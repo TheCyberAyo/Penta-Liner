@@ -4,14 +4,13 @@
 
 document.addEventListener('DOMContentLoaded', (event) => {
     const cells = document.querySelectorAll('.cell');
-    let currentColor = 'red'; // Initial color
+    let currentColor = 'green';
 
     cells.forEach(cell => {
         cell.addEventListener('click', () => {
             cell.style.backgroundColor = currentColor;
             
-            // Toggle the color for the next click
-            currentColor = (currentColor === 'red') ? 'blue' : 'red';
+            currentColor = (currentColor === 'green') ? 'blue' : 'green';
         });
     });
 });
