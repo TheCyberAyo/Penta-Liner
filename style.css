@@ -1,0 +1,17 @@
+.cell {
+    width: 60px;
+    height: 60px;
+    border: 1.5px solid;
+    box-shadow: 0 0 0 1.5px;
+    line-height: 60px;
+    display:flex;
+    justify-content: center;
+    cursor: pointer;
+ }
+ 
+ #cellContainer{
+     display: grid;
+     grid-template-columns: repeat(10, auto);
+     width: 600px;
+     margin: auto;
+ }
