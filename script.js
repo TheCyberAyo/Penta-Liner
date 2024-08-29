@@ -1,9 +1,21 @@
 document.addEventListener('DOMContentLoaded', (event) => {
-    const cells = document.querySelectorAll('.cell');
     const statusText = document.getElementById('statusText');
     const restartBtn = document.getElementById('restartBtn');
+    const cellContainer = document.getElementById('cellContainer');
+    const numberOfCells = 100; // Adjust this number as needed
     let playingColor = 'black';
     let isGameActive = true;
+
+    // Create cells
+    for (let i = 0; i < numberOfCells; i++) {
+        const cell = document.createElement('div');
+        cell.setAttribute('cellIndex', i);
+        cell.className = 'cell';
+        cellContainer.appendChild(cell);
+    }
+
+    // Re-select cells after they've been added to the DOM
+    const cells = document.querySelectorAll('.cell');
 
     // Initialize game
     updateStatusText();
