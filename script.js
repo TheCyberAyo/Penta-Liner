@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
     const cells = document.querySelectorAll('.cell');
     const statusText = document.getElementById('statusText');
     const restartBtn = document.getElementById('restartBtn');
-    let currentColor = 'black';
+    let playingColor = 'black';
     let isGameActive = true;
 
     // Initialize game
@@ -14,14 +14,14 @@ document.addEventListener('DOMContentLoaded', (event) => {
                 return;
             }
 
-            cell.style.backgroundColor = currentColor;
-            if (checkWin(cell, currentColor)) {
+            cell.style.backgroundColor = playingColor;
+            if (checkWin(cell, playingColor)) {
                 setTimeout(() => {
-                    statusText.textContent = `${currentColor} wins!`;
+                    statusText.textContent = `${playingColor} wins!`;
                     isGameActive = false; // Disable further moves
                 }, 100); // Delay to ensure the 5th block is visible
             } else {
-                currentColor = (currentColor === 'black') ? 'yellow' : 'black';
+                playingColor = (playingColor === 'black') ? 'yellow' : 'black';
                 updateStatusText();
             }
         });
@@ -82,12 +82,12 @@ document.addEventListener('DOMContentLoaded', (event) => {
         cells.forEach(cell => {
             cell.style.backgroundColor = ''; // Clear the background color
         });
-        currentColor = 'black'; // Reset the starting color
+        playingColor = 'black'; // Reset the starting color
         isGameActive = true; // Enable the game
         updateStatusText(); // Update the status text to reflect the current player
     }
 
     function updateStatusText() {
-        statusText.textContent = `${currentColor}, Play!`;
+        statusText.textContent = `${playingColor}, Play!`;
     }
 });

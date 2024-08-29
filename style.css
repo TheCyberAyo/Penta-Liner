@@ -1,6 +1,10 @@
-#gameContainer{
+#gameContainer {
     background-color: aqua;
-    
+    display: flex;
+    flex-direction: column; /* Stack items vertically */
+    align-items: center; /* Center horizontally */
+    justify-content: center; /* Center vertically */
+    height: 100vh;
 }
  
 #cellContainer{
@@ -20,4 +24,19 @@
     justify-content: center;
     cursor: pointer;
  }
+
+ #statusText {
+    margin-top: 10px;
+    font-size: x-large;
+    font-size: 2em;
+    text-align: center;
+    color: green;
+}
+
+#restartBtn {
+    margin-top: 10px;
+    padding: 10px 20px;
+    font-size: 1em;
+    cursor: pointer;
+}
  
