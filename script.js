@@ -10,6 +10,7 @@ function initializeGame() {
     const numberOfCells = 100;
     let playingColor = 'black';
     let isGameActive = true;
+    let turnTimer;
 
     createCells(cellContainer, numberOfCells);
 
@@ -17,8 +18,10 @@ function initializeGame() {
 
     updateStatusText(statusText, playingColor);
 
-    setupCellClickEvent(cells, statusText, playingColor, isGameActive);
-    restartBtn.addEventListener('click', () => resetGame(cells, statusText, playingColor, isGameActive));
+    setupCellClickEvent(cells, statusText, playingColor, isGameActive, turnTimer);
+    restartBtn.addEventListener('click', () => resetGame(cells, statusText, playingColor, isGameActive, turnTimer));
+
+    startTurnTimer(playingColor, statusText, turnTimer, isGameActive);
 }
 
 function createCells(container, numberOfCells) {
@@ -30,7 +33,7 @@ function createCells(container, numberOfCells) {
     }
 }
 
-function setupCellClickEvent(cells, statusText, playingColor, isGameActive) {
+function setupCellClickEvent(cells, statusText, playingColor, isGameActive, turnTimer) {
     cells.forEach(cell => {
         cell.addEventListener('click', () => {
             if (!isGameActive || cell.style.backgroundColor === 'black' || cell.style.backgroundColor === 'yellow') {
@@ -38,6 +41,8 @@ function setupCellClickEvent(cells, statusText, playingColor, isGameActive) {
             }
 
             cell.style.backgroundColor = playingColor;
+            clearTimeout(turnTimer); // Clear the timer for the current turn
+
             if (checkWin(cell, playingColor, cells)) {
                 setTimeout(() => {
                     statusText.textContent = `${playingColor} wins!`;
@@ -46,9 +51,19 @@ function setupCellClickEvent(cells, statusText, playingColor, isGameActive) {
             } else {
                 playingColor = (playingColor === 'black') ? 'yellow' : 'black';
                 updateStatusText(statusText, playingColor);
+                startTurnTimer(playingColor, statusText, turnTimer, isGameActive);
             }
         });
     });
+}
+
+function startTurnTimer(playingColor, statusText, turnTimer, isGameActive) {
+    turnTimer = setTimeout(() => {
+        if (isGameActive) {
+            statusText.textContent = `${playingColor} failed to play. Opponent wins!`;
+            isGameActive = false;
+        }
+    }, 15000); // 15 seconds
 }
 
 function checkWin(cell, color, cells) {
@@ -100,15 +115,20 @@ function getCell(row, col, cells) {
     return cells[row * 10 + col];
 }
 
-function resetGame(cells, statusText, playingColor, isGameActive) {
+function resetGame(cells, statusText, playingColor, isGameActive, turnTimer) {
+    clearTimeout(turnTimer); // Clear any existing timer
+
     cells.forEach(cell => {
         cell.style.backgroundColor = 'skyblue'; // Clear the background color
     });
     playingColor = 'black'; // Reset the starting color
     isGameActive = true; // Enable the game
     updateStatusText(statusText, playingColor); // Update the status text to reflect the current player
+
+    startTurnTimer(playingColor, statusText, turnTimer, isGameActive); // Restart the timer for the new game
 }
 
 function updateStatusText(statusText, playingColor) {
     statusText.textContent = `${playingColor}, Play!`;
 }
+
