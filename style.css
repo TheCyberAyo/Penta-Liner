@@ -1,42 +1,100 @@
 #gameContainer {
     background-color: rgb(161, 160, 160);
     display: flex;
-    flex-direction: column; 
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     height: 100vh;
+    padding: 10px; /* Default padding */
+    box-sizing: border-box; /* Consistent sizing */
 }
- 
-#cellContainer{
-     display: grid;
-     grid-template-columns: repeat(10, auto);
-     width: 600px;
-     margin: auto;
- }
- 
+
+#cellContainer {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr); /* Flexible grid layout */
+    width: 90vw; /* Responsive width */
+    max-width: 500px; /* Limit max width for larger screens */
+    margin: auto;
+}
+
 .cell {
-    width: 60px;
-    height: 60px;
-    border: 1.5px solid red;
-    box-shadow: 0 0 0 1.5px;
-    line-height: 60px;
+    width: 100%; /* Responsive to container size */
+    aspect-ratio: 1; /* Maintain square shape */
+    border: 1px solid red; /* Default border */
+    box-shadow: 0 0 0 1px;
     display: flex;
     justify-content: center;
+    align-items: center; /* Center content */
     cursor: pointer;
- }
+    background-color: skyblue; /* Default cell background */
+}
 
- #statusText {
+#statusText {
     margin-top: 10px;
-    font-size: x-large;
-    font-size: 2em;
+    font-size: 1.5em; /* Default font size */
     text-align: center;
     color: green;
 }
 
 #restartBtn {
     margin-top: 10px;
-    padding: 10px 20px;
-    font-size: 1em;
+    padding: 10px 20px; /* Default button padding */
+    font-size: 1em; /* Default font size */
     cursor: pointer;
 }
- 
+
+/* Media Query for Tablets (max-width: 768px) */
+@media (max-width: 768px) {
+    #cellContainer {
+        width: 85vw; /* Slightly narrower for tablets */
+        max-width: 400px;
+    }
+
+    #statusText {
+        font-size: 1.2em; /* Reduce font size */
+    }
+
+    #restartBtn {
+        font-size: 0.9em;
+        padding: 8px 16px; /* Adjust button padding */
+    }
+}
+
+/* Media Query for Phones (max-width: 480px) */
+@media (max-width: 480px) {
+    #gameContainer {
+        padding: 5px; /* Minimize padding */
+    }
+
+    #cellContainer {
+        width: 95vw; /* Use most of the viewport width */
+        max-width: none; /* Remove max-width constraint */
+    }
+
+    .cell {
+        border: 0.8px solid red; /* Reduce border size */
+    }
+
+    #statusText {
+        font-size: 1em; /* Further reduce font size */
+    }
+
+    #restartBtn {
+        font-size: 0.8em; /* Adjust button size */
+        padding: 6px 12px;
+    }
+}
+
+/* Ultra-small devices (max-width: 360px) */
+@media (max-width: 360px) {
+    #statusText {
+        font-size: 0.9em; /* Smallest font size */
+    }
+
+    #restartBtn {
+        font-size: 0.7em; /* Further reduce button size */
+        padding: 4px 8px;
+    }
+}
+
+
