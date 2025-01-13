@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 let countdownInterval; // Variable to store the timer interval
 let currentPlayer = 'black'; // Tracks the current player
+let isGameActive = true; // Global variable to track game state
 
 function initializeGame() {
     const statusText = document.getElementById('statusText');
@@ -12,7 +13,6 @@ function initializeGame() {
     const restartBtn = document.getElementById('restartBtn');
     const cellContainer = document.getElementById('cellContainer');
     const numberOfCells = 100;
-    let isGameActive = true;
 
     createCells(cellContainer, numberOfCells);
 
@@ -20,9 +20,9 @@ function initializeGame() {
 
     updateStatusText(statusText, currentPlayer);
 
-    setupCellClickEvent(cells, statusText, countdownText, isGameActive);
-    restartBtn.addEventListener('click', () => resetGame(cells, statusText, countdownText, isGameActive));
-    startTimer(countdownText, isGameActive);
+    setupCellClickEvent(cells, statusText, countdownText);
+    restartBtn.addEventListener('click', () => resetGame(cells, statusText, countdownText));
+    startTimer(countdownText);
 }
 
 function createCells(container, numberOfCells) {
@@ -34,11 +34,11 @@ function createCells(container, numberOfCells) {
     }
 }
 
-function setupCellClickEvent(cells, statusText, countdownText, isGameActive) {
+function setupCellClickEvent(cells, statusText, countdownText) {
     cells.forEach(cell => {
         cell.addEventListener('click', () => {
             if (!isGameActive || cell.style.backgroundColor === 'black' || cell.style.backgroundColor === 'yellow') {
-                return;
+                return; // Do nothing if the game is inactive or the cell is already filled
             }
 
             cell.style.backgroundColor = currentPlayer;
@@ -52,14 +52,14 @@ function setupCellClickEvent(cells, statusText, countdownText, isGameActive) {
             } else {
                 currentPlayer = (currentPlayer === 'black') ? 'yellow' : 'black';
                 updateStatusText(statusText, currentPlayer);
-                restartTimer(countdownText, isGameActive); // Restart the timer for the next player
+                restartTimer(countdownText); // Restart the timer for the next player
             }
         });
     });
 }
 
-function startTimer(countdownText, isGameActive) {
-    let timeLeft = 25;
+function startTimer(countdownText) {
+    let timeLeft = 15;
 
     countdownInterval = setInterval(() => {
         if (!isGameActive) {
@@ -72,7 +72,7 @@ function startTimer(countdownText, isGameActive) {
         if (timeLeft <= 0) {
             clearInterval(countdownInterval);
             const winner = currentPlayer === 'black' ? 'yellow' : 'black';
-            document.getElementById('statusText').textContent = `${winner} wins!`;
+            document.getElementById('statusText').textContent = `${winner} wins due to time limit!`;
             isGameActive = false; // End the game
         }
 
@@ -80,14 +80,16 @@ function startTimer(countdownText, isGameActive) {
     }, 1000);
 }
 
-function restartTimer(countdownText, isGameActive) {
+function restartTimer(countdownText) {
     clearInterval(countdownInterval);
-    startTimer(countdownText, isGameActive);
+    if (isGameActive) {
+        startTimer(countdownText);
+    }
 }
 
 function checkWin(cell, color, cells) {
     const index = Array.from(cells).indexOf(cell);
-    const row = Math.floor(index / 10); // a 10x10 grid
+    const row = Math.floor(index / 10); // A 10x10 grid
     const col = index % 10;
 
     return (
@@ -134,7 +136,7 @@ function getCell(row, col, cells) {
     return cells[row * 10 + col];
 }
 
-function resetGame(cells, statusText, countdownText, isGameActive) {
+function resetGame(cells, statusText, countdownText) {
     clearInterval(countdownInterval); // Stop any existing timer
     cells.forEach(cell => {
         cell.style.backgroundColor = 'skyblue'; // Clear the background color
@@ -142,7 +144,7 @@ function resetGame(cells, statusText, countdownText, isGameActive) {
     currentPlayer = 'black'; // Reset the starting color
     isGameActive = true; // Enable the game
     updateStatusText(statusText, currentPlayer); // Update the status text to reflect the current player
-    startTimer(countdownText, isGameActive); // Start a new timer
+    startTimer(countdownText); // Start a new timer
 }
 
 function updateStatusText(statusText, playingColor) {
