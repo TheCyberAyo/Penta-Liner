@@ -1,13 +1,38 @@
-// Add event listener when the DOM content is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    initializeGame();
+    const modeSelection = document.getElementById('modeSelection');
+    const cellContainer = document.getElementById('cellContainer');
+    const restartBtn = document.getElementById('restartBtn');
+    const pvpMode = document.getElementById('pvpMode');
+    const pvcMode = document.getElementById('pvcMode');
+
+    let isSinglePlayer = false;
+
+    pvpMode.addEventListener('click', () => {
+        isSinglePlayer = false;
+        modeSelection.style.display = 'none';  // Hide mode selection
+        cellContainer.style.display = 'grid';  // Show the grid
+        restartBtn.style.display = 'block';    // Show the restart button
+        initializeGame(isSinglePlayer);        // Initialize the game for PvP
+    });
+
+    pvcMode.addEventListener('click', () => {
+        isSinglePlayer = true;
+        modeSelection.style.display = 'none';  // Hide mode selection
+        cellContainer.style.display = 'grid';  // Show the grid
+        restartBtn.style.display = 'block';    // Show the restart button
+        initializeGame(isSinglePlayer);        // Initialize the game for PvC
+    });
+
+    // Initially hide the game grid and restart button
+    cellContainer.style.display = 'none';
+    restartBtn.style.display = 'none';
 });
 
-let countdownInterval; // Variable to store the timer interval
-let currentPlayer = 'black'; // Tracks the current player
-let isGameActive = true; // Global variable to track game state
+let countdownInterval;
+let currentPlayer = 'black';
+let isGameActive = true;
 
-function initializeGame() {
+function initializeGame(isSinglePlayer = false) {
     const statusText = document.getElementById('statusText');
     const countdownText = document.getElementById('countDown');
     const restartBtn = document.getElementById('restartBtn');
@@ -20,7 +45,7 @@ function initializeGame() {
 
     updateStatusText(statusText, currentPlayer);
 
-    setupCellClickEvent(cells, statusText, countdownText);
+    setupCellClickEvent(cells, statusText, countdownText, isSinglePlayer);
     restartBtn.addEventListener('click', () => resetGame(cells, statusText, countdownText));
     startTimer(countdownText);
 }
@@ -34,11 +59,11 @@ function createCells(container, numberOfCells) {
     }
 }
 
-function setupCellClickEvent(cells, statusText, countdownText) {
+function setupCellClickEvent(cells, statusText, countdownText, isSinglePlayer) {
     cells.forEach(cell => {
         cell.addEventListener('click', () => {
             if (!isGameActive || cell.style.backgroundColor === 'black' || cell.style.backgroundColor === 'yellow') {
-                return; // Do nothing if the game is inactive or the cell is already filled
+                return;
             }
 
             cell.style.backgroundColor = currentPlayer;
@@ -46,44 +71,39 @@ function setupCellClickEvent(cells, statusText, countdownText) {
             if (checkWin(cell, currentPlayer, cells)) {
                 setTimeout(() => {
                     statusText.textContent = `${currentPlayer} wins!`;
-                    clearInterval(countdownInterval); // Stop the timer
-                    isGameActive = false; // Disable further moves
-                }, 100); // Delay to ensure the 5th block is visible
+                    clearInterval(countdownInterval);
+                    isGameActive = false;
+                }, 100);
             } else {
                 currentPlayer = (currentPlayer === 'black') ? 'yellow' : 'black';
                 updateStatusText(statusText, currentPlayer);
-                restartTimer(countdownText); // Restart the timer for the next player
+                restartTimer(countdownText);
+
+                if (isSinglePlayer && currentPlayer === 'yellow') {
+                    setTimeout(() => computerMove(cells, statusText, countdownText), 500);
+                }
             }
         });
     });
 }
 
-function startTimer(countdownText) {
-    let timeLeft = 15;
+function computerMove(cells, statusText, countdownText) {
+    const availableCells = Array.from(cells).filter(cell => !cell.style.backgroundColor);
+    if (availableCells.length === 0) return;
 
-    countdownInterval = setInterval(() => {
-        if (!isGameActive) {
+    const randomCell = availableCells[Math.floor(Math.random() * availableCells.length)];
+    randomCell.style.backgroundColor = 'yellow';
+
+    if (checkWin(randomCell, 'yellow', cells)) {
+        setTimeout(() => {
+            statusText.textContent = 'yellow wins!';
             clearInterval(countdownInterval);
-            return;
-        }
-
-        countdownText.textContent = `Time Left: ${timeLeft}s`;
-
-        if (timeLeft <= 0) {
-            clearInterval(countdownInterval);
-            const winner = currentPlayer === 'black' ? 'yellow' : 'black';
-            document.getElementById('statusText').textContent = `${winner} wins due to time limit!`;
-            isGameActive = false; // End the game
-        }
-
-        timeLeft--;
-    }, 1000);
-}
-
-function restartTimer(countdownText) {
-    clearInterval(countdownInterval);
-    if (isGameActive) {
-        startTimer(countdownText);
+            isGameActive = false;
+        }, 100);
+    } else {
+        currentPlayer = 'black';
+        updateStatusText(statusText, currentPlayer);
+        restartTimer(countdownText);
     }
 }
 
@@ -149,4 +169,33 @@ function resetGame(cells, statusText, countdownText) {
 
 function updateStatusText(statusText, playingColor) {
     statusText.textContent = `${playingColor}, Play!`;
+}
+
+function startTimer(countdownText) {
+    let timeLeft = 15;
+
+    countdownInterval = setInterval(() => {
+        if (!isGameActive) {
+            clearInterval(countdownInterval);
+            return;
+        }
+
+        countdownText.textContent = `Time Left: ${timeLeft}s`;
+
+        if (timeLeft <= 0) {
+            clearInterval(countdownInterval);
+            const winner = currentPlayer === 'black' ? 'yellow' : 'black';
+            document.getElementById('statusText').textContent = `${winner} wins due to time limit!`;
+            isGameActive = false; // End the game
+        }
+
+        timeLeft--;
+    }, 1000);
+}
+
+function restartTimer(countdownText) {
+    clearInterval(countdownInterval);
+    if (isGameActive) {
+        startTimer(countdownText);
+    }
 }

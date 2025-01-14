@@ -9,14 +9,16 @@
 <body>
     <div id="gameContainer">
         <h1>PentAyo</h1>
-        <div id="cellContainer">
-            <!--Built in JavaScript -->
+        <div id="modeSelection">
+            <button id="pvpMode">Player vs Player</button>
+            <button id="pvcMode">Player vs Computer</button>
         </div>
-
+        <div id="cellContainer" style="display: none;">
+            <!-- Built in JavaScript -->
+        </div>
         <div id="statusText">Status Message</div>
-        <div id ="countDown">Timer</div>
-
-        <button id="restartBtn">Restart</button>
+        <div id="countDown">Timer</div>
+        <button id="restartBtn" style="display: none;">Restart</button>
     </div>
     <script src="script.js"></script>
 </body>
