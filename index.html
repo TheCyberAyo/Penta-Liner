@@ -7,19 +7,25 @@
     <title>Penta-Liner</title>
 </head>
 <body>
-    <div id="gameContainer">
-        <h1>PentAyo</h1>
+    <div id="welcomePage">
+        <h1>Welcome to PentAyo</h1>
+        <p>Select the game mode to get started!</p>
         <div id="modeSelection">
             <button id="pvpMode">Player vs Player</button>
             <button id="pvcMode">Player vs Computer</button>
         </div>
-        <div id="cellContainer" style="display: none;">
-            <!-- Built in JavaScript -->
+    </div>
+
+    <div id="gamePage" style="display: none;">
+        <h1>PentAyo</h1>
+        <div id="cellContainer">
+            <!-- Cells dynamically created in JavaScript -->
         </div>
         <div id="statusText">Status Message</div>
         <div id="countDown">Timer</div>
-        <button id="restartBtn" style="display: none;">Restart</button>
+        <button id="restartBtn">Restart</button>
     </div>
+
     <script src="script.js"></script>
 </body>
 </html>
