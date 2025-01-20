@@ -74,6 +74,20 @@
         font-size: 0.9em;
         padding: 8px 16px; /* Adjust button padding */
     }
+
+        #welcomePage {
+            padding: 20px;
+            height: auto; /* Allows content to expand naturally */
+            background-size: contain; /* Ensures the background scales well on smaller devices */
+        }
+    
+        #welcomePage h1 {
+            font-size: 2.5em; /* Scales down the font size for tablets */
+        }
+    
+        #welcomePage p {
+            font-size: 1em; /* Adjusts text size for better readability */
+        }
 }
 
 /* Media Query for Phones (max-width: 480px) */
@@ -98,6 +112,20 @@
     #restartBtn {
         font-size: 0.8em; /* Adjust button size */
         padding: 6px 12px;
+    }
+
+    #welcomePage {
+        padding: 10px;
+        height: auto;
+        background-size: contain;
+    }
+
+    #welcomePage h1 {
+        font-size: 2em; /* Scales down font size further for phones */
+    }
+
+    #welcomePage p {
+        font-size: 0.9em; /* Adjusts text size further for smaller screens */
     }
 }
 
