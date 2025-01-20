@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     pvpMode.addEventListener('click', () => {
         isSinglePlayer = false;
         startGame();
-    });
+    }); 
 
     pvcMode.addEventListener('click', () => {
         isSinglePlayer = true;

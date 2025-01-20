@@ -5,18 +5,24 @@
     align-items: center;
     justify-content: center;
     height: 100vh;
-    background-color: rgb(161, 160, 160);
+    background-image: url(black\ and\ yellow.jpg);
+    background-size: cover; /* Ensures the image covers the entire background */
+    background-position: center; /* Centers the image */
+    background-repeat: no-repeat; /* Prevents the image from repeating */
     text-align: center;
 }
 
 #welcomePage h1 {
-    font-size: 2em;
-    color: green;
+    font-size: 4em;
+    color: yellow;
 }
 
 #welcomePage p {
     font-size: 1.2em;
+    font-weight: bold;
     margin-bottom: 20px;
+    color: black;
+
 }
 
 #modeSelection button {
