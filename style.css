@@ -5,6 +5,7 @@
     align-items: center;
     justify-content: center;
     height: 100vh;
+    width: 100vw;
     background-image: url(black\ and\ yellow.jpg);
     background-size: cover; /* Ensures the image covers the entire background */
     background-position: center; /* Centers the image */
@@ -15,6 +16,10 @@
 #welcomePage h1 {
     font-size: 4em;
     color: yellow;
+}
+
+#welcomePage h1 span{
+    color: black;
 }
 
 #welcomePage p {
