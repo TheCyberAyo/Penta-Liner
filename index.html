@@ -1,19 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
     <title>Penta-Liner</title>
 </head>
+
 <body>
     <div id="welcomePage">
-        <h1>Welcome to Bee-<span>Five</span></h1>
-        <p>Select the game mode to get started!</p>
-        <div id="modeSelection">
-            <button id="pvpMode">Player vs Player</button>
-            <button id="pvcMode">Player vs Computer</button>
+
+        <div id="black">
+            <h1>Welcome to Bee-<span>Five</span></h1>
+            <p>Select the game mode to get started!</p>
+            <div id="modeSelection">
+                <button id="pvpMode">Human vs Human</button>
+                <button id="pvcMode">Human vs Robot</button>
+            </div>
+            
         </div>
+        <footer>
+                <p>&copy; 2025 PentAyo. All rights reserved.</p>
+            </footer>
+
+
     </div>
 
     <div id="gamePage" style="display: none;">
@@ -24,12 +35,15 @@
         <div id="statusText">Status Message</div>
         <div id="countDown">Timer</div>
         <button id="restartBtn">Restart</button>
+
+        <footer>
+            &copy; 2025 PentAyo. All rights reserved.
+        </footer>
     </div>
 
-    <footer>
-        &copy; 2025 PentAyo. All rights reserved.
-    </footer>
+
 
     <script src="script.js"></script>
 </body>
+
 </html>
