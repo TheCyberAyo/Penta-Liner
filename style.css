@@ -68,31 +68,81 @@ footer {
  
 
 
+/* Base Styles */
 #welcomePage h1 {
-    font-size: 4em;
+    font-size: 4vw; /* Scales with viewport width */
     color: yellow;
+    text-align: center; /* Center-align text for better visuals */
+    margin-bottom: 20px;
 }
 
-#welcomePage h1 span{
+#welcomePage h1 span {
     color: black;
 }
 
 #welcomePage p {
-    font-size: 1.2em;
+    font-size: 1.2vw; /* Scales with viewport width */
     font-weight: bold;
     margin-bottom: 20px;
-    /* color: black; */
-
+    text-align: center; /* Center-align the paragraph */
 }
 
-
+/* Buttons */
+#modeSelection {
+    display: flex;
+    justify-content: center; /* Center the buttons */
+    flex-wrap: wrap; /* Allows buttons to wrap on small screens */
+    gap: 10px; /* Adds spacing between buttons */
+}
 
 #modeSelection button {
     margin: 10px;
     padding: 10px 20px;
     font-size: 1em;
     cursor: pointer;
+    border: 1px solid #ccc;
+    background-color: black;
+    color: yellow;
+    border-radius: 5px;
+    transition: all 0.3s ease;
 }
+
+#modeSelection button:hover {
+    background-color: yellow;
+    color: black;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    #welcomePage h1 {
+        font-size: 6vw; /* Larger font size for smaller devices */
+    }
+
+    #welcomePage p {
+        font-size: 3vw; /* Adjust paragraph size for readability */
+    }
+
+    #modeSelection button {
+        padding: 8px 16px; /* Slightly smaller buttons */
+        font-size: 0.9em;
+    }
+}
+
+@media (max-width: 480px) {
+    #welcomePage h1 {
+        font-size: 7vw; /* Even larger for very small screens */
+    }
+
+    #welcomePage p {
+        font-size: 4vw;
+    }
+
+    #modeSelection button {
+        padding: 6px 12px; /* Even smaller buttons */
+        font-size: 0.8em;
+    }
+}
+
 
 /* Game Page Styling */
 #gamePage {
