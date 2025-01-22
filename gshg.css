@@ -1,0 +1,38 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+  }
+  
+  .outer-frame {
+    background-color: yellow;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .middle-frame {
+    background-color: black;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .inner-frame {
+    background-color: yellow;
+    padding: 20px;
+    text-align: center;
+    font-size: 1.2rem;
+    font-family: Arial, sans-serif;
+    color: black;
+  }
+  
