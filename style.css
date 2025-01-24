@@ -18,7 +18,7 @@ body{
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: yellow;
+    background-color: #E9AB17;
     width: 100vw;
     height: 100vh;
     /* border: 10px solid yellow; */
@@ -41,7 +41,7 @@ body{
     justify-content: center;
     width: 100%;
     height: 100%;
-    background-color: yellow;
+    background-color: #E9AB17;
     border-radius: 10px;
     padding: 3em;
 
@@ -71,7 +71,7 @@ footer {
 /* Base Styles */
 #welcomePage h1 {
     font-size: 4vw; /* Scales with viewport width */
-    color: yellow;
+    color: #E9AB17;
     text-align: center; /* Center-align text for better visuals */
     margin-bottom: 20px;
 }
@@ -102,13 +102,13 @@ footer {
     cursor: pointer;
     border: 1px solid #ccc;
     background-color: black;
-    color: yellow;
+    color: #E9AB17;
     border-radius: 5px;
     transition: all 0.3s ease;
 }
 
 #modeSelection button:hover {
-    background-color: yellow;
+    background-color: #E9AB17;
     color: black;
 }
 
@@ -149,7 +149,7 @@ footer {
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: yellow;
+    background-color: #E9AB17;
     width: 100vw;
     height: 100vh;
     /* border: 10px solid yellow; */
