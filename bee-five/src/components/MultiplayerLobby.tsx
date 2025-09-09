@@ -102,6 +102,15 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
     // Simple approach: just create a mock room and proceed immediately
     setTimeout(() => {
       const roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      
+      // Store host info in localStorage for other players to find
+      const hostInfo = {
+        roomId: roomCode,
+        hostName: playerName.trim(),
+        timestamp: Date.now()
+      };
+      localStorage.setItem(`bee5_host_${roomCode}`, JSON.stringify(hostInfo));
+      
       const mockRoom = {
         roomId: roomCode,
         players: [
@@ -119,11 +128,23 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
       
       // For testing: simulate a second player joining after 3 seconds
       setTimeout(() => {
+        // Check if a guest has joined by looking for their info in localStorage
+        let guestName = "Waiting for Player...";
+        const guestInfoStr = localStorage.getItem(`bee5_guest_${roomCode}`);
+        if (guestInfoStr) {
+          try {
+            const guestInfo = JSON.parse(guestInfoStr);
+            guestName = guestInfo.guestName || "Guest Player";
+          } catch (error) {
+            console.warn('Could not parse guest info:', error);
+          }
+        }
+        
         const updatedRoom = {
           ...mockRoom,
           players: [
             ...mockRoom.players,
-            {id: "guest", name: "Guest Player", playerNumber: 2 as 1 | 2, isHost: false}
+            {id: "guest", name: guestName, playerNumber: 2 as 1 | 2, isHost: false}
           ],
           isGameStarted: true
         };
@@ -154,10 +175,32 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
 
     // Simple approach: just create a mock room and proceed immediately
     setTimeout(() => {
+      const roomCodeUpper = roomCode.trim().toUpperCase();
+      
+      // Store guest info in localStorage for host to find
+      const guestInfo = {
+        roomId: roomCodeUpper,
+        guestName: playerName.trim(),
+        timestamp: Date.now()
+      };
+      localStorage.setItem(`bee5_guest_${roomCodeUpper}`, JSON.stringify(guestInfo));
+      
+      // Try to get host name from localStorage
+      let hostName = "Room Host";
+      const hostInfoStr = localStorage.getItem(`bee5_host_${roomCodeUpper}`);
+      if (hostInfoStr) {
+        try {
+          const hostInfo = JSON.parse(hostInfoStr);
+          hostName = hostInfo.hostName || "Room Host";
+        } catch (error) {
+          console.warn('Could not parse host info:', error);
+        }
+      }
+      
       const mockRoom = {
-        roomId: roomCode.trim().toUpperCase(),
+        roomId: roomCodeUpper,
         players: [
-          {id: "host", name: "Host", playerNumber: 1 as 1 | 2, isHost: true},
+          {id: "host", name: hostName, playerNumber: 1 as 1 | 2, isHost: true},
           {id: "guest", name: playerName.trim(), playerNumber: 2 as 1 | 2, isHost: false}
         ],
         isGameStarted: true, // Game is ready to start with 2 players
