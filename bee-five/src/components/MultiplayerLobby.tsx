@@ -33,8 +33,10 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
     };
 
     p2pClient.onRoomJoined = (roomInfo: RoomInfo) => {
+      console.log('🎉 Room joined successfully:', roomInfo);
       setCurrentRoom(roomInfo);
       setLobbyMode('waiting');
+      setIsJoiningRoom(false);
       
       // If game is already started (2 players), start immediately
       if (roomInfo.isGameStarted && roomInfo.players.length === 2) {

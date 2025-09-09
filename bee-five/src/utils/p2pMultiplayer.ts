@@ -164,6 +164,13 @@ class P2PMultiplayerClient {
       // Poll for answer from host
       this.pollForAnswer(roomCode);
 
+      // For now, call onRoomJoined immediately to proceed to the game
+      // The WebRTC connection will be established in the background
+      console.log('🚀 Proceeding to game - WebRTC connection will establish in background');
+      if (this.onRoomJoined) {
+        this.onRoomJoined(this.currentRoom);
+      }
+
     } catch (error) {
       console.error('Failed to join room:', error);
       if (this.onError) {
@@ -188,47 +195,61 @@ class P2PMultiplayerClient {
     // Set up event handlers
     this.peerConnection.onicecandidate = (event) => {
       if (event.candidate) {
+        console.log('🧊 ICE candidate generated');
         // Store ICE candidate for the other peer
         this.storeIceCandidate(event.candidate);
+      } else {
+        console.log('🧊 ICE gathering complete');
       }
     };
 
     this.peerConnection.onconnectionstatechange = () => {
       const state = this.peerConnection?.connectionState;
-      console.log('Connection state:', state);
+      console.log('🔗 Connection state changed:', state);
       
       if (state === 'connected') {
+        console.log('✅ WebRTC connection established!');
         if (this.onConnected) {
           this.onConnected();
         }
-      } else if (state === 'disconnected' || state === 'failed') {
+      } else if (state === 'disconnected' || state === 'failed' || state === 'closed') {
+        console.log('❌ WebRTC connection failed:', state);
         if (this.onDisconnected) {
           this.onDisconnected();
         }
       }
     };
 
+    this.peerConnection.oniceconnectionstatechange = () => {
+      const iceState = this.peerConnection?.iceConnectionState;
+      console.log('🧊 ICE connection state:', iceState);
+    };
+
     if (this.isHost) {
       // Host creates data channel
       this.dataChannel = this.peerConnection.createDataChannel('gameData');
-      this.setupDataChannel();
+      this.setupDataChannel(this.dataChannel);
       
       // Poll for incoming connection offers
       this.pollForOffers();
     } else {
       // Guest waits for data channel from host
       this.peerConnection.ondatachannel = (event) => {
+        console.log('📡 Data channel received from host');
         this.dataChannel = event.channel;
-        this.setupDataChannel();
+        this.setupDataChannel(this.dataChannel);
       };
     }
   }
 
-  private setupDataChannel(): void {
+  private setupDataChannel(dataChannel?: RTCDataChannel): void {
+    if (dataChannel) {
+      this.dataChannel = dataChannel;
+    }
     if (!this.dataChannel) return;
 
     this.dataChannel.onopen = () => {
-      console.log('Data channel opened');
+      console.log('📡 Data channel opened - connection established!');
       if (this.onConnected) {
         this.onConnected();
       }
@@ -237,6 +258,7 @@ class P2PMultiplayerClient {
     this.dataChannel.onmessage = (event) => {
       try {
         const message: P2PMessage = JSON.parse(event.data);
+        console.log('📨 Received message:', message.type);
         this.handleMessage(message);
       } catch (error) {
         console.error('Error parsing message:', error);
@@ -244,10 +266,14 @@ class P2PMultiplayerClient {
     };
 
     this.dataChannel.onclose = () => {
-      console.log('Data channel closed');
+      console.log('📡 Data channel closed');
       if (this.onDisconnected) {
         this.onDisconnected();
       }
+    };
+
+    this.dataChannel.onerror = (error) => {
+      console.error('📡 Data channel error:', error);
     };
   }
 
@@ -377,13 +403,25 @@ class P2PMultiplayerClient {
 
   private pollForAnswer(roomCode: string): void {
     let pollCount = 0;
-    const maxPolls = 300; // 5 minutes of polling
+    const maxPolls = 60; // 1 minute of polling (reduced from 5 minutes)
+    let connectionEstablished = false;
+
+    // Set a timeout to force connection completion
+    const connectionTimeout = setTimeout(() => {
+      if (!connectionEstablished) {
+        console.log('⏰ Connection timeout - forcing connection completion');
+        if (this.onRoomJoined && this.currentRoom) {
+          this.onRoomJoined(this.currentRoom);
+        }
+      }
+    }, 10000); // 10 seconds timeout
 
     const checkForAnswer = () => {
       pollCount++;
       
       if (pollCount > maxPolls) {
-        console.log('Stopped polling for answer after 5 minutes');
+        console.log('Stopped polling for answer after 1 minute');
+        clearTimeout(connectionTimeout);
         if (this.onError) {
           this.onError('Connection timeout. Host may not be available.');
         }
@@ -403,6 +441,8 @@ class P2PMultiplayerClient {
           }
           
           if (parsedData.type === 'answer') {
+            connectionEstablished = true;
+            clearTimeout(connectionTimeout);
             this.handleIncomingAnswer(parsedData);
             localStorage.removeItem(`bee5_answer_${roomCode}`);
             return;
