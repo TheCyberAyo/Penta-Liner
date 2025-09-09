@@ -17,7 +17,7 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
   // PlayerInfo is used in the component logic
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
   const [isJoiningRoom, setIsJoiningRoom] = useState(false);
-  const [lobbyMode, setLobbyMode] = useState<'menu' | 'create' | 'join' | 'waiting'>('menu');
+  const [lobbyMode, setLobbyMode] = useState<'menu' | 'create' | 'join' | 'waiting' | 'connecting'>('menu');
 
   useEffect(() => {
     // Set up P2P client event handlers
@@ -118,10 +118,15 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
     setConnectionError(null);
 
     try {
+      console.log('🔄 Attempting to join room:', roomCode.trim().toUpperCase());
+      setLobbyMode('connecting');
       await p2pClient.joinRoom(roomCode.trim().toUpperCase(), playerName.trim());
       soundManager.playClickSound();
+      console.log('✅ Successfully initiated room join process');
     } catch (error) {
-      setConnectionError('Failed to join room. Room may not exist or be full.');
+      console.error('❌ Failed to join room:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to join room. Please check the room code and try again.';
+      setConnectionError(errorMessage);
       setIsJoiningRoom(false);
     }
   };
@@ -366,6 +371,57 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
     </div>
   );
 
+  const renderConnecting = () => (
+    <div style={{ textAlign: 'center' }}>
+      <h3 style={{ color: 'black', marginBottom: '20px' }}>
+        🔄 Connecting to Room...
+      </h3>
+      
+      <div style={{ 
+        backgroundColor: 'rgba(255, 255, 0, 0.2)', 
+        padding: '20px', 
+        borderRadius: '10px',
+        border: '2px solid #FFC30B',
+        marginBottom: '20px'
+      }}>
+        <div style={{ fontSize: '2em', marginBottom: '15px' }}>
+          <div style={{ 
+            animation: 'pulse 1.5s infinite',
+            color: '#FFC30B'
+          }}>
+            🐝
+          </div>
+        </div>
+        <div style={{ color: 'black', fontWeight: 'bold', marginBottom: '10px' }}>
+          Establishing peer-to-peer connection...
+        </div>
+        <div style={{ fontSize: '0.9em', color: '#666' }}>
+          This may take a few moments. Please wait while we connect you to the host.
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
+        <button
+          onClick={() => {
+            setLobbyMode('join');
+            setIsJoiningRoom(false);
+          }}
+          style={{
+            padding: '10px 20px',
+            fontSize: '1em',
+            backgroundColor: '#f44336',
+            color: 'white',
+            border: '2px solid black',
+            borderRadius: '8px',
+            cursor: 'pointer'
+          }}
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+
   const renderWaitingRoom = () => {
     if (!currentRoom) return null;
 
@@ -493,6 +549,7 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
             {lobbyMode === 'menu' && renderLobbyMenu()}
             {lobbyMode === 'create' && renderCreateRoom()}
             {lobbyMode === 'join' && renderJoinRoom()}
+            {lobbyMode === 'connecting' && renderConnecting()}
             {lobbyMode === 'waiting' && renderWaitingRoom()}
           </>
         )}

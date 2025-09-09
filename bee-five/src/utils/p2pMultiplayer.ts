@@ -79,13 +79,15 @@ class P2PMultiplayerClient {
       // Set up peer connection for incoming connections
       await this.setupPeerConnection();
       
-      // Store room info in sessionStorage for other players to find
+      // Store room info in localStorage for other players to find (with expiration)
       const roomData = {
         roomId,
         hostId: this.localPlayerId,
-        timestamp: Date.now()
+        hostName: playerName,
+        timestamp: Date.now(),
+        expires: Date.now() + (30 * 60 * 1000) // 30 minutes
       };
-      sessionStorage.setItem(`p2p_room_${roomId}`, JSON.stringify(roomData));
+      localStorage.setItem(`bee5_room_${roomId}`, JSON.stringify(roomData));
 
       if (this.onRoomJoined) {
         this.onRoomJoined(this.currentRoom);
@@ -108,17 +110,17 @@ class P2PMultiplayerClient {
       this.isHost = false;
 
       // Check if room exists
-      const roomData = sessionStorage.getItem(`p2p_room_${roomCode}`);
+      const roomData = localStorage.getItem(`bee5_room_${roomCode}`);
       if (!roomData) {
-        throw new Error('Room not found');
+        throw new Error('Room not found. Make sure the room code is correct.');
       }
 
       const parsedRoomData = JSON.parse(roomData);
       
-      // Check if room is still active (within 1 hour)
-      if (Date.now() - parsedRoomData.timestamp > 3600000) {
-        sessionStorage.removeItem(`p2p_room_${roomCode}`);
-        throw new Error('Room expired');
+      // Check if room is still active
+      if (Date.now() > parsedRoomData.expires) {
+        localStorage.removeItem(`bee5_room_${roomCode}`);
+        throw new Error('Room has expired. Please ask the host to create a new room.');
       }
 
       await this.setupPeerConnection();
@@ -129,7 +131,7 @@ class P2PMultiplayerClient {
         players: [
           {
             id: parsedRoomData.hostId,
-            name: 'Host', // We'll get the real name via WebRTC
+            name: parsedRoomData.hostName || 'Host',
             playerNumber: 1,
             isHost: true
           },
@@ -154,9 +156,10 @@ class P2PMultiplayerClient {
         offer: offer,
         playerId: this.localPlayerId,
         playerName: playerName,
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        expires: Date.now() + (5 * 60 * 1000) // 5 minutes for connection
       };
-      sessionStorage.setItem(`p2p_connection_${roomCode}`, JSON.stringify(connectionData));
+      localStorage.setItem(`bee5_connection_${roomCode}`, JSON.stringify(connectionData));
 
       // Poll for answer from host
       this.pollForAnswer(roomCode);
@@ -286,18 +289,42 @@ class P2PMultiplayerClient {
   private pollForOffers(): void {
     if (!this.currentRoom) return;
 
+    let pollCount = 0;
+    const maxPolls = 300; // 5 minutes of polling
+
     const checkForOffers = () => {
-      const connectionData = sessionStorage.getItem(`p2p_connection_${this.currentRoom!.roomId}`);
-      if (connectionData) {
-        const parsedData = JSON.parse(connectionData);
-        if (parsedData.type === 'offer') {
-          this.handleIncomingOffer(parsedData);
-          sessionStorage.removeItem(`p2p_connection_${this.currentRoom!.roomId}`);
-        }
-      } else {
-        // Continue polling
-        setTimeout(checkForOffers, 1000);
+      pollCount++;
+      
+      if (pollCount > maxPolls) {
+        console.log('Stopped polling for offers after 5 minutes');
+        return;
       }
+
+      const connectionData = localStorage.getItem(`bee5_connection_${this.currentRoom!.roomId}`);
+      if (connectionData) {
+        try {
+          const parsedData = JSON.parse(connectionData);
+          
+          // Check if connection data has expired
+          if (Date.now() > parsedData.expires) {
+            localStorage.removeItem(`bee5_connection_${this.currentRoom!.roomId}`);
+            setTimeout(checkForOffers, 1000);
+            return;
+          }
+          
+          if (parsedData.type === 'offer') {
+            this.handleIncomingOffer(parsedData);
+            localStorage.removeItem(`bee5_connection_${this.currentRoom!.roomId}`);
+            return;
+          }
+        } catch (error) {
+          console.error('Error parsing connection data:', error);
+          localStorage.removeItem(`bee5_connection_${this.currentRoom!.roomId}`);
+        }
+      }
+      
+      // Continue polling
+      setTimeout(checkForOffers, 1000);
     };
 
     checkForOffers();
@@ -322,9 +349,10 @@ class P2PMultiplayerClient {
       const answerData = {
         type: 'answer',
         answer: answer,
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        expires: Date.now() + (5 * 60 * 1000) // 5 minutes for connection
       };
-      sessionStorage.setItem(`p2p_answer_${this.currentRoom!.roomId}`, JSON.stringify(answerData));
+      localStorage.setItem(`bee5_answer_${this.currentRoom!.roomId}`, JSON.stringify(answerData));
 
       // Send player info to guest
       setTimeout(() => {
@@ -348,18 +376,45 @@ class P2PMultiplayerClient {
   }
 
   private pollForAnswer(roomCode: string): void {
+    let pollCount = 0;
+    const maxPolls = 300; // 5 minutes of polling
+
     const checkForAnswer = () => {
-      const answerData = sessionStorage.getItem(`p2p_answer_${roomCode}`);
-      if (answerData) {
-        const parsedData = JSON.parse(answerData);
-        if (parsedData.type === 'answer') {
-          this.handleIncomingAnswer(parsedData);
-          sessionStorage.removeItem(`p2p_answer_${roomCode}`);
+      pollCount++;
+      
+      if (pollCount > maxPolls) {
+        console.log('Stopped polling for answer after 5 minutes');
+        if (this.onError) {
+          this.onError('Connection timeout. Host may not be available.');
         }
-      } else {
-        // Continue polling
-        setTimeout(checkForAnswer, 1000);
+        return;
       }
+
+      const answerData = localStorage.getItem(`bee5_answer_${roomCode}`);
+      if (answerData) {
+        try {
+          const parsedData = JSON.parse(answerData);
+          
+          // Check if answer data has expired
+          if (Date.now() > parsedData.expires) {
+            localStorage.removeItem(`bee5_answer_${roomCode}`);
+            setTimeout(checkForAnswer, 1000);
+            return;
+          }
+          
+          if (parsedData.type === 'answer') {
+            this.handleIncomingAnswer(parsedData);
+            localStorage.removeItem(`bee5_answer_${roomCode}`);
+            return;
+          }
+        } catch (error) {
+          console.error('Error parsing answer data:', error);
+          localStorage.removeItem(`bee5_answer_${roomCode}`);
+        }
+      }
+      
+      // Continue polling
+      setTimeout(checkForAnswer, 1000);
     };
 
     checkForAnswer();
@@ -437,7 +492,9 @@ class P2PMultiplayerClient {
     }
 
     if (this.currentRoom && this.isHost) {
-      sessionStorage.removeItem(`p2p_room_${this.currentRoom.roomId}`);
+      localStorage.removeItem(`bee5_room_${this.currentRoom.roomId}`);
+      localStorage.removeItem(`bee5_connection_${this.currentRoom.roomId}`);
+      localStorage.removeItem(`bee5_answer_${this.currentRoom.roomId}`);
     }
 
     this.currentRoom = null;
