@@ -437,8 +437,8 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
             const mockRoom = {
               roomId: "DEBUG123",
               players: [
-                {id: "host", name: "Debug Host", playerNumber: 1, isHost: true},
-                {id: "guest", name: "Debug Guest", playerNumber: 2, isHost: false}
+                {id: "host", name: "Debug Host", playerNumber: 1 as 1 | 2, isHost: true},
+                {id: "guest", name: "Debug Guest", playerNumber: 2 as 1 | 2, isHost: false}
               ],
               isGameStarted: true,
               hostId: "host"
