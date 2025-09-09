@@ -468,35 +468,6 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
           Cancel
         </button>
         
-        {/* Debug button - remove in production */}
-        <button
-          onClick={() => {
-            console.log('🧪 Debug: Forcing room joined callback');
-            const mockRoom = {
-              roomId: "DEBUG123",
-              players: [
-                {id: "host", name: "Debug Host", playerNumber: 1 as 1 | 2, isHost: true},
-                {id: "guest", name: "Debug Guest", playerNumber: 2 as 1 | 2, isHost: false}
-              ],
-              isGameStarted: true,
-              hostId: "host"
-            };
-            if (p2pClient.onRoomJoined) {
-              p2pClient.onRoomJoined(mockRoom);
-            }
-          }}
-          style={{
-            padding: '10px 20px',
-            fontSize: '1em',
-            backgroundColor: '#4CAF50',
-            color: 'white',
-            border: '2px solid black',
-            borderRadius: '8px',
-            cursor: 'pointer'
-          }}
-        >
-          🧪 Debug Test
-        </button>
       </div>
     </div>
   );
@@ -597,52 +568,6 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
             🚪 Leave Room
           </button>
           
-          {/* Debug buttons for waiting room */}
-          <button
-            onClick={() => {
-              console.log('🧪 Debug: Testing localStorage sync from waiting room');
-              const testData = {
-                roomId: currentRoom.roomId,
-                test: 'sync_test',
-                timestamp: Date.now()
-              };
-              localStorage.setItem(`bee5_test_${currentRoom.roomId}`, JSON.stringify(testData));
-              console.log('🧪 Debug: Stored test data:', testData);
-            }}
-            style={{
-              padding: '10px 20px',
-              fontSize: '1em',
-              backgroundColor: '#FF9800',
-              color: 'white',
-              border: '2px solid black',
-              borderRadius: '8px',
-              cursor: 'pointer'
-            }}
-          >
-            🧪 Test Storage
-          </button>
-          
-          <button
-            onClick={() => {
-              console.log('🧪 Debug: Checking localStorage data');
-              const keys = Object.keys(localStorage).filter(key => key.startsWith('bee5_'));
-              console.log('🧪 Debug: All bee5 keys:', keys);
-              keys.forEach(key => {
-                console.log(`🧪 Debug: ${key}:`, localStorage.getItem(key));
-              });
-            }}
-            style={{
-              padding: '10px 20px',
-              fontSize: '1em',
-              backgroundColor: '#9C27B0',
-              color: 'white',
-              border: '2px solid black',
-              borderRadius: '8px',
-              cursor: 'pointer'
-            }}
-          >
-            🔍 Check Storage
-          </button>
         </div>
       </div>
     );

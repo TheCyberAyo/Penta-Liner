@@ -535,59 +535,6 @@ export function MultiplayerGame({ roomInfo, playerNumber, onBackToLobby }: Multi
         {getStatusMessage()}
       </div>
 
-      {/* Debug test button */}
-      <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-        <button
-          onClick={() => {
-            console.log('🧪 Debug: Testing move sync manually');
-            const testMove = {
-              row: Math.floor(Math.random() * 10),
-              col: Math.floor(Math.random() * 10),
-              player: playerNumber === 1 ? 2 : 1,
-              timestamp: Date.now(),
-              roomId: roomInfo.roomId
-            };
-            console.log('🧪 Debug: Sending test move:', testMove);
-            simpleMultiplayerClient.sendMove(testMove.row, testMove.col);
-          }}
-          style={{
-            padding: '8px 16px',
-            fontSize: '0.9em',
-            backgroundColor: '#FF9800',
-            color: 'white',
-            border: '2px solid black',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            marginRight: '10px'
-          }}
-        >
-          🧪 Test Sync
-        </button>
-        
-        <button
-          onClick={() => {
-            console.log('🧪 Debug: Checking localStorage');
-            const moveKey = `bee5_move_${roomInfo.roomId}`;
-            const lastMoveKey = `bee5_lastmove_${roomInfo.roomId}`;
-            const stateKey = `bee5_gamestate_${roomInfo.roomId}`;
-            
-            console.log('Move data:', localStorage.getItem(moveKey));
-            console.log('Last move time:', localStorage.getItem(lastMoveKey));
-            console.log('Game state:', localStorage.getItem(stateKey));
-          }}
-          style={{
-            padding: '8px 16px',
-            fontSize: '0.9em',
-            backgroundColor: '#9C27B0',
-            color: 'white',
-            border: '2px solid black',
-            borderRadius: '6px',
-            cursor: 'pointer'
-          }}
-        >
-          🔍 Check Storage
-        </button>
-      </div>
       
       <div style={{ display: 'flex', gap: '15px' }}>
         {isHost && (
