@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { p2pClient, type RoomInfo } from '../utils/p2pMultiplayer';
+import { simpleCrossDeviceClient, SimpleCrossDeviceClient } from '../utils/simpleCrossDevice';
 import { soundManager } from '../utils/sounds';
 
 interface MultiplayerLobbyProps {
@@ -18,6 +19,18 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
   const [isJoiningRoom, setIsJoiningRoom] = useState(false);
   const [lobbyMode, setLobbyMode] = useState<'menu' | 'create' | 'join' | 'waiting' | 'connecting'>('menu');
+  const [useCrossDevice, setUseCrossDevice] = useState(false);
+  const [roomUrl, setRoomUrl] = useState<string>('');
+
+  useEffect(() => {
+    // Check if we're joining from a URL
+    const roomFromUrl = SimpleCrossDeviceClient.getRoomFromUrl();
+    if (roomFromUrl) {
+      setRoomCode(roomFromUrl);
+      setUseCrossDevice(true);
+      setLobbyMode('join');
+    }
+  }, []);
 
   useEffect(() => {
     // Set up P2P client event handlers
@@ -99,17 +112,11 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
     setIsCreatingRoom(true);
     setConnectionError(null);
 
-    // Simple approach: just create a mock room and proceed immediately
-    setTimeout(() => {
-      const roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-      
-      // Store host info in localStorage for other players to find
-      const hostInfo = {
-        roomId: roomCode,
-        hostName: playerName.trim(),
-        timestamp: Date.now()
-      };
-      localStorage.setItem(`bee5_host_${roomCode}`, JSON.stringify(hostInfo));
+    if (useCrossDevice) {
+      // Cross-device mode: create room and generate shareable URL
+      const roomCode = simpleCrossDeviceClient.createRoom(playerName.trim());
+      const url = simpleCrossDeviceClient.getRoomUrl();
+      setRoomUrl(url);
       
       const mockRoom = {
         roomId: roomCode,
@@ -120,52 +127,97 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
         hostId: "host"
       };
       
-      console.log('🏠 Creating mock room:', mockRoom);
+      console.log('🏠 Creating cross-device room:', mockRoom);
       setCurrentRoom(mockRoom);
       setLobbyMode('waiting');
       setIsCreatingRoom(false);
       soundManager.playClickSound();
       
-      // Set up polling to wait for a real guest to join
-      const pollForGuest = () => {
-        const guestInfoStr = localStorage.getItem(`bee5_guest_${roomCode}`);
-        if (guestInfoStr) {
-          try {
-            const guestInfo = JSON.parse(guestInfoStr);
-            const guestName = guestInfo.guestName || "Guest Player";
-            
-            const updatedRoom = {
-              ...mockRoom,
-              players: [
-                ...mockRoom.players,
-                {id: "guest", name: guestName, playerNumber: 2 as 1 | 2, isHost: false}
-              ],
-              isGameStarted: true
-            };
-            console.log('🎉 Real guest joined:', updatedRoom);
-            setCurrentRoom(updatedRoom);
-            
-            // Start the game for the host
-            console.log('🎮 Starting game for host player');
-            onGameStart(updatedRoom, 1);
-            
-            // Clear the polling interval
-            clearInterval(pollInterval);
-          } catch (error) {
-            console.warn('Could not parse guest info:', error);
-          }
+      // Set up cross-device polling
+      simpleCrossDeviceClient.onRoomUpdate((room) => {
+        if (room.guestName) {
+          const updatedRoom = {
+            ...mockRoom,
+            players: [
+              ...mockRoom.players,
+              {id: "guest", name: room.guestName, playerNumber: 2 as 1 | 2, isHost: false}
+            ],
+            isGameStarted: true
+          };
+          console.log('🎉 Cross-device guest joined:', updatedRoom);
+          setCurrentRoom(updatedRoom);
+          onGameStart(updatedRoom, 1);
         }
-      };
-      
-      // Poll every 500ms for guest to join
-      const pollInterval = setInterval(pollForGuest, 500);
-      
-      // Clean up polling after 30 seconds if no guest joins
+      });
+    } else {
+      // Local mode: use existing localStorage approach
       setTimeout(() => {
-        clearInterval(pollInterval);
-        console.log('⏰ No guest joined within 30 seconds, stopping poll');
-      }, 30000);
-    }, 1000); // 1 second delay to show "creating" briefly
+        const roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+        
+        // Store host info in localStorage for other players to find
+        const hostInfo = {
+          roomId: roomCode,
+          hostName: playerName.trim(),
+          timestamp: Date.now()
+        };
+        localStorage.setItem(`bee5_host_${roomCode}`, JSON.stringify(hostInfo));
+        
+        const mockRoom = {
+          roomId: roomCode,
+          players: [
+            {id: "host", name: playerName.trim(), playerNumber: 1 as 1 | 2, isHost: true}
+          ],
+          isGameStarted: false,
+          hostId: "host"
+        };
+        
+        console.log('🏠 Creating local room:', mockRoom);
+        setCurrentRoom(mockRoom);
+        setLobbyMode('waiting');
+        setIsCreatingRoom(false);
+        soundManager.playClickSound();
+        
+        // Set up polling to wait for a real guest to join
+        const pollForGuest = () => {
+          const guestInfoStr = localStorage.getItem(`bee5_guest_${roomCode}`);
+          if (guestInfoStr) {
+            try {
+              const guestInfo = JSON.parse(guestInfoStr);
+              const guestName = guestInfo.guestName || "Guest Player";
+              
+              const updatedRoom = {
+                ...mockRoom,
+                players: [
+                  ...mockRoom.players,
+                  {id: "guest", name: guestName, playerNumber: 2 as 1 | 2, isHost: false}
+                ],
+                isGameStarted: true
+              };
+              console.log('🎉 Local guest joined:', updatedRoom);
+              setCurrentRoom(updatedRoom);
+              
+              // Start the game for the host
+              console.log('🎮 Starting game for host player');
+              onGameStart(updatedRoom, 1);
+              
+              // Clear the polling interval
+              clearInterval(pollInterval);
+            } catch (error) {
+              console.warn('Could not parse guest info:', error);
+            }
+          }
+        };
+        
+        // Poll every 500ms for guest to join
+        const pollInterval = setInterval(pollForGuest, 500);
+        
+        // Clean up polling after 30 seconds if no guest joins
+        setTimeout(() => {
+          clearInterval(pollInterval);
+          console.log('⏰ No guest joined within 30 seconds, stopping poll');
+        }, 30000);
+      }, 1000); // 1 second delay to show "creating" briefly
+    }
   };
 
   const handleJoinRoom = async () => {
@@ -175,7 +227,7 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
     }
 
     if (!roomCode.trim()) {
-      setConnectionError('Please enter room code');
+      setConnectionError('Please enter a room code');
       return;
     }
 
@@ -183,54 +235,85 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
     setConnectionError(null);
     setLobbyMode('connecting');
 
-    // Simple approach: just create a mock room and proceed immediately
-    setTimeout(() => {
-      const roomCodeUpper = roomCode.trim().toUpperCase();
+    if (useCrossDevice) {
+      // Cross-device mode: join room using cross-device client
+      const success = simpleCrossDeviceClient.joinRoom(roomCode.trim().toUpperCase(), playerName.trim());
       
-      // Store guest info in localStorage for host to find
-      const guestInfo = {
-        roomId: roomCodeUpper,
-        guestName: playerName.trim(),
-        timestamp: Date.now()
-      };
-      localStorage.setItem(`bee5_guest_${roomCodeUpper}`, JSON.stringify(guestInfo));
-      
-      // Try to get host name from localStorage
-      let hostName = "Room Host";
-      const hostInfoStr = localStorage.getItem(`bee5_host_${roomCodeUpper}`);
-      if (hostInfoStr) {
-        try {
-          const hostInfo = JSON.parse(hostInfoStr);
-          hostName = hostInfo.hostName || "Room Host";
-        } catch (error) {
-          console.warn('Could not parse host info:', error);
+      if (success) {
+        const mockRoom = {
+          roomId: roomCode.trim().toUpperCase(),
+          players: [
+            {id: "host", name: "Host", playerNumber: 1 as 1 | 2, isHost: true},
+            {id: "guest", name: playerName.trim(), playerNumber: 2 as 1 | 2, isHost: false}
+          ],
+          isGameStarted: true,
+          hostId: "host"
+        };
+        
+        console.log('🚀 Cross-device room joined:', mockRoom);
+        setCurrentRoom(mockRoom);
+        setLobbyMode('waiting');
+        setIsJoiningRoom(false);
+        soundManager.playClickSound();
+        
+        // Start the game immediately
+        console.log('🎮 Starting cross-device game for guest');
+        onGameStart(mockRoom, 2);
+      } else {
+        setConnectionError('Room not found or could not join');
+        setIsJoiningRoom(false);
+        setLobbyMode('join');
+      }
+    } else {
+      // Local mode: use existing localStorage approach
+      setTimeout(() => {
+        const roomCodeUpper = roomCode.trim().toUpperCase();
+        
+        // Store guest info in localStorage for host to find
+        const guestInfo = {
+          roomId: roomCodeUpper,
+          guestName: playerName.trim(),
+          timestamp: Date.now()
+        };
+        localStorage.setItem(`bee5_guest_${roomCodeUpper}`, JSON.stringify(guestInfo));
+        
+        // Try to get host name from localStorage
+        let hostName = "Room Host";
+        const hostInfoStr = localStorage.getItem(`bee5_host_${roomCodeUpper}`);
+        if (hostInfoStr) {
+          try {
+            const hostInfo = JSON.parse(hostInfoStr);
+            hostName = hostInfo.hostName || "Room Host";
+          } catch (error) {
+            console.warn('Could not parse host info:', error);
+          }
         }
-      }
-      
-      const mockRoom = {
-        roomId: roomCodeUpper,
-        players: [
-          {id: "host", name: hostName, playerNumber: 1 as 1 | 2, isHost: true},
-          {id: "guest", name: playerName.trim(), playerNumber: 2 as 1 | 2, isHost: false}
-        ],
-        isGameStarted: true, // Game is ready to start with 2 players
-        hostId: "host"
-      };
-      
-      console.log('🚀 Creating mock room and proceeding:', mockRoom);
-      setCurrentRoom(mockRoom);
-      setLobbyMode('waiting');
-      setIsJoiningRoom(false);
-      soundManager.playClickSound();
-      
-      // Since we have 2 players, start the game immediately
-      console.log('🎮 Starting game immediately with 2 players');
-      const currentPlayer = mockRoom.players.find(p => p.id === "guest");
-      if (currentPlayer && currentPlayer.playerNumber) {
-        console.log('🎮 Starting game for player:', currentPlayer.playerNumber);
-        onGameStart(mockRoom, currentPlayer.playerNumber);
-      }
-    }, 1000); // 1 second delay to show "connecting" briefly
+        
+        const mockRoom = {
+          roomId: roomCodeUpper,
+          players: [
+            {id: "host", name: hostName, playerNumber: 1 as 1 | 2, isHost: true},
+            {id: "guest", name: playerName.trim(), playerNumber: 2 as 1 | 2, isHost: false}
+          ],
+          isGameStarted: true, // Game is ready to start with 2 players
+          hostId: "host"
+        };
+        
+        console.log('🚀 Local room joined:', mockRoom);
+        setCurrentRoom(mockRoom);
+        setLobbyMode('waiting');
+        setIsJoiningRoom(false);
+        soundManager.playClickSound();
+        
+        // Since we have 2 players, start the game immediately
+        console.log('🎮 Starting local game immediately with 2 players');
+        const currentPlayer = mockRoom.players.find(p => p.id === "guest");
+        if (currentPlayer && currentPlayer.playerNumber) {
+          console.log('🎮 Starting game for player:', currentPlayer.playerNumber);
+          onGameStart(mockRoom, currentPlayer.playerNumber);
+        }
+      }, 1000); // 1 second delay to show "connecting" briefly
+    }
   };
 
   const handleLeaveRoom = () => {
@@ -320,6 +403,20 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
         />
       </div>
 
+      <div style={{ marginBottom: '20px' }}>
+        <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '15px' }}>
+          <input
+            type="checkbox"
+            checked={useCrossDevice}
+            onChange={(e) => setUseCrossDevice(e.target.checked)}
+            style={{ transform: 'scale(1.2)' }}
+          />
+          <span style={{ color: 'black', fontSize: '0.9em' }}>
+            🌐 Cross-Device Mode (for different devices)
+          </span>
+        </label>
+      </div>
+
       <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', marginBottom: '20px' }}>
         <button
           onClick={() => setLobbyMode('create')}
@@ -372,6 +469,23 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
         Creating a room for: <strong>{playerName}</strong>
       </p>
 
+      {useCrossDevice && (
+        <div style={{ 
+          backgroundColor: '#e3f2fd', 
+          padding: '15px', 
+          borderRadius: '8px', 
+          marginBottom: '20px',
+          border: '2px solid #2196F3'
+        }}>
+          <p style={{ color: '#1976d2', marginBottom: '10px', fontWeight: 'bold' }}>
+            🌐 Cross-Device Mode Enabled
+          </p>
+          <p style={{ color: '#666', fontSize: '0.9em' }}>
+            Share the room URL with your friend on a different device
+          </p>
+        </div>
+      )}
+
       <button
         onClick={handleCreateRoom}
         disabled={isCreatingRoom}
@@ -389,6 +503,49 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
       >
         {isCreatingRoom ? '🔄 Creating...' : '🏠 Create Room'}
       </button>
+
+      {roomUrl && (
+        <div style={{ 
+          backgroundColor: '#f0f0f0', 
+          padding: '15px', 
+          borderRadius: '8px', 
+          marginBottom: '20px',
+          border: '2px solid #ccc'
+        }}>
+          <p style={{ color: 'black', marginBottom: '10px', fontWeight: 'bold' }}>
+            📋 Room URL (share this with your friend):
+          </p>
+          <div style={{ 
+            backgroundColor: 'white', 
+            padding: '10px', 
+            borderRadius: '5px', 
+            border: '1px solid #ccc',
+            wordBreak: 'break-all',
+            fontSize: '0.9em',
+            color: '#333'
+          }}>
+            {roomUrl}
+          </div>
+          <button
+            onClick={() => {
+              navigator.clipboard.writeText(roomUrl);
+              alert('URL copied to clipboard!');
+            }}
+            style={{
+              marginTop: '10px',
+              padding: '8px 16px',
+              fontSize: '0.9em',
+              backgroundColor: '#2196F3',
+              color: 'white',
+              border: '1px solid black',
+              borderRadius: '5px',
+              cursor: 'pointer'
+            }}
+          >
+            📋 Copy URL
+          </button>
+        </div>
+      )}
 
       <div style={{ marginTop: '20px' }}>
         <button
