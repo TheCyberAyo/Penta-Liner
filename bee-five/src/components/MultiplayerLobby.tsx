@@ -34,14 +34,18 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
 
     p2pClient.onRoomJoined = (roomInfo: RoomInfo) => {
       console.log('🎉 Room joined successfully:', roomInfo);
+      console.log('🔄 Setting lobby mode to waiting...');
       setCurrentRoom(roomInfo);
       setLobbyMode('waiting');
       setIsJoiningRoom(false);
+      console.log('✅ State updated - should show waiting room now');
       
       // If game is already started (2 players), start immediately
       if (roomInfo.isGameStarted && roomInfo.players.length === 2) {
+        console.log('🚀 Game is ready to start with 2 players');
         const currentPlayer = roomInfo.players.find(p => p.id === p2pClient.getCurrentPlayerId());
         if (currentPlayer && currentPlayer.playerNumber) {
+          console.log('🎮 Starting game for player:', currentPlayer.playerNumber);
           onGameStart(roomInfo, currentPlayer.playerNumber);
         }
       }
@@ -106,6 +110,8 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
   };
 
   const handleJoinRoom = async () => {
+    console.log('🖱️ Join room button clicked');
+    
     if (!playerName.trim()) {
       setConnectionError('Please enter your name');
       return;
@@ -116,12 +122,14 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
       return;
     }
 
+    console.log('🔄 Setting joining state and clearing errors...');
     setIsJoiningRoom(true);
     setConnectionError(null);
 
     try {
       console.log('🔄 Attempting to join room:', roomCode.trim().toUpperCase());
       setLobbyMode('connecting');
+      console.log('🔄 Calling p2pClient.joinRoom...');
       await p2pClient.joinRoom(roomCode.trim().toUpperCase(), playerName.trim());
       soundManager.playClickSound();
       console.log('✅ Successfully initiated room join process');
@@ -130,6 +138,7 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
       const errorMessage = error instanceof Error ? error.message : 'Failed to join room. Please check the room code and try again.';
       setConnectionError(errorMessage);
       setIsJoiningRoom(false);
+      setLobbyMode('join'); // Reset to join mode on error
     }
   };
 
@@ -419,6 +428,36 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
           }}
         >
           Cancel
+        </button>
+        
+        {/* Debug button - remove in production */}
+        <button
+          onClick={() => {
+            console.log('🧪 Debug: Forcing room joined callback');
+            const mockRoom = {
+              roomId: "DEBUG123",
+              players: [
+                {id: "host", name: "Debug Host", playerNumber: 1, isHost: true},
+                {id: "guest", name: "Debug Guest", playerNumber: 2, isHost: false}
+              ],
+              isGameStarted: true,
+              hostId: "host"
+            };
+            if (p2pClient.onRoomJoined) {
+              p2pClient.onRoomJoined(mockRoom);
+            }
+          }}
+          style={{
+            padding: '10px 20px',
+            fontSize: '1em',
+            backgroundColor: '#4CAF50',
+            color: 'white',
+            border: '2px solid black',
+            borderRadius: '8px',
+            cursor: 'pointer'
+          }}
+        >
+          🧪 Debug Test
         </button>
       </div>
     </div>

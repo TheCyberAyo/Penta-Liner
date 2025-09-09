@@ -106,6 +106,7 @@ class P2PMultiplayerClient {
   // Join an existing room
   async joinRoom(roomCode: string, playerName: string): Promise<void> {
     try {
+      console.log('🔄 Starting room join process...');
       this.playerName = playerName;
       this.isHost = false;
 
@@ -116,6 +117,7 @@ class P2PMultiplayerClient {
       }
 
       const parsedRoomData = JSON.parse(roomData);
+      console.log('📋 Found room data:', parsedRoomData);
       
       // Check if room is still active
       if (Date.now() > parsedRoomData.expires) {
@@ -123,9 +125,7 @@ class P2PMultiplayerClient {
         throw new Error('Room has expired. Please ask the host to create a new room.');
       }
 
-      await this.setupPeerConnection();
-      
-      // Create room info
+      // Create room info immediately (simplified approach)
       this.currentRoom = {
         roomId: roomCode,
         players: [
@@ -146,33 +146,27 @@ class P2PMultiplayerClient {
         hostId: parsedRoomData.hostId
       };
 
-      // Create offer to connect to host
-      const offer = await this.peerConnection!.createOffer();
-      await this.peerConnection!.setLocalDescription(offer);
+      console.log('🏠 Created room info:', this.currentRoom);
 
-      // Store offer for host to find
-      const connectionData = {
-        type: 'offer',
-        offer: offer,
-        playerId: this.localPlayerId,
-        playerName: playerName,
-        timestamp: Date.now(),
-        expires: Date.now() + (5 * 60 * 1000) // 5 minutes for connection
-      };
-      localStorage.setItem(`bee5_connection_${roomCode}`, JSON.stringify(connectionData));
-
-      // Poll for answer from host
-      this.pollForAnswer(roomCode);
-
-      // For now, call onRoomJoined immediately to proceed to the game
-      // The WebRTC connection will be established in the background
-      console.log('🚀 Proceeding to game - WebRTC connection will establish in background');
+      // Call onRoomJoined immediately - no WebRTC complexity for now
+      console.log('🚀 Calling onRoomJoined callback...');
       if (this.onRoomJoined) {
         this.onRoomJoined(this.currentRoom);
+        console.log('✅ onRoomJoined callback called successfully');
+      } else {
+        console.error('❌ onRoomJoined callback is not set!');
+      }
+
+      // Set up WebRTC in background (optional)
+      try {
+        await this.setupPeerConnection();
+        console.log('🔗 WebRTC setup completed in background');
+      } catch (webrtcError) {
+        console.warn('⚠️ WebRTC setup failed, but continuing with simplified mode:', webrtcError);
       }
 
     } catch (error) {
-      console.error('Failed to join room:', error);
+      console.error('❌ Failed to join room:', error);
       if (this.onError) {
         this.onError('Failed to join room: ' + (error instanceof Error ? error.message : String(error)));
       }
@@ -401,88 +395,9 @@ class P2PMultiplayerClient {
     }
   }
 
-  private pollForAnswer(roomCode: string): void {
-    let pollCount = 0;
-    const maxPolls = 60; // 1 minute of polling (reduced from 5 minutes)
-    let connectionEstablished = false;
+  // Removed pollForAnswer method as it's not needed in simplified mode
 
-    // Set a timeout to force connection completion
-    const connectionTimeout = setTimeout(() => {
-      if (!connectionEstablished) {
-        console.log('⏰ Connection timeout - forcing connection completion');
-        if (this.onRoomJoined && this.currentRoom) {
-          this.onRoomJoined(this.currentRoom);
-        }
-      }
-    }, 10000); // 10 seconds timeout
-
-    const checkForAnswer = () => {
-      pollCount++;
-      
-      if (pollCount > maxPolls) {
-        console.log('Stopped polling for answer after 1 minute');
-        clearTimeout(connectionTimeout);
-        if (this.onError) {
-          this.onError('Connection timeout. Host may not be available.');
-        }
-        return;
-      }
-
-      const answerData = localStorage.getItem(`bee5_answer_${roomCode}`);
-      if (answerData) {
-        try {
-          const parsedData = JSON.parse(answerData);
-          
-          // Check if answer data has expired
-          if (Date.now() > parsedData.expires) {
-            localStorage.removeItem(`bee5_answer_${roomCode}`);
-            setTimeout(checkForAnswer, 1000);
-            return;
-          }
-          
-          if (parsedData.type === 'answer') {
-            connectionEstablished = true;
-            clearTimeout(connectionTimeout);
-            this.handleIncomingAnswer(parsedData);
-            localStorage.removeItem(`bee5_answer_${roomCode}`);
-            return;
-          }
-        } catch (error) {
-          console.error('Error parsing answer data:', error);
-          localStorage.removeItem(`bee5_answer_${roomCode}`);
-        }
-      }
-      
-      // Continue polling
-      setTimeout(checkForAnswer, 1000);
-    };
-
-    checkForAnswer();
-  }
-
-  private async handleIncomingAnswer(data: any): Promise<void> {
-    try {
-      await this.peerConnection!.setRemoteDescription(data.answer);
-      
-      if (this.onRoomJoined && this.currentRoom) {
-        this.onRoomJoined(this.currentRoom);
-      }
-
-      // Send our player info to host
-      setTimeout(() => {
-        this.sendMessage({
-          type: 'player-info',
-          data: {
-            playerId: this.localPlayerId,
-            playerName: this.playerName
-          }
-        });
-      }, 1000);
-
-    } catch (error) {
-      console.error('Error handling answer:', error);
-    }
-  }
+  // Removed unused WebRTC methods for simplified mode
 
   private storeIceCandidate(candidate: RTCIceCandidate): void {
     if (!this.currentRoom) return;
