@@ -56,7 +56,8 @@ class SimpleMultiplayerClient {
     // Also store the latest move timestamp to help with polling
     localStorage.setItem(`bee5_lastmove_${this.roomId}`, move.timestamp.toString());
     
-    console.log(`📤 Sent move:`, move);
+    console.log(`📤 Simple multiplayer: Sent move:`, move);
+    console.log(`📤 Simple multiplayer: Stored in localStorage key:`, moveKey);
   }
 
   // Send game state updates
@@ -85,6 +86,8 @@ class SimpleMultiplayerClient {
     let lastMoveTime = 0;
     let lastStateTime = 0;
 
+    console.log(`🔄 Starting polling for room: ${this.roomId}, player: ${this.playerNumber}`);
+
     this.pollInterval = window.setInterval(() => {
       // Check for new moves
       const moveKey = `bee5_move_${this.roomId}`;
@@ -98,13 +101,16 @@ class SimpleMultiplayerClient {
           if (moveData) {
             try {
               const move: SimpleMove = JSON.parse(moveData);
+              console.log(`🔍 Polling: Found move data:`, move);
               // Only process moves from other players
               if (move.player !== this.playerNumber) {
-                console.log(`📥 Received move:`, move);
+                console.log(`📥 Received move from opponent:`, move);
                 if (this.onMoveCallback) {
                   this.onMoveCallback(move);
                 }
                 lastMoveTime = moveTime;
+              } else {
+                console.log(`🔍 Polling: Ignoring own move:`, move);
               }
             } catch (error) {
               console.error('Error parsing move:', error);

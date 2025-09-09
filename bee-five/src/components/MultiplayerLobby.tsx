@@ -449,7 +449,7 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
+      <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', flexWrap: 'wrap' }}>
         <button
           onClick={() => {
             setLobbyMode('join');
@@ -581,7 +581,7 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
           </div>
         )}
 
-        <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
+        <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', flexWrap: 'wrap' }}>
           <button
             onClick={handleLeaveRoom}
             style={{
@@ -595,6 +595,53 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
             }}
           >
             🚪 Leave Room
+          </button>
+          
+          {/* Debug buttons for waiting room */}
+          <button
+            onClick={() => {
+              console.log('🧪 Debug: Testing localStorage sync from waiting room');
+              const testData = {
+                roomId: currentRoom.roomId,
+                test: 'sync_test',
+                timestamp: Date.now()
+              };
+              localStorage.setItem(`bee5_test_${currentRoom.roomId}`, JSON.stringify(testData));
+              console.log('🧪 Debug: Stored test data:', testData);
+            }}
+            style={{
+              padding: '10px 20px',
+              fontSize: '1em',
+              backgroundColor: '#FF9800',
+              color: 'white',
+              border: '2px solid black',
+              borderRadius: '8px',
+              cursor: 'pointer'
+            }}
+          >
+            🧪 Test Storage
+          </button>
+          
+          <button
+            onClick={() => {
+              console.log('🧪 Debug: Checking localStorage data');
+              const keys = Object.keys(localStorage).filter(key => key.startsWith('bee5_'));
+              console.log('🧪 Debug: All bee5 keys:', keys);
+              keys.forEach(key => {
+                console.log(`🧪 Debug: ${key}:`, localStorage.getItem(key));
+              });
+            }}
+            style={{
+              padding: '10px 20px',
+              fontSize: '1em',
+              backgroundColor: '#9C27B0',
+              color: 'white',
+              border: '2px solid black',
+              borderRadius: '8px',
+              cursor: 'pointer'
+            }}
+          >
+            🔍 Check Storage
           </button>
         </div>
       </div>
