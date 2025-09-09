@@ -116,6 +116,24 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
       setLobbyMode('waiting');
       setIsCreatingRoom(false);
       soundManager.playClickSound();
+      
+      // For testing: simulate a second player joining after 3 seconds
+      setTimeout(() => {
+        const updatedRoom = {
+          ...mockRoom,
+          players: [
+            ...mockRoom.players,
+            {id: "guest", name: "Guest Player", playerNumber: 2 as 1 | 2, isHost: false}
+          ],
+          isGameStarted: true
+        };
+        console.log('🤖 Simulating guest player joining:', updatedRoom);
+        setCurrentRoom(updatedRoom);
+        
+        // Start the game for the host
+        console.log('🎮 Starting game for host player');
+        onGameStart(updatedRoom, 1);
+      }, 3000);
     }, 1000); // 1 second delay to show "creating" briefly
   };
 
@@ -142,7 +160,7 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
           {id: "host", name: "Host", playerNumber: 1 as 1 | 2, isHost: true},
           {id: "guest", name: playerName.trim(), playerNumber: 2 as 1 | 2, isHost: false}
         ],
-        isGameStarted: true,
+        isGameStarted: true, // Game is ready to start with 2 players
         hostId: "host"
       };
       
@@ -151,6 +169,14 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
       setLobbyMode('waiting');
       setIsJoiningRoom(false);
       soundManager.playClickSound();
+      
+      // Since we have 2 players, start the game immediately
+      console.log('🎮 Starting game immediately with 2 players');
+      const currentPlayer = mockRoom.players.find(p => p.id === "guest");
+      if (currentPlayer && currentPlayer.playerNumber) {
+        console.log('🎮 Starting game for player:', currentPlayer.playerNumber);
+        onGameStart(mockRoom, currentPlayer.playerNumber);
+      }
     }, 1000); // 1 second delay to show "connecting" briefly
   };
 
