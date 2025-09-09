@@ -4,6 +4,7 @@
 interface SimpleMove {
   roomId: string;
   playerNumber: 1 | 2;
+  player: 1 | 2; // Add this to match the expected interface
   row: number;
   col: number;
   timestamp: number;
@@ -12,7 +13,7 @@ interface SimpleMove {
 
 interface SimpleGameState {
   roomId: string;
-  board: number[][];
+  board: (0 | 1 | 2)[][]; // Fix the board type
   currentPlayer: 1 | 2;
   winner: 0 | 1 | 2;
   gameActive: boolean;
@@ -109,6 +110,7 @@ class SimpleCrossDeviceClient {
     const move: SimpleMove = {
       roomId: this.roomId,
       playerNumber: this.playerNumber,
+      player: this.playerNumber, // Add this field
       row,
       col,
       timestamp: Date.now(),
@@ -119,7 +121,7 @@ class SimpleCrossDeviceClient {
     console.log('📤 Simple cross-device move sent:', move);
   }
 
-  sendGameState(board: number[][], currentPlayer: 1 | 2, winner: 0 | 1 | 2, gameActive: boolean): void {
+  sendGameState(board: (0 | 1 | 2)[][], currentPlayer: 1 | 2, winner: 0 | 1 | 2, gameActive: boolean): void {
     const gameState: SimpleGameState = {
       roomId: this.roomId,
       board,

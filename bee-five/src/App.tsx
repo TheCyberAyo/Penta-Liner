@@ -1242,6 +1242,7 @@ function SimpleWelcome() {
         roomInfo={currentRoom}
         playerNumber={playerNumber}
         onBackToLobby={() => setGameMode('online-lobby')}
+        useCrossDevice={true}
       />
     );
   }

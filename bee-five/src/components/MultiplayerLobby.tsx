@@ -19,7 +19,7 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
   const [isJoiningRoom, setIsJoiningRoom] = useState(false);
   const [lobbyMode, setLobbyMode] = useState<'menu' | 'create' | 'join' | 'waiting' | 'connecting'>('menu');
-  const [useCrossDevice, setUseCrossDevice] = useState(false);
+  const [useCrossDevice, setUseCrossDevice] = useState(true);
   const [roomUrl, setRoomUrl] = useState<string>('');
 
   useEffect(() => {
@@ -403,18 +403,22 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
         />
       </div>
 
-      <div style={{ marginBottom: '20px' }}>
-        <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '15px' }}>
-          <input
-            type="checkbox"
-            checked={useCrossDevice}
-            onChange={(e) => setUseCrossDevice(e.target.checked)}
-            style={{ transform: 'scale(1.2)' }}
-          />
-          <span style={{ color: 'black', fontSize: '0.9em' }}>
-            🌐 Cross-Device Mode (for different devices)
-          </span>
-        </label>
+      <div style={{ 
+        marginBottom: '20px', 
+        backgroundColor: '#e8f5e8', 
+        padding: '10px', 
+        borderRadius: '8px',
+        border: '2px solid #4CAF50'
+      }}>
+        <p style={{ 
+          color: '#2e7d32', 
+          fontSize: '0.9em', 
+          margin: 0, 
+          textAlign: 'center',
+          fontWeight: 'bold'
+        }}>
+          🌐 Cross-Device Mode Enabled - Play with friends on different devices!
+        </p>
       </div>
 
       <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', marginBottom: '20px' }}>

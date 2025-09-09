@@ -154,6 +154,18 @@ class SimpleMultiplayerClient {
       localStorage.removeItem(`bee5_gamestate_${this.roomId}`);
     }
   }
+
+  leaveRoom(): void {
+    if (this.pollInterval) {
+      clearInterval(this.pollInterval);
+      this.pollInterval = undefined;
+    }
+    
+    this.roomId = '';
+    this.playerNumber = 1;
+    
+    console.log('🚪 Left simple multiplayer room');
+  }
 }
 
 export const simpleMultiplayerClient = new SimpleMultiplayerClient();

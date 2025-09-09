@@ -1,15 +1,17 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { p2pClient, type GameMove, type RoomInfo } from '../utils/p2pMultiplayer';
 import { simpleMultiplayerClient, type SimpleMove, type SimpleGameState } from '../utils/simpleMultiplayer';
+import { simpleCrossDeviceClient, type SimpleMove as CrossDeviceMove, type SimpleGameState as CrossDeviceGameState } from '../utils/simpleCrossDevice';
 import { soundManager } from '../utils/sounds';
 
 interface MultiplayerGameProps {
   roomInfo: RoomInfo;
   playerNumber: 1 | 2;
   onBackToLobby: () => void;
+  useCrossDevice?: boolean;
 }
 
-export function MultiplayerGame({ roomInfo, playerNumber, onBackToLobby }: MultiplayerGameProps) {
+export function MultiplayerGame({ roomInfo, playerNumber, onBackToLobby, useCrossDevice = false }: MultiplayerGameProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [board, setBoard] = useState<(0 | 1 | 2)[][]>(() => 
     Array(10).fill(null).map(() => Array(10).fill(0))
@@ -42,24 +44,44 @@ export function MultiplayerGame({ roomInfo, playerNumber, onBackToLobby }: Multi
     const opponent = roomInfo.players.find(p => p.playerNumber !== playerNumber);
     setOpponentName(opponent?.name || 'Opponent');
 
-    // Set up simple multiplayer client
-    console.log('🔧 Initializing simple multiplayer client for room:', roomInfo.roomId, 'player:', playerNumber);
-    simpleMultiplayerClient.createRoom(roomInfo.roomId, playerNumber);
-    
-    // Set up move callback
-    simpleMultiplayerClient.onMove((move: SimpleMove) => {
-      console.log('📥 Received move from opponent:', move);
-      applyMove(move);
-    });
+    if (useCrossDevice) {
+      // Set up cross-device multiplayer client
+      console.log('🔧 Initializing cross-device multiplayer client for room:', roomInfo.roomId, 'player:', playerNumber);
+      
+      // Set up move callback
+      simpleCrossDeviceClient.onMove((move: CrossDeviceMove) => {
+        console.log('📥 Received move from cross-device opponent:', move);
+        applyMove(move);
+      });
 
-    // Set up game state callback
-    simpleMultiplayerClient.onGameState((gameState: SimpleGameState) => {
-      console.log('📥 Received game state from opponent:', gameState);
-      setBoard(gameState.board);
-      setCurrentPlayer(gameState.currentPlayer);
-      setWinner(gameState.winner);
-      setGameActive(gameState.gameActive);
-    });
+      // Set up game state callback
+      simpleCrossDeviceClient.onGameState((gameState: CrossDeviceGameState) => {
+        console.log('📥 Received game state from cross-device opponent:', gameState);
+        setBoard(gameState.board);
+        setCurrentPlayer(gameState.currentPlayer);
+        setWinner(gameState.winner);
+        setGameActive(gameState.gameActive);
+      });
+    } else {
+      // Set up simple multiplayer client
+      console.log('🔧 Initializing simple multiplayer client for room:', roomInfo.roomId, 'player:', playerNumber);
+      simpleMultiplayerClient.createRoom(roomInfo.roomId, playerNumber);
+      
+      // Set up move callback
+      simpleMultiplayerClient.onMove((move: SimpleMove) => {
+        console.log('📥 Received move from opponent:', move);
+        applyMove(move);
+      });
+
+      // Set up game state callback
+      simpleMultiplayerClient.onGameState((gameState: SimpleGameState) => {
+        console.log('📥 Received game state from opponent:', gameState);
+        setBoard(gameState.board);
+        setCurrentPlayer(gameState.currentPlayer);
+        setWinner(gameState.winner);
+        setGameActive(gameState.gameActive);
+      });
+    }
 
     // Set up P2P event handlers as backup
     p2pClient.onGameMove = (move: GameMove) => {
@@ -89,8 +111,15 @@ export function MultiplayerGame({ roomInfo, playerNumber, onBackToLobby }: Multi
       p2pClient.onGameReset = null;
       p2pClient.onDisconnected = null;
       p2pClient.onConnected = null;
+      
+      // Clean up multiplayer client
+      if (useCrossDevice) {
+        simpleCrossDeviceClient.leaveRoom();
+      } else {
+        simpleMultiplayerClient.leaveRoom();
+      }
     };
-  }, [roomInfo, playerNumber, onBackToLobby]);
+  }, [roomInfo, playerNumber, onBackToLobby, useCrossDevice]);
 
   // Apply a move to the game board (handles both SimpleMove and GameMove)
   const applyMove = useCallback((move: SimpleMove | GameMove) => {
@@ -356,26 +385,41 @@ export function MultiplayerGame({ roomInfo, playerNumber, onBackToLobby }: Multi
         setCurrentPlayer(currentPlayer === 1 ? 2 : 1);
       }
 
-      // Send move to other players via simple multiplayer
-      console.log('📤 Sending move via simple multiplayer:', { row, col, player: currentPlayer });
-      simpleMultiplayerClient.sendMove(row, col);
-      
-      // Send game state to other players
-      const gameState: SimpleGameState = {
-        board: newBoard,
-        currentPlayer: currentPlayer === 1 ? 2 : 1,
-        winner: newWinner,
-        gameActive: newGameActive,
-        lastMove: {
-          row,
-          col,
-          player: currentPlayer,
-          timestamp: Date.now(),
-          roomId: roomInfo.roomId
-        }
-      };
-      console.log('📤 Sending game state via simple multiplayer:', gameState);
-      simpleMultiplayerClient.sendGameState(gameState);
+      if (useCrossDevice) {
+        // Send move to other players via cross-device multiplayer
+        console.log('📤 Sending move via cross-device multiplayer:', { row, col, player: currentPlayer });
+        simpleCrossDeviceClient.sendMove(row, col);
+        
+        // Send game state via cross-device multiplayer
+        console.log('📤 Sending game state via cross-device multiplayer:', { 
+          board: newBoard, 
+          currentPlayer: currentPlayer === 1 ? 2 : 1, 
+          winner: newWinner, 
+          gameActive: newGameActive 
+        });
+        simpleCrossDeviceClient.sendGameState(newBoard, currentPlayer === 1 ? 2 : 1, newWinner, newGameActive);
+      } else {
+        // Send move to other players via simple multiplayer
+        console.log('📤 Sending move via simple multiplayer:', { row, col, player: currentPlayer });
+        simpleMultiplayerClient.sendMove(row, col);
+        
+        // Send game state to other players
+        const gameState: SimpleGameState = {
+          board: newBoard,
+          currentPlayer: currentPlayer === 1 ? 2 : 1,
+          winner: newWinner,
+          gameActive: newGameActive,
+          lastMove: {
+            row,
+            col,
+            player: currentPlayer,
+            timestamp: Date.now(),
+            roomId: roomInfo.roomId
+          }
+        };
+        console.log('📤 Sending game state via simple multiplayer:', gameState);
+        simpleMultiplayerClient.sendGameState(gameState);
+      }
 
       // Also send via P2P as backup
       const move: GameMove = {
