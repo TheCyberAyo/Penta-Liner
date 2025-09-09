@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { p2pClient, type GameMove, type RoomInfo } from '../utils/p2pMultiplayer';
+import { simpleMultiplayerClient, type SimpleMove, type SimpleGameState } from '../utils/simpleMultiplayer';
 import { soundManager } from '../utils/sounds';
 
 interface MultiplayerGameProps {
@@ -41,7 +42,25 @@ export function MultiplayerGame({ roomInfo, playerNumber, onBackToLobby }: Multi
     const opponent = roomInfo.players.find(p => p.playerNumber !== playerNumber);
     setOpponentName(opponent?.name || 'Opponent');
 
-    // Set up event handlers
+    // Set up simple multiplayer client
+    simpleMultiplayerClient.createRoom(roomInfo.roomId, playerNumber);
+    
+    // Set up move callback
+    simpleMultiplayerClient.onMove((move: SimpleMove) => {
+      console.log('📥 Received move from opponent:', move);
+      applyMove(move);
+    });
+
+    // Set up game state callback
+    simpleMultiplayerClient.onGameState((gameState: SimpleGameState) => {
+      console.log('📥 Received game state from opponent:', gameState);
+      setBoard(gameState.board);
+      setCurrentPlayer(gameState.currentPlayer);
+      setWinner(gameState.winner);
+      setGameActive(gameState.gameActive);
+    });
+
+    // Set up P2P event handlers as backup
     p2pClient.onGameMove = (move: GameMove) => {
       // Only process moves from opponent
       if (move.player !== playerNumber) {
@@ -72,8 +91,8 @@ export function MultiplayerGame({ roomInfo, playerNumber, onBackToLobby }: Multi
     };
   }, [roomInfo, playerNumber, onBackToLobby]);
 
-  // Apply a move to the game board
-  const applyMove = useCallback((move: GameMove) => {
+  // Apply a move to the game board (handles both SimpleMove and GameMove)
+  const applyMove = useCallback((move: SimpleMove | GameMove) => {
     setBoard(prevBoard => {
       const newBoard = prevBoard.map(row => [...row]);
       newBoard[move.row][move.col] = move.player;
@@ -304,17 +323,64 @@ export function MultiplayerGame({ roomInfo, playerNumber, onBackToLobby }: Multi
     const row = Math.floor((y - BORDER_WIDTH) / (CELL_SIZE + BORDER_WIDTH));
 
     if (row >= 0 && row < GRID_SIZE && col >= 0 && col < GRID_SIZE && board[row][col] === 0) {
+      // Make the move locally
+      const newBoard = board.map(row => [...row]);
+      newBoard[row][col] = currentPlayer;
+      setBoard(newBoard);
+
+      // Add animation
+      const animationKey = `${row}-${col}`;
+      setAnimatingPieces(prev => new Map(prev).set(animationKey, {
+        player: currentPlayer,
+        startTime: Date.now(),
+        row,
+        col
+      }));
+
+      // Check for win
+      const winResult = checkWin(newBoard, row, col, currentPlayer);
+      let newWinner: 0 | 1 | 2 = 0;
+      let newGameActive: boolean = gameActive;
+      
+      if (winResult) {
+        newWinner = currentPlayer;
+        newGameActive = false;
+        setWinner(newWinner);
+        setGameActive(false);
+        setShowWinPopup(true);
+        setWinMessage(newWinner === playerNumber ? 'You won! 🐝' : 'Opponent won! 🐝');
+        soundManager.playVictorySound();
+      } else {
+        // Switch turns
+        setCurrentPlayer(currentPlayer === 1 ? 2 : 1);
+      }
+
+      // Send move to other players via simple multiplayer
+      simpleMultiplayerClient.sendMove(row, col);
+      
+      // Send game state to other players
+      const gameState: SimpleGameState = {
+        board: newBoard,
+        currentPlayer: currentPlayer === 1 ? 2 : 1,
+        winner: newWinner,
+        gameActive: newGameActive,
+        lastMove: {
+          row,
+          col,
+          player: currentPlayer,
+          timestamp: Date.now(),
+          roomId: roomInfo.roomId
+        }
+      };
+      simpleMultiplayerClient.sendGameState(gameState);
+
+      // Also send via P2P as backup
       const move: GameMove = {
         row,
         col,
         player: playerNumber,
         timestamp: Date.now()
       };
-
-      // Apply move locally first
-      applyMove(move);
-      
-      // Send move to other player
       p2pClient.sendGameMove(move);
       
       // Play sound
