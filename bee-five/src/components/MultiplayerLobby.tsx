@@ -126,35 +126,45 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
       setIsCreatingRoom(false);
       soundManager.playClickSound();
       
-      // For testing: simulate a second player joining after 3 seconds
-      setTimeout(() => {
-        // Check if a guest has joined by looking for their info in localStorage
-        let guestName = "Waiting for Player...";
+      // Set up polling to wait for a real guest to join
+      const pollForGuest = () => {
         const guestInfoStr = localStorage.getItem(`bee5_guest_${roomCode}`);
         if (guestInfoStr) {
           try {
             const guestInfo = JSON.parse(guestInfoStr);
-            guestName = guestInfo.guestName || "Guest Player";
+            const guestName = guestInfo.guestName || "Guest Player";
+            
+            const updatedRoom = {
+              ...mockRoom,
+              players: [
+                ...mockRoom.players,
+                {id: "guest", name: guestName, playerNumber: 2 as 1 | 2, isHost: false}
+              ],
+              isGameStarted: true
+            };
+            console.log('🎉 Real guest joined:', updatedRoom);
+            setCurrentRoom(updatedRoom);
+            
+            // Start the game for the host
+            console.log('🎮 Starting game for host player');
+            onGameStart(updatedRoom, 1);
+            
+            // Clear the polling interval
+            clearInterval(pollInterval);
           } catch (error) {
             console.warn('Could not parse guest info:', error);
           }
         }
-        
-        const updatedRoom = {
-          ...mockRoom,
-          players: [
-            ...mockRoom.players,
-            {id: "guest", name: guestName, playerNumber: 2 as 1 | 2, isHost: false}
-          ],
-          isGameStarted: true
-        };
-        console.log('🤖 Simulating guest player joining:', updatedRoom);
-        setCurrentRoom(updatedRoom);
-        
-        // Start the game for the host
-        console.log('🎮 Starting game for host player');
-        onGameStart(updatedRoom, 1);
-      }, 3000);
+      };
+      
+      // Poll every 500ms for guest to join
+      const pollInterval = setInterval(pollForGuest, 500);
+      
+      // Clean up polling after 30 seconds if no guest joins
+      setTimeout(() => {
+        clearInterval(pollInterval);
+        console.log('⏰ No guest joined within 30 seconds, stopping poll');
+      }, 30000);
     }, 1000); // 1 second delay to show "creating" briefly
   };
 
