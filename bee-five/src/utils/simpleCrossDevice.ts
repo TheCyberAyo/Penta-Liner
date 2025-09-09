@@ -59,6 +59,7 @@ class SimpleCrossDeviceClient {
     return data ? JSON.parse(data) : null;
   }
 
+
   createRoom(playerName: string): string {
     this.playerName = playerName;
     this.isHost = true;
@@ -85,22 +86,18 @@ class SimpleCrossDeviceClient {
     this.playerNumber = 2;
     this.roomId = roomId;
 
-    const room = this.getData('room');
-    if (!room) {
-      console.error('Room not found:', roomId);
-      return false;
-    }
-
-    // Update room with guest name
-    const updatedRoom: SimpleRoom = {
-      ...room,
+    // For cross-device, we can't rely on localStorage from the host
+    // Instead, we'll create a mock room and let the host detect us
+    const room: SimpleRoom = {
+      roomId: roomId,
+      hostName: 'Host', // We don't know the host name yet
       guestName: playerName,
       isGameStarted: true,
       timestamp: Date.now()
     };
 
-    this.storeData('room', updatedRoom);
-    console.log('🚀 Simple cross-device room joined:', updatedRoom);
+    this.storeData('room', room);
+    console.log('🚀 Cross-device room joined (guest):', room);
     
     this.startPolling();
     return true;
