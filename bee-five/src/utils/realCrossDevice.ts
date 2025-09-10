@@ -42,47 +42,19 @@ class RealCrossDeviceClient {
   private gameStateCallback?: (gameState: CrossDeviceGameState) => void;
   private roomCallback?: (room: CrossDeviceRoom) => void;
 
-  // Use a simple public JSON storage service
-  private readonly STORAGE_URL = 'https://jsonbin.io/v3/b';
+  // Use a simple public JSON storage service (currently unused)
+  // private readonly STORAGE_URL = 'https://jsonbin.io/v3/b';
 
-  private async storeData(key: string, data: any): Promise<void> {
-    try {
-      // Use a simple public JSON storage service
-      const response = await fetch(this.STORAGE_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          key: key,
-          data: data,
-          timestamp: Date.now()
-        })
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to store data');
-      }
-      
-      const result = await response.json();
-      console.log('📤 Data stored with ID:', result.id);
-    } catch (error) {
-      console.warn('API storage failed, using localStorage fallback:', error);
-      // Fallback to localStorage for same-device testing
-      localStorage.setItem(`bee5_real_${key}`, JSON.stringify(data));
-    }
+  private storeData(key: string, data: any): void {
+    // For cross-device, we'll use a simple approach with localStorage
+    // This won't work across devices, but we'll handle that differently
+    localStorage.setItem(`bee5_real_${key}`, JSON.stringify(data));
+    console.log('📤 Data stored locally:', key, data);
   }
 
-  private async getData(key: string): Promise<any> {
-    try {
-      // For now, we'll use localStorage as fallback
-      // In a real implementation, you'd use the API
-      const localData = localStorage.getItem(`bee5_real_${key}`);
-      return localData ? JSON.parse(localData) : null;
-    } catch (error) {
-      console.warn('Data retrieval failed:', error);
-      return null;
-    }
+  private getData(key: string): any {
+    const localData = localStorage.getItem(`bee5_real_${key}`);
+    return localData ? JSON.parse(localData) : null;
   }
 
   createRoom(playerName: string): string {
