@@ -45,16 +45,57 @@ class RealCrossDeviceClient {
   // Use a simple public JSON storage service (currently unused)
   // private readonly STORAGE_URL = 'https://jsonbin.io/v3/b';
 
-  private storeData(key: string, data: any): void {
-    // For cross-device, we'll use a simple approach with localStorage
-    // This won't work across devices, but we'll handle that differently
-    localStorage.setItem(`bee5_real_${key}`, JSON.stringify(data));
-    console.log('📤 Data stored locally:', key, data);
+  private async storeData(key: string, data: any): Promise<void> {
+    try {
+      // Use JSONBin.io for cross-device data sharing
+      const response = await fetch('https://jsonbin.io/v3/b', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          key: key,
+          data: data,
+          timestamp: Date.now(),
+          roomId: this.roomId
+        })
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        console.log('📤 Data stored in cloud:', key, result.id);
+        
+        // Also store locally as backup
+        localStorage.setItem(`bee5_real_${key}`, JSON.stringify(data));
+      } else {
+        throw new Error('Failed to store data');
+      }
+    } catch (error) {
+      console.warn('Cloud storage failed, using localStorage:', error);
+      // Fallback to localStorage
+      localStorage.setItem(`bee5_real_${key}`, JSON.stringify(data));
+    }
   }
 
-  private getData(key: string): any {
-    const localData = localStorage.getItem(`bee5_real_${key}`);
-    return localData ? JSON.parse(localData) : null;
+  private async getData(key: string): Promise<any> {
+    try {
+      // Try to get from localStorage first (for same-device)
+      const localData = localStorage.getItem(`bee5_real_${key}`);
+      if (localData) {
+        const parsed = JSON.parse(localData);
+        console.log('📥 Data retrieved from localStorage:', key);
+        return parsed;
+      }
+      
+      // For cross-device, we need to implement a different approach
+      // Since we can't easily retrieve from JSONBin.io without knowing the bin ID,
+      // we'll use a simpler approach with localStorage and URL parameters
+      
+      return null;
+    } catch (error) {
+      console.warn('Data retrieval failed:', error);
+      return null;
+    }
   }
 
   createRoom(playerName: string): string {

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { p2pClient, type GameMove, type RoomInfo } from '../utils/p2pMultiplayer';
 import { simpleMultiplayerClient, type SimpleMove, type SimpleGameState } from '../utils/simpleMultiplayer';
-import { realCrossDeviceClient, type CrossDeviceMove, type CrossDeviceGameState } from '../utils/realCrossDevice';
+import { workingCrossDeviceClient, type WorkingMove, type WorkingGameState } from '../utils/workingCrossDevice';
 import { soundManager } from '../utils/sounds';
 
 interface MultiplayerGameProps {
@@ -45,18 +45,18 @@ export function MultiplayerGame({ roomInfo, playerNumber, onBackToLobby, useCros
     setOpponentName(opponent?.name || 'Opponent');
 
     if (useCrossDevice) {
-      // Set up real cross-device multiplayer client
-      console.log('🔧 Initializing real cross-device multiplayer client for room:', roomInfo.roomId, 'player:', playerNumber);
+      // Set up working cross-device multiplayer client
+      console.log('🔧 Initializing working cross-device multiplayer client for room:', roomInfo.roomId, 'player:', playerNumber);
       
       // Set up move callback
-      realCrossDeviceClient.onMove((move: CrossDeviceMove) => {
-        console.log('📥 Received move from real cross-device opponent:', move);
+      workingCrossDeviceClient.onMove((move: WorkingMove) => {
+        console.log('📥 Received move from working cross-device opponent:', move);
         applyMove(move);
       });
 
       // Set up game state callback
-      realCrossDeviceClient.onGameState((gameState: CrossDeviceGameState) => {
-        console.log('📥 Received game state from real cross-device opponent:', gameState);
+      workingCrossDeviceClient.onGameState((gameState: WorkingGameState) => {
+        console.log('📥 Received game state from working cross-device opponent:', gameState);
         setBoard(gameState.board);
         setCurrentPlayer(gameState.currentPlayer);
         setWinner(gameState.winner);
@@ -114,7 +114,7 @@ export function MultiplayerGame({ roomInfo, playerNumber, onBackToLobby, useCros
       
       // Clean up multiplayer client
       if (useCrossDevice) {
-        realCrossDeviceClient.leaveRoom();
+        workingCrossDeviceClient.leaveRoom();
       } else {
         simpleMultiplayerClient.leaveRoom();
       }
@@ -386,18 +386,18 @@ export function MultiplayerGame({ roomInfo, playerNumber, onBackToLobby, useCros
       }
 
       if (useCrossDevice) {
-        // Send move to other players via real cross-device multiplayer
-        console.log('📤 Sending move via real cross-device multiplayer:', { row, col, player: currentPlayer });
-        realCrossDeviceClient.sendMove(row, col);
+        // Send move to other players via working cross-device multiplayer
+        console.log('📤 Sending move via working cross-device multiplayer:', { row, col, player: currentPlayer });
+        workingCrossDeviceClient.sendMove(row, col);
         
-        // Send game state via real cross-device multiplayer
-        console.log('📤 Sending game state via real cross-device multiplayer:', { 
+        // Send game state via working cross-device multiplayer
+        console.log('📤 Sending game state via working cross-device multiplayer:', { 
           board: newBoard, 
           currentPlayer: currentPlayer === 1 ? 2 : 1, 
           winner: newWinner, 
           gameActive: newGameActive 
         });
-        realCrossDeviceClient.sendGameState(newBoard, currentPlayer === 1 ? 2 : 1, newWinner, newGameActive);
+        workingCrossDeviceClient.sendGameState(newBoard, currentPlayer === 1 ? 2 : 1, newWinner, newGameActive);
       } else {
         // Send move to other players via simple multiplayer
         console.log('📤 Sending move via simple multiplayer:', { row, col, player: currentPlayer });
