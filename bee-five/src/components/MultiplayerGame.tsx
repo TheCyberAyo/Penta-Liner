@@ -121,8 +121,8 @@ export function MultiplayerGame({ roomInfo, playerNumber, onBackToLobby, useCros
     };
   }, [roomInfo, playerNumber, onBackToLobby, useCrossDevice]);
 
-  // Apply a move to the game board (handles both SimpleMove and GameMove)
-  const applyMove = useCallback((move: SimpleMove | GameMove) => {
+  // Apply a move to the game board (handles SimpleMove, GameMove, and DemoGameMove)
+  const applyMove = useCallback((move: SimpleMove | GameMove | DemoGameMove) => {
     setBoard(prevBoard => {
       const newBoard = prevBoard.map(row => [...row]);
       newBoard[move.row][move.col] = move.player;
