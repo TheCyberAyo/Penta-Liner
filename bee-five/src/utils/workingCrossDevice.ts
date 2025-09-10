@@ -49,6 +49,11 @@ class WorkingCrossDeviceClient {
     return `bee5_working_${this.roomId}_${key}`;
   }
 
+  // Get storage key for a specific room (used when joining)
+  private getStorageKeyForRoom(roomId: string, key: string): string {
+    return `bee5_working_${roomId}_${key}`;
+  }
+
   private storeData(key: string, data: any): void {
     const storageKey = this.getStorageKey(key);
     const dataWithTimestamp = {
@@ -97,17 +102,27 @@ class WorkingCrossDeviceClient {
     this.playerNumber = 2;
     this.roomId = roomId;
 
-    // Create a guest room entry
-    const room: WorkingRoom = {
-      roomId: roomId,
-      hostName: 'Host', // We don't know the host name yet
+    // Check if room exists (host has created it) using the room-specific key
+    const roomStorageKey = this.getStorageKeyForRoom(roomId, 'room');
+    const existingRoomData = localStorage.getItem(roomStorageKey);
+    
+    if (!existingRoomData) {
+      console.log('❌ Room not found:', roomId);
+      return false;
+    }
+
+    const existingRoom = JSON.parse(existingRoomData);
+    
+    // Update the existing room with guest info
+    const updatedRoom: WorkingRoom = {
+      ...existingRoom,
       guestName: playerName,
       isGameStarted: true,
       timestamp: Date.now()
     };
 
-    this.storeData('room', room);
-    console.log('🚀 Working cross-device room joined:', room);
+    this.storeData('room', updatedRoom);
+    console.log('🚀 Working cross-device room joined:', updatedRoom);
     
     this.startPolling();
     return true;
@@ -151,7 +166,7 @@ class WorkingCrossDeviceClient {
       clearInterval(this.pollingInterval);
     }
 
-    this.pollingInterval = setInterval(() => {
+    this.pollingInterval = window.setInterval(() => {
       this.pollForUpdates();
     }, 1000); // Poll every second
   }

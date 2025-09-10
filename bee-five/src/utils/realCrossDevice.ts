@@ -178,7 +178,7 @@ class RealCrossDeviceClient {
       clearInterval(this.pollingInterval);
     }
 
-    this.pollingInterval = setInterval(async () => {
+    this.pollingInterval = window.setInterval(async () => {
       await this.pollForUpdates();
     }, 1000); // Poll every second for cross-device
   }

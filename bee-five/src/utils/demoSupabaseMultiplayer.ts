@@ -1,30 +1,30 @@
-// Simple cross-device multiplayer using URL sharing
-// Players share a room URL and use a simple coordination system
+// Demo Supabase multiplayer client for testing
+// This simulates Supabase behavior locally for immediate testing
 
-interface SimpleMove {
+export interface DemoGameMove {
   roomId: string;
   playerNumber: 1 | 2;
-  player: 1 | 2; // Add this to match the expected interface
+  player: 1 | 2;
   row: number;
   col: number;
-  timestamp: number;
   playerName: string;
+  timestamp: number;
 }
 
-interface SimpleGameState {
+export interface DemoGameState {
   roomId: string;
-  board: (0 | 1 | 2)[][]; // Fix the board type
+  board: (0 | 1 | 2)[][];
   currentPlayer: 1 | 2;
   winner: 0 | 1 | 2;
   gameActive: boolean;
-  timestamp: number;
   playerNames: {
     player1: string;
     player2: string;
   };
+  timestamp: number;
 }
 
-interface SimpleRoom {
+export interface DemoRoom {
   roomId: string;
   hostName: string;
   guestName?: string;
@@ -32,33 +32,42 @@ interface SimpleRoom {
   timestamp: number;
 }
 
-class SimpleCrossDeviceClient {
+class DemoSupabaseMultiplayerClient {
   private roomId: string = '';
   private playerNumber: 1 | 2 = 1;
   private playerName: string = '';
   private isHost: boolean = false;
+  private moveCallback?: (move: DemoGameMove) => void;
+  private gameStateCallback?: (gameState: DemoGameState) => void;
+  private roomCallback?: (room: DemoRoom) => void;
   private pollingInterval: number | null = null;
-  private moveCallback?: (move: SimpleMove) => void;
-  private gameStateCallback?: (gameState: SimpleGameState) => void;
-  private roomCallback?: (room: SimpleRoom) => void;
 
-  // Use a simple approach with URL parameters and localStorage
+  // Simulate Supabase database with localStorage
   private getStorageKey(key: string): string {
-    return `bee5_simple_${this.roomId}_${key}`;
+    return `demo_supabase_${this.roomId}_${key}`;
   }
 
   private storeData(key: string, data: any): void {
     const storageKey = this.getStorageKey(key);
-    localStorage.setItem(storageKey, JSON.stringify(data));
-    console.log('📤 Data stored locally:', storageKey, data);
+    const dataWithTimestamp = {
+      ...data,
+      timestamp: Date.now(),
+      roomId: this.roomId
+    };
+    localStorage.setItem(storageKey, JSON.stringify(dataWithTimestamp));
+    console.log('📤 Demo Supabase: Data stored:', storageKey, dataWithTimestamp);
   }
 
   private getData(key: string): any {
     const storageKey = this.getStorageKey(key);
     const data = localStorage.getItem(storageKey);
-    return data ? JSON.parse(data) : null;
+    if (data) {
+      const parsed = JSON.parse(data);
+      console.log('📥 Demo Supabase: Data retrieved:', storageKey, parsed);
+      return parsed;
+    }
+    return null;
   }
-
 
   createRoom(playerName: string): string {
     this.playerName = playerName;
@@ -66,7 +75,7 @@ class SimpleCrossDeviceClient {
     this.playerNumber = 1;
     this.roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
 
-    const room: SimpleRoom = {
+    const room: DemoRoom = {
       roomId: this.roomId,
       hostName: playerName,
       isGameStarted: false,
@@ -74,66 +83,71 @@ class SimpleCrossDeviceClient {
     };
 
     this.storeData('room', room);
-    console.log('🏠 Simple cross-device room created:', room);
+    console.log('🏠 Demo Supabase: Room created:', room);
     
     this.startPolling();
     return this.roomId;
   }
 
-  joinRoom(roomId: string, playerName: string): boolean {
+  async joinRoom(roomId: string, playerName: string): Promise<boolean> {
     this.playerName = playerName;
     this.isHost = false;
     this.playerNumber = 2;
     this.roomId = roomId;
 
-    // For cross-device, we can't rely on localStorage from the host
-    // Instead, we'll create a mock room and let the host detect us
-    const room: SimpleRoom = {
-      roomId: roomId,
-      hostName: 'Host', // We don't know the host name yet
+    // Check if room exists
+    const existingRoom = this.getData('room');
+    if (!existingRoom) {
+      console.log('❌ Demo Supabase: Room not found:', roomId);
+      return false;
+    }
+
+    // Update room with guest info
+    const updatedRoom: DemoRoom = {
+      ...existingRoom,
       guestName: playerName,
       isGameStarted: true,
       timestamp: Date.now()
     };
 
-    this.storeData('room', room);
-    console.log('🚀 Cross-device room joined (guest):', room);
+    this.storeData('room', updatedRoom);
+    console.log('🚀 Demo Supabase: Room joined:', updatedRoom);
     
     this.startPolling();
     return true;
   }
 
-  sendMove(row: number, col: number): void {
-    const move: SimpleMove = {
+  async sendMove(row: number, col: number): Promise<void> {
+    const move: DemoGameMove = {
       roomId: this.roomId,
       playerNumber: this.playerNumber,
-      player: this.playerNumber, // Add this field
+      player: this.playerNumber,
       row,
       col,
-      timestamp: Date.now(),
-      playerName: this.playerName
+      playerName: this.playerName,
+      timestamp: Date.now()
     };
 
     this.storeData('move', move);
-    console.log('📤 Simple cross-device move sent:', move);
+    console.log('📤 Demo Supabase: Move sent:', move);
   }
 
-  sendGameState(board: (0 | 1 | 2)[][], currentPlayer: 1 | 2, winner: 0 | 1 | 2, gameActive: boolean): void {
-    const gameState: SimpleGameState = {
+  async sendGameState(board: (0 | 1 | 2)[][], currentPlayer: 1 | 2, winner: 0 | 1 | 2, gameActive: boolean): Promise<void> {
+    const gameState: DemoGameState = {
       roomId: this.roomId,
       board,
       currentPlayer,
       winner,
       gameActive,
-      timestamp: Date.now(),
       playerNames: {
         player1: this.isHost ? this.playerName : 'Host',
         player2: this.isHost ? 'Guest' : this.playerName
-      }
+      },
+      timestamp: Date.now()
     };
 
     this.storeData('gamestate', gameState);
-    console.log('📤 Simple cross-device game state sent:', gameState);
+    console.log('📤 Demo Supabase: Game state sent:', gameState);
   }
 
   private startPolling(): void {
@@ -143,7 +157,7 @@ class SimpleCrossDeviceClient {
 
     this.pollingInterval = window.setInterval(() => {
       this.pollForUpdates();
-    }, 1000); // Poll every second
+    }, 500); // Poll every 500ms for demo
   }
 
   private pollForUpdates(): void {
@@ -158,8 +172,10 @@ class SimpleCrossDeviceClient {
 
       // Check for moves
       const move = this.getData('move');
-      if (move && move.playerNumber !== this.playerNumber && this.moveCallback) {
-        this.moveCallback(move);
+      if (move && move.playerNumber !== this.playerNumber) {
+        if (this.moveCallback) {
+          this.moveCallback(move);
+        }
       }
 
       // Check for game state updates
@@ -168,23 +184,23 @@ class SimpleCrossDeviceClient {
         this.gameStateCallback(gameState);
       }
     } catch (error) {
-      console.warn('Polling error:', error);
+      console.warn('Demo Supabase polling error:', error);
     }
   }
 
-  onMove(callback: (move: SimpleMove) => void): void {
+  onMove(callback: (move: DemoGameMove) => void): void {
     this.moveCallback = callback;
   }
 
-  onGameState(callback: (gameState: SimpleGameState) => void): void {
+  onGameState(callback: (gameState: DemoGameState) => void): void {
     this.gameStateCallback = callback;
   }
 
-  onRoomUpdate(callback: (room: SimpleRoom) => void): void {
+  onRoomUpdate(callback: (room: DemoRoom) => void): void {
     this.roomCallback = callback;
   }
 
-  leaveRoom(): void {
+  async leaveRoom(): Promise<void> {
     if (this.pollingInterval) {
       clearInterval(this.pollingInterval);
       this.pollingInterval = null;
@@ -195,7 +211,7 @@ class SimpleCrossDeviceClient {
     this.playerName = '';
     this.isHost = false;
     
-    console.log('🚪 Left simple cross-device room');
+    console.log('🚪 Demo Supabase: Left room and cleaned up');
   }
 
   // Get the room URL for sharing
@@ -210,6 +226,5 @@ class SimpleCrossDeviceClient {
   }
 }
 
-export const simpleCrossDeviceClient = new SimpleCrossDeviceClient();
-export { SimpleCrossDeviceClient };
-export type { SimpleMove, SimpleGameState, SimpleRoom };
+export const demoSupabaseMultiplayerClient = new DemoSupabaseMultiplayerClient();
+export { DemoSupabaseMultiplayerClient };

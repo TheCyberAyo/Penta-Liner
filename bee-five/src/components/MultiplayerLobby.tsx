@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { p2pClient, type RoomInfo } from '../utils/p2pMultiplayer';
-import { workingCrossDeviceClient, WorkingCrossDeviceClient } from '../utils/workingCrossDevice';
+import { demoSupabaseMultiplayerClient, DemoSupabaseMultiplayerClient } from '../utils/demoSupabaseMultiplayer';
 import { soundManager } from '../utils/sounds';
 
 interface MultiplayerLobbyProps {
@@ -24,7 +24,7 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
 
   useEffect(() => {
     // Check if we're joining from a URL
-    const roomFromUrl = WorkingCrossDeviceClient.getRoomFromUrl();
+    const roomFromUrl = DemoSupabaseMultiplayerClient.getRoomFromUrl();
     if (roomFromUrl) {
       setRoomCode(roomFromUrl);
       setUseCrossDevice(true);
@@ -113,9 +113,9 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
     setConnectionError(null);
 
     if (useCrossDevice) {
-      // Cross-device mode: create room using working cross-device client
-      const roomCode = workingCrossDeviceClient.createRoom(playerName.trim());
-      const url = workingCrossDeviceClient.getRoomUrl();
+      // Cross-device mode: create room using Demo Supabase
+      const roomCode = demoSupabaseMultiplayerClient.createRoom(playerName.trim());
+      const url = demoSupabaseMultiplayerClient.getRoomUrl();
       setRoomUrl(url);
       
       const mockRoom = {
@@ -127,15 +127,15 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
         hostId: "host"
       };
       
-      console.log('🏠 Creating working cross-device room:', mockRoom);
+      console.log('🏠 Creating Demo Supabase cross-device room:', mockRoom);
       setCurrentRoom(mockRoom);
       setLobbyMode('waiting');
       setIsCreatingRoom(false);
       soundManager.playClickSound();
       
-      // Set up working cross-device polling
-      workingCrossDeviceClient.onRoomUpdate((room) => {
-        if (room.guestName) {
+      // Set up Demo Supabase room update callback
+      demoSupabaseMultiplayerClient.onRoomUpdate((room) => {
+        if (room.guestName && room.isGameStarted) {
           const updatedRoom = {
             ...mockRoom,
             players: [
@@ -144,7 +144,7 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
             ],
             isGameStarted: true
           };
-          console.log('🎉 Working cross-device guest joined:', updatedRoom);
+          console.log('🎉 Demo Supabase guest joined:', updatedRoom);
           setCurrentRoom(updatedRoom);
           onGameStart(updatedRoom, 1);
         }
@@ -236,8 +236,8 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
     setLobbyMode('connecting');
 
     if (useCrossDevice) {
-      // Cross-device mode: join room using working cross-device client
-      const success = workingCrossDeviceClient.joinRoom(roomCode.trim().toUpperCase(), playerName.trim());
+      // Cross-device mode: join room using Demo Supabase
+      const success = await demoSupabaseMultiplayerClient.joinRoom(roomCode.trim().toUpperCase(), playerName.trim());
       
       if (success) {
         const mockRoom = {
@@ -250,14 +250,14 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
           hostId: "host"
         };
         
-        console.log('🚀 Working cross-device room joined:', mockRoom);
+        console.log('🚀 Demo Supabase room joined:', mockRoom);
         setCurrentRoom(mockRoom);
         setLobbyMode('waiting');
         setIsJoiningRoom(false);
         soundManager.playClickSound();
         
         // Start the game immediately
-        console.log('🎮 Starting working cross-device game for guest');
+        console.log('🎮 Starting Demo Supabase cross-device game for guest');
         onGameStart(mockRoom, 2);
       } else {
         setConnectionError('Room not found or could not join');

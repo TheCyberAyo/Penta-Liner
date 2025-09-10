@@ -85,7 +85,7 @@ export const useGameLogic = (options: UseGameLogicOptions) => {
   // Timer management
   useEffect(() => {
     if (gameState.isGameActive && gameState.timeLeft > 0) {
-      timerRef.current = setTimeout(() => {
+      timerRef.current = window.setTimeout(() => {
         setGameState(prevState => {
           if (prevState.timeLeft <= 1) {
             // Time's up - other player wins
