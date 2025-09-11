@@ -228,15 +228,128 @@ class PentaLinerAI {
     return true;
   }
 
+  // Strategic AI for hard difficulty
+  findStrategicMove(board) {
+    // Block any 3-in-a-row threats immediately
+    const blockingMove = this.findBlockingMove(board);
+    if (blockingMove) {
+      return blockingMove;
+    }
+    
+    // If no blocking needed, use regular minimax
+    const moves = this.generateMoves(board);
+    let bestMove = null;
+    let bestValue = -Infinity;
+    
+    for (const move of moves) {
+      board[move.row][move.col] = this.AI;
+      const moveValue = this.minimax(board, 4, false, -Infinity, Infinity, move);
+      board[move.row][move.col] = this.EMPTY;
+      
+      if (moveValue > bestValue) {
+        bestValue = moveValue;
+        bestMove = move;
+      }
+    }
+    
+    // Fallback: if no move found, return first available move
+    if (!bestMove && moves.length > 0) {
+      bestMove = moves[0];
+    }
+    
+    return bestMove;
+  }
+
+  // Find blocking move - scans for existing 3-in-a-row threats
+  findBlockingMove(board) {
+    // Check every position for human threats
+    for (let row = 0; row < this.GRID_SIZE; row++) {
+      for (let col = 0; col < this.GRID_SIZE; col++) {
+        if (board[row][col] === this.HUMAN) {
+          // Check all directions from this human piece
+          const directions = [
+            [0, 1],   // horizontal
+            [1, 0],   // vertical
+            [1, 1],   // diagonal /
+            [1, -1]   // diagonal \
+          ];
+          
+          for (const [dRow, dCol] of directions) {
+            const threat = this.checkHumanThreat(board, row, col, dRow, dCol);
+            if (threat) {
+              return threat;
+            }
+          }
+        }
+      }
+    }
+    
+    return null;
+  }
+
+  // Check for human threat in a specific direction and return blocking position
+  checkHumanThreat(board, startRow, startCol, dRow, dCol) {
+    let humanCount = 1; // Count the starting human piece
+    let emptyPositions = [];
+    
+    // Check positive direction
+    for (let i = 1; i < 5; i++) {
+      const newRow = startRow + i * dRow;
+      const newCol = startCol + i * dCol;
+      
+      if (!this.isInBounds(newRow, newCol)) break;
+      
+      if (board[newRow][newCol] === this.HUMAN) {
+        humanCount++;
+      } else if (board[newRow][newCol] === this.EMPTY) {
+        emptyPositions.push({row: newRow, col: newCol});
+        break;
+      } else {
+        break; // Blocked by AI piece
+      }
+    }
+    
+    // Check negative direction
+    for (let i = 1; i < 5; i++) {
+      const newRow = startRow - i * dRow;
+      const newCol = startCol - i * dCol;
+      
+      if (!this.isInBounds(newRow, newCol)) break;
+      
+      if (board[newRow][newCol] === this.HUMAN) {
+        humanCount++;
+      } else if (board[newRow][newCol] === this.EMPTY) {
+        emptyPositions.push({row: newRow, col: newCol});
+        break;
+      } else {
+        break; // Blocked by AI piece
+      }
+    }
+    
+    // If we have 3+ human pieces and at least one empty position, we can block
+    if (humanCount >= 3 && emptyPositions.length > 0) {
+      return emptyPositions[0]; // Return first blocking position
+    }
+    
+    return null;
+  }
+
+
   // Find best move using minimax
   findBestMove(board, difficulty = 'medium') {
     const depthMap = {
-      easy: 2,
-      medium: 3,
-      hard: 4
+      easy: 2,    // Current medium becomes new easy (depth 2)
+      medium: 3,  // Current hard becomes new medium (depth 3)
+      hard: 4      // New hard uses strategic AI
     };
     
-    const depth = depthMap[difficulty] || 3;
+    // For hard difficulty, use strategic AI (blocks 3-in-a-row)
+    if (difficulty === 'hard') {
+      return this.findStrategicMove(board);
+    }
+    
+    // For easy and medium, use minimax
+    const depth = depthMap[difficulty] || 2;
     let bestMove = null;
     let bestValue = -Infinity;
     
@@ -278,14 +391,6 @@ self.onmessage = function(e) {
         });
         break;
         
-      case 'evaluateBoard':
-        const evaluation = ai.evaluateBoard(board);
-        self.postMessage({
-          type: 'boardEvaluated',
-          evaluation,
-          id
-        });
-        break;
         
       default:
         self.postMessage({

@@ -7,7 +7,7 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 const SUPABASE_URL = 'https://qtfuldmppecmvpglbxix.supabase.co'; // Replace with your Supabase URL
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZnVsZG1wcGVjbXZwZ2xieGl4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0NzIxMzcsImV4cCI6MjA3MzA0ODEzN30.INH34TtLgfCVDJPArIWg1Kr4rdTYwgwWpnILjaayuew'; // Replace with your Supabase anon key
 
-// Database types (internal)
+// Database types (internal) 
 interface SupabaseMove {
   id?: number;
   room_id: string;

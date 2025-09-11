@@ -214,7 +214,7 @@ export const useGameLogic = (options: UseGameLogicOptions) => {
       };
 
       // Trigger AI move if it's single player and game is still active
-      if (isSinglePlayer && !winner && !boardFull && prevState.currentPlayer === 1) {
+      if (isSinglePlayer && !winner && !boardFull && newState.currentPlayer === 2) {
         // Use Web Worker for AI move
         setTimeout(() => {
           if (workerRef.current) {

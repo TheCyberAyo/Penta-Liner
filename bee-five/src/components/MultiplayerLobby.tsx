@@ -221,16 +221,25 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
   };
 
   const handleJoinRoom = async () => {
+    console.log('🔍 handleJoinRoom called with:', { 
+      playerName: playerName.trim(), 
+      roomCode: roomCode.trim(),
+      useCrossDevice 
+    });
+    
     if (!playerName.trim()) {
+      console.log('❌ No player name');
       setConnectionError('Please enter your name');
       return;
     }
 
     if (!roomCode.trim()) {
+      console.log('❌ No room code');
       setConnectionError('Please enter a room code');
       return;
     }
 
+    console.log('✅ Starting join process...');
     setIsJoiningRoom(true);
     setConnectionError(null);
     setLobbyMode('connecting');
@@ -583,7 +592,10 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
           type="text"
           placeholder="Enter room code"
           value={roomCode}
-          onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
+          onChange={(e) => {
+            console.log('🔍 Room code changed:', e.target.value);
+            setRoomCode(e.target.value.toUpperCase());
+          }}
           style={{
             padding: '10px',
             fontSize: '1.2em',
@@ -598,7 +610,15 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
       </div>
 
       <button
-        onClick={handleJoinRoom}
+        onClick={() => {
+          console.log('🔍 Join button clicked!', { 
+            isJoiningRoom, 
+            roomCode: roomCode.trim(), 
+            playerName: playerName.trim(),
+            useCrossDevice 
+          });
+          handleJoinRoom();
+        }}
         disabled={isJoiningRoom || !roomCode.trim()}
         style={{
           padding: '12px 24px',
@@ -614,6 +634,24 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
       >
         {isJoiningRoom ? '🔄 Joining...' : '🚪 Join Room'}
       </button>
+      
+      {/* Debug info */}
+      <div style={{ 
+        fontSize: '0.8em', 
+        color: '#666', 
+        marginTop: '10px',
+        textAlign: 'left',
+        backgroundColor: '#f0f0f0',
+        padding: '10px',
+        borderRadius: '5px'
+      }}>
+        <div>Debug Info:</div>
+        <div>• isJoiningRoom: {isJoiningRoom ? 'true' : 'false'}</div>
+        <div>• roomCode: "{roomCode}"</div>
+        <div>• playerName: "{playerName}"</div>
+        <div>• useCrossDevice: {useCrossDevice ? 'true' : 'false'}</div>
+        <div>• Button disabled: {(isJoiningRoom || !roomCode.trim()) ? 'YES' : 'NO'}</div>
+      </div>
 
       <div style={{ marginTop: '20px' }}>
         <button

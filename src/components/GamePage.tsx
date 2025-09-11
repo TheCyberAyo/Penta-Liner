@@ -8,7 +8,7 @@ interface GamePageProps {
 }
 
 const GamePage: React.FC<GamePageProps> = ({ isSinglePlayer, onBackToWelcome }) => {
-  const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
+  const [difficulty, setDifficulty] = useState<'medium' | 'hard'>('medium');
   const [timeLimit] = useState(15);
   
   const { gameState, handleCellClick, resetGame, updateGameState } = useGameLogic({
@@ -34,7 +34,7 @@ const GamePage: React.FC<GamePageProps> = ({ isSinglePlayer, onBackToWelcome }) 
     return `${currentPlayerName}, Play!`;
   };
 
-  const handleDifficultyChange = (newDifficulty: 'easy' | 'medium' | 'hard') => {
+  const handleDifficultyChange = (newDifficulty: 'medium' | 'hard') => {
     setDifficulty(newDifficulty);
   };
 
@@ -50,12 +50,11 @@ const GamePage: React.FC<GamePageProps> = ({ isSinglePlayer, onBackToWelcome }) 
             <label>AI Difficulty:</label>
             <select 
               value={difficulty} 
-              onChange={(e) => handleDifficultyChange(e.target.value as 'easy' | 'medium' | 'hard')}
+              onChange={(e) => handleDifficultyChange(e.target.value as 'medium' | 'hard')}
               disabled={gameState.isGameActive && gameState.board.some(row => row.some(cell => cell !== 0))}
             >
-              <option value="easy">Easy</option>
-              <option value="medium">Medium</option>
-              <option value="hard">Hard</option>
+              <option value="medium">Medium (Easy)</option>
+              <option value="hard">Impossible to Win</option>
             </select>
           </div>
         )}

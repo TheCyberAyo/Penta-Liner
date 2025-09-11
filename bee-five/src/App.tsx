@@ -959,7 +959,7 @@ function SimpleGame({ onBackToMenu, isSinglePlayer }: { onBackToMenu: () => void
             <span style={{ color: '#666', fontSize: '0.8em', fontStyle: 'italic' }}>
               {difficulty === 'easy' && '1-move lookahead'}
               {difficulty === 'medium' && '2-move + blocking'}
-              {difficulty === 'hard' && '3-move + counter-attacks'}
+              {difficulty === 'hard' && 'impossible to win'}
             </span>
           )}
         </div>
@@ -1251,15 +1251,17 @@ function SimpleWelcome() {
     <div style={{ 
       background: 'linear-gradient(135deg, #FFC30B 0%, #FFD700 50%, #FFC30B 100%)',
       minHeight: '100vh',
-      width: '100vw',
+      width: '100%',
+      maxWidth: '100vw',
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'center',
       alignItems: 'center',
-      padding: 'clamp(1rem, 4vw, 2rem)',
+      padding: 'clamp(0.5rem, 2vw, 1rem)',
       fontFamily: 'system-ui, -apple-system, sans-serif',
       position: 'relative',
-      overflow: 'auto'
+      overflow: 'hidden',
+      boxSizing: 'border-box'
     }}>
       {/* Decorative bee pattern background */}
       <div style={{
@@ -1288,15 +1290,17 @@ function SimpleWelcome() {
       <div style={{
         background: 'rgba(255, 255, 255, 0.95)',
         borderRadius: 'clamp(15px, 3vw, 25px)',
-        padding: 'clamp(2rem, 6vw, 4rem)',
+        padding: 'clamp(1rem, 3vw, 2rem)',
         width: '100%',
-        maxWidth: 'min(90vw, 600px)',
+        maxWidth: 'min(90vw, 450px)',
         boxShadow: '0 20px 40px rgba(0,0,0,0.1), 0 0 0 3px rgba(0,0,0,0.1)',
         backdropFilter: 'blur(10px)',
         textAlign: 'center',
         position: 'relative',
         zIndex: 1,
-        animation: 'slideIn 0.6s ease-out'
+        animation: 'slideIn 0.6s ease-out',
+        margin: '0 auto',
+        boxSizing: 'border-box'
       }}>
         {/* Title */}
         <div style={{ marginBottom: 'clamp(1.5rem, 4vw, 2.5rem)' }}>
@@ -1310,24 +1314,17 @@ function SimpleWelcome() {
           }}>
             🐝 Bee-<span style={{ color: 'black', textShadow: '3px 3px 0px #FFC30B, -1px -1px 0px #FFC30B, 1px -1px 0px #FFC30B, -1px 1px 0px #FFC30B' }}>Five</span> 🐝
           </h1>
-          <p style={{ 
-            fontSize: 'clamp(1rem, 3vw, 1.3rem)', 
-            fontWeight: '600', 
-            color: '#333',
-            margin: 0,
-            opacity: 0.8
-          }}>
-            Connect 5 pieces in a row to win!
-          </p>
         </div>
 
         {/* Game mode buttons */}
         <div style={{ 
-          display: 'grid',
-          gridTemplateColumns: window.innerWidth < 768 ? '1fr' : 'repeat(auto-fit, minmax(200px, 1fr))',
+          display: 'flex',
+          flexDirection: 'column',
           gap: 'clamp(0.75rem, 2vw, 1rem)',
           marginBottom: 'clamp(1.5rem, 4vw, 2rem)',
-          maxWidth: '100%'
+          width: '100%',
+          maxWidth: '100%',
+          alignItems: 'center'
         }}>
           <button 
             onClick={() => {
@@ -1357,11 +1354,13 @@ function SimpleWelcome() {
               alignItems: 'center',
               justifyContent: 'center',
               gap: '0.5rem',
-              minHeight: '60px'
+              minHeight: '60px',
+              width: '100%',
+              maxWidth: '300px'
             }}
           >
             <span style={{ fontSize: '1.2em' }}>🤖</span>
-            <span>vs Smart AI</span>
+            <span>vs AI</span>
           </button>
 
           <button 
@@ -1392,11 +1391,13 @@ function SimpleWelcome() {
               alignItems: 'center',
               justifyContent: 'center',
               gap: '0.5rem',
-              minHeight: '60px'
+              minHeight: '60px',
+              width: '100%',
+              maxWidth: '300px'
             }}
           >
             <span style={{ fontSize: '1.2em' }}>👥</span>
-            <span>Local Play</span>
+            <span>Take Turns</span>
           </button>
 
           <button 
@@ -1427,7 +1428,9 @@ function SimpleWelcome() {
               alignItems: 'center',
               justifyContent: 'center',
               gap: '0.5rem',
-              minHeight: '60px'
+              minHeight: '60px',
+              width: '100%',
+              maxWidth: '300px'
             }}
           >
             <span style={{ fontSize: '1.2em' }}>🌐</span>
@@ -1435,52 +1438,6 @@ function SimpleWelcome() {
         </button>
         </div>
 
-        {/* Feature highlights */}
-        <div style={{ 
-          background: 'rgba(135, 206, 235, 0.1)',
-          borderRadius: 'clamp(8px, 2vw, 12px)',
-          padding: 'clamp(1rem, 3vw, 1.5rem)',
-          marginBottom: 'clamp(1rem, 3vw, 1.5rem)',
-          border: '2px solid rgba(135, 206, 235, 0.3)'
-        }}>
-          <h3 style={{ 
-            fontSize: 'clamp(1rem, 2.5vw, 1.2rem)',
-            color: '#333',
-            margin: '0 0 clamp(0.5rem, 2vw, 1rem) 0',
-            fontWeight: 'bold'
-          }}>
-            🎮 Game Features
-          </h3>
-          <div style={{ 
-            display: 'grid',
-            gridTemplateColumns: window.innerWidth < 480 ? '1fr' : 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: 'clamp(0.5rem, 2vw, 1rem)',
-            fontSize: 'clamp(0.8rem, 2vw, 0.9rem)',
-            color: '#555',
-            textAlign: 'left'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span>🧠</span>
-              <span><strong>Smart AI:</strong> 3 difficulty levels</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span>🎵</span>
-              <span><strong>Sound Effects:</strong> Bee-themed audio</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span>✨</span>
-              <span><strong>Animations:</strong> Smooth gameplay</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span>🏆</span>
-              <span><strong>Win Celebration:</strong> Victory popup</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span>🌐</span>
-              <span><strong>P2P Multiplayer:</strong> No server needed!</span>
-            </div>
-          </div>
-        </div>
 
         {/* How to play */}
         <div style={{ 
@@ -1512,6 +1469,10 @@ function SimpleWelcome() {
       </footer>
 
       <style>{`
+        * {
+          box-sizing: border-box;
+        }
+        
         @keyframes slideIn {
           from {
             opacity: 0;

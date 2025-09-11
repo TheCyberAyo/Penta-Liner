@@ -3,7 +3,7 @@ import { GameState } from '../components/GameCanvas';
 
 export interface UseGameLogicOptions {
   isSinglePlayer: boolean;
-  difficulty: 'easy' | 'medium' | 'hard';
+  difficulty: 'medium' | 'hard';
   timeLimit: number;
 }
 
@@ -35,8 +35,6 @@ export const useGameLogic = (options: UseGameLogicOptions) => {
         const { type, move, computationTime, id } = e.data;
         
         if (type === 'bestMoveFound' && move) {
-          console.log(`AI computed move in ${computationTime.toFixed(2)}ms`);
-          
           // Apply AI move
           setGameState(prevState => {
             const newBoard = prevState.board.map(row => [...row]);
