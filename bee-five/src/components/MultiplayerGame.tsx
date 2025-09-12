@@ -3,6 +3,8 @@ import { p2pClient, type GameMove, type RoomInfo } from '../utils/p2pMultiplayer
 import { simpleMultiplayerClient, type SimpleMove, type SimpleGameState } from '../utils/simpleMultiplayer';
 import { demoSupabaseMultiplayerClient, type DemoGameMove, type DemoGameState } from '../utils/demoSupabaseMultiplayer';
 import { soundManager } from '../utils/sounds';
+import { GRID_SIZE, MULTIPLAYER_CELL_SIZE, BORDER_WIDTH, MULTIPLAYER_CANVAS_SIZE } from '../constants/gameConstants';
+import { checkWinCondition } from '../utils/gameLogic';
 
 interface MultiplayerGameProps {
   roomInfo: RoomInfo;
@@ -31,10 +33,9 @@ export function MultiplayerGame({ roomInfo, playerNumber, onBackToLobby, useCros
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'reconnecting'>('connected');
   const [opponentName, setOpponentName] = useState<string>('');
 
-  const GRID_SIZE = 10;
-  const CELL_SIZE = 40;
-  const BORDER_WIDTH = 2;
-  const CANVAS_SIZE = GRID_SIZE * CELL_SIZE + (GRID_SIZE + 1) * BORDER_WIDTH;
+  // Use shared constants
+  const CELL_SIZE = MULTIPLAYER_CELL_SIZE;
+  const CANVAS_SIZE = MULTIPLAYER_CANVAS_SIZE;
   const ANIMATION_DURATION = 400;
   const animationFrameRef = useRef<number | undefined>(undefined);
 
@@ -46,17 +47,14 @@ export function MultiplayerGame({ roomInfo, playerNumber, onBackToLobby, useCros
 
     if (useCrossDevice) {
       // Cross-device mode: use Demo Supabase for real-time multiplayer
-      console.log('🔧 Initializing Demo Supabase cross-device multiplayer for room:', roomInfo.roomId, 'player:', playerNumber);
       
       // Set up Demo Supabase move callback
       demoSupabaseMultiplayerClient.onMove((move: DemoGameMove) => {
-        console.log('📥 Received move from Demo Supabase opponent:', move);
         applyMove(move);
       });
 
       // Set up Demo Supabase game state callback
       demoSupabaseMultiplayerClient.onGameState((gameState: DemoGameState) => {
-        console.log('📥 Received game state from Demo Supabase opponent:', gameState);
         setBoard(gameState.board);
         setCurrentPlayer(gameState.currentPlayer);
         setWinner(gameState.winner);
@@ -64,18 +62,15 @@ export function MultiplayerGame({ roomInfo, playerNumber, onBackToLobby, useCros
       });
     } else {
       // Set up simple multiplayer client
-      console.log('🔧 Initializing simple multiplayer client for room:', roomInfo.roomId, 'player:', playerNumber);
       simpleMultiplayerClient.createRoom(roomInfo.roomId, playerNumber);
       
       // Set up move callback
       simpleMultiplayerClient.onMove((move: SimpleMove) => {
-        console.log('📥 Received move from opponent:', move);
         applyMove(move);
       });
 
       // Set up game state callback
       simpleMultiplayerClient.onGameState((gameState: SimpleGameState) => {
-        console.log('📥 Received game state from opponent:', gameState);
         setBoard(gameState.board);
         setCurrentPlayer(gameState.currentPlayer);
         setWinner(gameState.winner);
@@ -144,14 +139,14 @@ export function MultiplayerGame({ roomInfo, playerNumber, onBackToLobby, useCros
 
     // Play sound for opponent moves
     if (move.player !== playerNumber) {
-      soundManager.playAIBuzzSound();
+      soundManager.playBuzzSound();
     }
 
     // Check for win condition
     const newBoard = board.map(row => [...row]);
     newBoard[move.row][move.col] = move.player;
     
-    if (checkWin(newBoard, move.row, move.col, move.player)) {
+    if (checkWinCondition(newBoard, move.row, move.col, move.player)) {
       setTimeout(() => {
         setWinner(move.player);
         setGameActive(false);
@@ -175,34 +170,6 @@ export function MultiplayerGame({ roomInfo, playerNumber, onBackToLobby, useCros
   }, [board, playerNumber, opponentName]);
 
   // Check for win condition
-  const checkWin = useCallback((board: (0 | 1 | 2)[][], row: number, col: number, player: 1 | 2): boolean => {
-    const directions = [[0, 1], [1, 0], [1, 1], [1, -1]];
-    
-    for (const [dRow, dCol] of directions) {
-      let count = 1;
-      
-      // Check positive direction
-      for (let i = 1; i < 5; i++) {
-        const newRow = row + i * dRow;
-        const newCol = col + i * dCol;
-        if (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 10 && board[newRow][newCol] === player) {
-          count++;
-        } else break;
-      }
-      
-      // Check negative direction
-      for (let i = 1; i < 5; i++) {
-        const newRow = row - i * dRow;
-        const newCol = col - i * dCol;
-        if (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 10 && board[newRow][newCol] === player) {
-          count++;
-        } else break;
-      }
-      
-      if (count >= 5) return true;
-    }
-    return false;
-  }, []);
 
   // Draw the game board with animations
   const drawGame = useCallback(() => {
@@ -368,7 +335,7 @@ export function MultiplayerGame({ roomInfo, playerNumber, onBackToLobby, useCros
       }));
 
       // Check for win
-      const winResult = checkWin(newBoard, row, col, currentPlayer);
+      const winResult = checkWinCondition(newBoard, row, col, currentPlayer);
       let newWinner: 0 | 1 | 2 = 0;
       let newGameActive: boolean = gameActive;
       
@@ -387,20 +354,12 @@ export function MultiplayerGame({ roomInfo, playerNumber, onBackToLobby, useCros
 
       if (useCrossDevice) {
         // Send move to other players via Demo Supabase
-        console.log('📤 Sending move via Demo Supabase:', { row, col, player: currentPlayer });
         await demoSupabaseMultiplayerClient.sendMove(row, col);
         
         // Send game state via Demo Supabase
-        console.log('📤 Sending game state via Demo Supabase:', { 
-          board: newBoard, 
-          currentPlayer: currentPlayer === 1 ? 2 : 1, 
-          winner: newWinner, 
-          gameActive: newGameActive 
-        });
         await demoSupabaseMultiplayerClient.sendGameState(newBoard, currentPlayer === 1 ? 2 : 1, newWinner, newGameActive);
       } else {
         // Send move to other players via simple multiplayer
-        console.log('📤 Sending move via simple multiplayer:', { row, col, player: currentPlayer });
         simpleMultiplayerClient.sendMove(row, col);
         
         // Send game state to other players
@@ -417,7 +376,6 @@ export function MultiplayerGame({ roomInfo, playerNumber, onBackToLobby, useCros
             roomId: roomInfo.roomId
           }
         };
-        console.log('📤 Sending game state via simple multiplayer:', gameState);
         simpleMultiplayerClient.sendGameState(gameState);
       }
 

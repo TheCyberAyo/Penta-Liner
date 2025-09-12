@@ -46,19 +46,15 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
     };
 
     p2pClient.onRoomJoined = (roomInfo: RoomInfo) => {
-      console.log('🎉 Room joined successfully:', roomInfo);
-      console.log('🔄 Setting lobby mode to waiting...');
       setCurrentRoom(roomInfo);
       setLobbyMode('waiting');
       setIsJoiningRoom(false);
-      console.log('✅ State updated - should show waiting room now');
       
       // If game is already started (2 players), start immediately
       if (roomInfo.isGameStarted && roomInfo.players.length === 2) {
-        console.log('🚀 Game is ready to start with 2 players');
         const currentPlayer = roomInfo.players.find(p => p.id === p2pClient.getCurrentPlayerId());
         if (currentPlayer && currentPlayer.playerNumber) {
-          console.log('🎮 Starting game for player:', currentPlayer.playerNumber);
+          // console.log('🎮 Starting game for player:', currentPlayer.playerNumber);
           onGameStart(roomInfo, currentPlayer.playerNumber);
         }
       }
@@ -127,7 +123,6 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
         hostId: "host"
       };
       
-      console.log('🏠 Creating Demo Supabase cross-device room:', mockRoom);
       setCurrentRoom(mockRoom);
       setLobbyMode('waiting');
       setIsCreatingRoom(false);
@@ -144,7 +139,6 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
             ],
             isGameStarted: true
           };
-          console.log('🎉 Demo Supabase guest joined:', updatedRoom);
           setCurrentRoom(updatedRoom);
           onGameStart(updatedRoom, 1);
         }
@@ -171,7 +165,6 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
           hostId: "host"
         };
         
-        console.log('🏠 Creating local room:', mockRoom);
         setCurrentRoom(mockRoom);
         setLobbyMode('waiting');
         setIsCreatingRoom(false);
@@ -193,11 +186,11 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
                 ],
                 isGameStarted: true
               };
-              console.log('🎉 Local guest joined:', updatedRoom);
+              // console.log('🎉 Local guest joined:', updatedRoom);
               setCurrentRoom(updatedRoom);
               
               // Start the game for the host
-              console.log('🎮 Starting game for host player');
+              // console.log('🎮 Starting game for host player');
               onGameStart(updatedRoom, 1);
               
               // Clear the polling interval
@@ -214,32 +207,26 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
         // Clean up polling after 30 seconds if no guest joins
         setTimeout(() => {
           clearInterval(pollInterval);
-          console.log('⏰ No guest joined within 30 seconds, stopping poll');
+          // console.log('⏰ No guest joined within 30 seconds, stopping poll');
         }, 30000);
       }, 1000); // 1 second delay to show "creating" briefly
     }
   };
 
   const handleJoinRoom = async () => {
-    console.log('🔍 handleJoinRoom called with:', { 
-      playerName: playerName.trim(), 
-      roomCode: roomCode.trim(),
-      useCrossDevice 
-    });
-    
     if (!playerName.trim()) {
-      console.log('❌ No player name');
+      // console.log('❌ No player name');
       setConnectionError('Please enter your name');
       return;
     }
 
     if (!roomCode.trim()) {
-      console.log('❌ No room code');
+      // console.log('❌ No room code');
       setConnectionError('Please enter a room code');
       return;
     }
 
-    console.log('✅ Starting join process...');
+    // console.log('✅ Starting join process...');
     setIsJoiningRoom(true);
     setConnectionError(null);
     setLobbyMode('connecting');
@@ -259,14 +246,14 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
           hostId: "host"
         };
         
-        console.log('🚀 Demo Supabase room joined:', mockRoom);
+        // console.log('🚀 Demo Supabase room joined:', mockRoom);
         setCurrentRoom(mockRoom);
         setLobbyMode('waiting');
         setIsJoiningRoom(false);
         soundManager.playClickSound();
         
         // Start the game immediately
-        console.log('🎮 Starting Demo Supabase cross-device game for guest');
+        // console.log('🎮 Starting Demo Supabase cross-device game for guest');
         onGameStart(mockRoom, 2);
       } else {
         setConnectionError('Room not found or could not join');
@@ -308,17 +295,17 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
           hostId: "host"
         };
         
-        console.log('🚀 Local room joined:', mockRoom);
+        // console.log('🚀 Local room joined:', mockRoom);
         setCurrentRoom(mockRoom);
         setLobbyMode('waiting');
         setIsJoiningRoom(false);
         soundManager.playClickSound();
         
         // Since we have 2 players, start the game immediately
-        console.log('🎮 Starting local game immediately with 2 players');
+        // console.log('🎮 Starting local game immediately with 2 players');
         const currentPlayer = mockRoom.players.find(p => p.id === "guest");
         if (currentPlayer && currentPlayer.playerNumber) {
-          console.log('🎮 Starting game for player:', currentPlayer.playerNumber);
+          // console.log('🎮 Starting game for player:', currentPlayer.playerNumber);
           onGameStart(mockRoom, currentPlayer.playerNumber);
         }
       }, 1000); // 1 second delay to show "connecting" briefly
@@ -593,7 +580,7 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
           placeholder="Enter room code"
           value={roomCode}
           onChange={(e) => {
-            console.log('🔍 Room code changed:', e.target.value);
+            // console.log('🔍 Room code changed:', e.target.value);
             setRoomCode(e.target.value.toUpperCase());
           }}
           style={{
@@ -611,12 +598,6 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
 
       <button
         onClick={() => {
-          console.log('🔍 Join button clicked!', { 
-            isJoiningRoom, 
-            roomCode: roomCode.trim(), 
-            playerName: playerName.trim(),
-            useCrossDevice 
-          });
           handleJoinRoom();
         }}
         disabled={isJoiningRoom || !roomCode.trim()}
@@ -635,23 +616,6 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
         {isJoiningRoom ? '🔄 Joining...' : '🚪 Join Room'}
       </button>
       
-      {/* Debug info */}
-      <div style={{ 
-        fontSize: '0.8em', 
-        color: '#666', 
-        marginTop: '10px',
-        textAlign: 'left',
-        backgroundColor: '#f0f0f0',
-        padding: '10px',
-        borderRadius: '5px'
-      }}>
-        <div>Debug Info:</div>
-        <div>• isJoiningRoom: {isJoiningRoom ? 'true' : 'false'}</div>
-        <div>• roomCode: "{roomCode}"</div>
-        <div>• playerName: "{playerName}"</div>
-        <div>• useCrossDevice: {useCrossDevice ? 'true' : 'false'}</div>
-        <div>• Button disabled: {(isJoiningRoom || !roomCode.trim()) ? 'YES' : 'NO'}</div>
-      </div>
 
       <div style={{ marginTop: '20px' }}>
         <button

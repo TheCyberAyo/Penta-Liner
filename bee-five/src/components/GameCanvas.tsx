@@ -1,23 +1,15 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { type GameState } from '../hooks/useGameLogic';
+import { GRID_SIZE, CELL_SIZE, BORDER_WIDTH, CANVAS_SIZE } from '../constants/gameConstants';
 
 export interface GameCanvasProps {
   gameState: GameState;
   onCellClick: (row: number, col: number) => void;
-  onGameStateChange: (newState: Partial<GameState>) => void;
-  isSinglePlayer: boolean;
 }
-
-const GRID_SIZE = 10;
-const CELL_SIZE = 50;
-const BORDER_WIDTH = 2;
-const CANVAS_SIZE = GRID_SIZE * CELL_SIZE + (GRID_SIZE + 1) * BORDER_WIDTH;
 
 const GameCanvas: React.FC<GameCanvasProps> = ({ 
   gameState, 
-  onCellClick, 
-  onGameStateChange: _onGameStateChange,
-  isSinglePlayer: _isSinglePlayer 
+  onCellClick
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameRef = useRef<number | undefined>(undefined);

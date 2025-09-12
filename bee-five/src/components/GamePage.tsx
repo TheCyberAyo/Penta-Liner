@@ -1,41 +1,32 @@
-import React, { useState } from 'react';
-import GameCanvas from './GameCanvas';
+import React from 'react';
 import { useGameLogic } from '../hooks/useGameLogic';
+import GameCanvas from './GameCanvas';
+import { getPlayerName, getWinnerName } from '../utils/gameLogic';
 
 interface GamePageProps {
-  isSinglePlayer: boolean;
   onBackToWelcome: () => void;
 }
 
-const GamePage: React.FC<GamePageProps> = ({ isSinglePlayer, onBackToWelcome }) => {
-  const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
-  const [timeLimit] = useState(15);
+const GamePage: React.FC<GamePageProps> = ({ onBackToWelcome }) => {
+  const [timeLimit] = React.useState(15);
   
-  const { gameState, handleCellClick, resetGame, updateGameState } = useGameLogic({
-    isSinglePlayer,
-    difficulty,
+  const { gameState, handleCellClick, resetGame } = useGameLogic({
     timeLimit
   });
 
   const getStatusMessage = () => {
     if (gameState.winner > 0) {
-      const winnerName = gameState.winner === 1 ? 'Black' : 'Yellow';
-      return `${winnerName} wins!`;
+      return `${getWinnerName(gameState.winner as 1 | 2)} wins!`;
     }
     if (!gameState.isGameActive && gameState.winner === 0) {
       return 'Game Over - Draw!';
     }
     if (gameState.timeLeft === 0) {
-      const winner = gameState.currentPlayer === 1 ? 'Yellow' : 'Black';
-      return `${winner} wins due to time limit!`;
+      const winner = gameState.currentPlayer === 1 ? 2 : 1;
+      return `${getPlayerName(winner)} wins due to time limit!`;
     }
     
-    const currentPlayerName = gameState.currentPlayer === 1 ? 'Black' : 'Yellow';
-    return `${currentPlayerName}, Play!`;
-  };
-
-  const handleDifficultyChange = (newDifficulty: 'easy' | 'medium' | 'hard') => {
-    setDifficulty(newDifficulty);
+    return `${getPlayerName(gameState.currentPlayer)}, Play!`;
   };
 
   return (
@@ -44,21 +35,6 @@ const GamePage: React.FC<GamePageProps> = ({ isSinglePlayer, onBackToWelcome }) 
         <h1 className="game-title">
           Bee-<span>Five</span>
         </h1>
-        
-        {isSinglePlayer && (
-          <div className="difficulty-selector">
-            <label>AI Difficulty:</label>
-            <select 
-              value={difficulty} 
-              onChange={(e) => handleDifficultyChange(e.target.value as 'easy' | 'medium' | 'hard')}
-              disabled={gameState.isGameActive && gameState.board.some(row => row.some(cell => cell !== 0))}
-            >
-              <option value="easy">Easy</option>
-              <option value="medium">Medium</option>
-              <option value="hard">Hard</option>
-            </select>
-          </div>
-        )}
         
         <div className="timer">
           Time Left: {gameState.timeLeft}s
@@ -69,8 +45,6 @@ const GamePage: React.FC<GamePageProps> = ({ isSinglePlayer, onBackToWelcome }) 
         <GameCanvas
           gameState={gameState}
           onCellClick={handleCellClick}
-          onGameStateChange={updateGameState}
-          isSinglePlayer={isSinglePlayer}
         />
       </div>
 

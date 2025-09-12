@@ -55,7 +55,7 @@ class DemoSupabaseMultiplayerClient {
       roomId: this.roomId
     };
     localStorage.setItem(storageKey, JSON.stringify(dataWithTimestamp));
-    console.log('📤 Demo Supabase: Data stored:', storageKey, dataWithTimestamp);
+    // console.log('📤 Demo Supabase: Data stored:', storageKey, dataWithTimestamp);
   }
 
   private getData(key: string): any {
@@ -63,7 +63,7 @@ class DemoSupabaseMultiplayerClient {
     const data = localStorage.getItem(storageKey);
     if (data) {
       const parsed = JSON.parse(data);
-      console.log('📥 Demo Supabase: Data retrieved:', storageKey, parsed);
+      // console.log('📥 Demo Supabase: Data retrieved:', storageKey, parsed);
       return parsed;
     }
     return null;
@@ -83,7 +83,7 @@ class DemoSupabaseMultiplayerClient {
     };
 
     this.storeData('room', room);
-    console.log('🏠 Demo Supabase: Room created:', room);
+    // console.log('🏠 Demo Supabase: Room created:', room);
     
     this.startPolling();
     return this.roomId;
@@ -98,7 +98,7 @@ class DemoSupabaseMultiplayerClient {
     // Check if room exists
     const existingRoom = this.getData('room');
     if (!existingRoom) {
-      console.log('❌ Demo Supabase: Room not found:', roomId);
+      // console.log('❌ Demo Supabase: Room not found:', roomId);
       return false;
     }
 
@@ -111,7 +111,7 @@ class DemoSupabaseMultiplayerClient {
     };
 
     this.storeData('room', updatedRoom);
-    console.log('🚀 Demo Supabase: Room joined:', updatedRoom);
+    // console.log('🚀 Demo Supabase: Room joined:', updatedRoom);
     
     this.startPolling();
     return true;
@@ -129,7 +129,7 @@ class DemoSupabaseMultiplayerClient {
     };
 
     this.storeData('move', move);
-    console.log('📤 Demo Supabase: Move sent:', move);
+    // console.log('📤 Demo Supabase: Move sent:', move);
   }
 
   async sendGameState(board: (0 | 1 | 2)[][], currentPlayer: 1 | 2, winner: 0 | 1 | 2, gameActive: boolean): Promise<void> {
@@ -147,7 +147,7 @@ class DemoSupabaseMultiplayerClient {
     };
 
     this.storeData('gamestate', gameState);
-    console.log('📤 Demo Supabase: Game state sent:', gameState);
+    // console.log('📤 Demo Supabase: Game state sent:', gameState);
   }
 
   private startPolling(): void {
@@ -184,7 +184,7 @@ class DemoSupabaseMultiplayerClient {
         this.gameStateCallback(gameState);
       }
     } catch (error) {
-      console.warn('Demo Supabase polling error:', error);
+      // console.warn('Demo Supabase polling error:', error);
     }
   }
 
@@ -211,7 +211,7 @@ class DemoSupabaseMultiplayerClient {
     this.playerName = '';
     this.isHost = false;
     
-    console.log('🚪 Demo Supabase: Left room and cleaned up');
+    // console.log('🚪 Demo Supabase: Left room and cleaned up');
   }
 
   // Get the room URL for sharing

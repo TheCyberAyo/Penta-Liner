@@ -1,781 +1,46 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import './App.css';
 import { soundManager } from './utils/sounds';
 import { type RoomInfo } from './utils/p2pMultiplayer';
+import { getPlayerName, getWinnerName } from './utils/gameLogic';
 import { MultiplayerLobby } from './components/MultiplayerLobby';
 import { MultiplayerGame } from './components/MultiplayerGame';
+import { useGameLogic } from './hooks/useGameLogic';
+import GameCanvas from './components/GameCanvas';
 
-// Simple Game Component with Canvas and AI
-function SimpleGame({ onBackToMenu, isSinglePlayer }: { onBackToMenu: () => void; isSinglePlayer: boolean }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const workerRef = useRef<Worker | null>(null);
-  const [board, setBoard] = useState<(0 | 1 | 2)[][]>(() => 
-    Array(10).fill(null).map(() => Array(10).fill(0))
-  );
-  const [currentPlayer, setCurrentPlayer] = useState<1 | 2>(1);
-  const [winner, setWinner] = useState<0 | 1 | 2>(0);
-  const [gameActive, setGameActive] = useState(true);
-  const [aiThinking, setAiThinking] = useState(false);
-  const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
-  const [animatingPieces, setAnimatingPieces] = useState<Map<string, { 
-    player: 1 | 2; 
-    startTime: number; 
-    row: number; 
-    col: number; 
-  }>>(new Map());
-  const [hoveredCell, setHoveredCell] = useState<{ row: number; col: number } | null>(null);
-  const [showWinPopup, setShowWinPopup] = useState(false);
-  const [winMessage, setWinMessage] = useState('');
+// Simple Game Component - Multiplayer Only
+function SimpleGame({ onBackToMenu }: { onBackToMenu: () => void }) {
+  const [timeLimit] = useState(15);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [volume, setVolume] = useState(0.3);
-
-  const GRID_SIZE = 10;
-  const BORDER_WIDTH = 2;
   
-  // Calculate responsive sizes
-  const isMobile = window.innerWidth <= 768;
-  const maxBoardSize = isMobile 
-    ? Math.min(window.innerWidth - 40, window.innerHeight - 200) 
-    : Math.min(500, window.innerWidth * 0.6, window.innerHeight * 0.7);
-  
-  const CELL_SIZE = Math.floor((maxBoardSize - (GRID_SIZE + 1) * BORDER_WIDTH) / GRID_SIZE);
-  const CANVAS_SIZE = GRID_SIZE * CELL_SIZE + (GRID_SIZE + 1) * BORDER_WIDTH;
-
-  // Initialize Web Worker for AI
-  useEffect(() => {
-    if (isSinglePlayer) {
-      workerRef.current = new Worker('/aiWorker.js');
-      
-      workerRef.current.onmessage = (e) => {
-        const { type, move, computationTime } = e.data;
-        
-        if (type === 'bestMoveFound' && move) {
-          console.log(`AI computed move in ${computationTime.toFixed(2)}ms`);
-          setAiThinking(false);
-          
-          // Apply AI move
-          setBoard(prevBoard => {
-            const newBoard = prevBoard.map(row => [...row]);
-            newBoard[move.row][move.col] = 2; // AI is player 2
-            
-            if (checkWin(newBoard, move.row, move.col, 2)) {
-              setTimeout(() => {
-                setWinner(2);
-                setGameActive(false);
-              }, 0);
-            } else {
-              setTimeout(() => {
-                setCurrentPlayer(1); // Switch back to human player
-              }, 0);
-            }
-            
-            return newBoard;
-          });
-        }
-        
-        if (type === 'error') {
-          console.error('AI Worker error:', e.data.message);
-          setAiThinking(false);
-          // Fallback to smart move
-          makeSmartAiMove();
-        }
-      };
-      
-      workerRef.current.onerror = (error) => {
-        console.error('Worker error:', error);
-        setAiThinking(false);
-        makeSmartAiMove();
-      };
-    }
-    
-    return () => {
-      if (workerRef.current) {
-        workerRef.current.terminate();
-      }
-    };
-  }, [isSinglePlayer]);
-
-  // Check for win condition
-  const checkWin = (board: (0 | 1 | 2)[][], row: number, col: number, player: 1 | 2): boolean => {
-    const directions = [[0, 1], [1, 0], [1, 1], [1, -1]];
-    
-    for (const [dRow, dCol] of directions) {
-      let count = 1;
-      
-      // Check positive direction
-      for (let i = 1; i < 5; i++) {
-        const newRow = row + i * dRow;
-        const newCol = col + i * dCol;
-        if (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 10 && board[newRow][newCol] === player) {
-          count++;
-        } else break;
-      }
-      
-      // Check negative direction
-      for (let i = 1; i < 5; i++) {
-        const newRow = row - i * dRow;
-        const newCol = col - i * dCol;
-        if (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 10 && board[newRow][newCol] === player) {
-          count++;
-        } else break;
-      }
-      
-      if (count >= 5) return true;
-    }
-    return false;
-  };
-
-  // Smart AI move with strategic thinking
-  const makeSmartAiMove = useCallback(() => {
-    setAiThinking(false);
-    setBoard(prevBoard => {
-      let bestMove = findBestMove(prevBoard, difficulty);
-      
-      if (!bestMove) {
-        // Fallback to random if no move found
-        const emptyCells: { row: number; col: number }[] = [];
-        for (let row = 0; row < 10; row++) {
-          for (let col = 0; col < 10; col++) {
-            if (prevBoard[row][col] === 0) {
-              emptyCells.push({ row, col });
-            }
-          }
-        }
-        if (emptyCells.length === 0) return prevBoard;
-        bestMove = emptyCells[Math.floor(Math.random() * emptyCells.length)];
-      }
-      
-      const newBoard = prevBoard.map(row => [...row]);
-      newBoard[bestMove.row][bestMove.col] = 2;
-      
-      // Play AI buzz sound for piece placement
-      if (soundEnabled) {
-        setTimeout(() => {
-          soundManager.playAIBuzzSound();
-        }, 100); // Small delay to distinguish from human sound
-      }
-      
-      // Start animation for AI piece
-      const pieceKey = `${bestMove.row}-${bestMove.col}`;
-      setAnimatingPieces(prev => {
-        const newMap = new Map(prev);
-        newMap.set(pieceKey, {
-          player: 2,
-          startTime: Date.now(),
-          row: bestMove.row,
-          col: bestMove.col
-        });
-        return newMap;
-      });
-      
-      if (checkWin(newBoard, bestMove.row, bestMove.col, 2)) {
-        setTimeout(() => {
-          setWinner(2);
-          setGameActive(false);
-          
-          // Show AI win popup
-          setTimeout(() => {
-            setWinMessage('AI Wins!');
-            setShowWinPopup(true);
-            
-            // Play defeat sound for AI win
-            if (soundEnabled) {
-              soundManager.playDefeatSound();
-            }
-          }, 500);
-        }, 0);
-      } else {
-        setTimeout(() => {
-          setCurrentPlayer(1); // Switch back to human player
-        }, 0);
-      }
-      
-      return newBoard;
-    });
-  }, [checkWin, difficulty]);
-
-  // Find the best move for AI using strategic analysis with strong defense
-  const findBestMove = (board: (0 | 1 | 2)[][], difficulty: 'easy' | 'medium' | 'hard') => {
-    const moves = getAvailableMoves(board);
-    if (moves.length === 0) return null;
-
-    // 1. Check for immediate winning moves
-    for (const move of moves) {
-      const testBoard = board.map(row => [...row]);
-      testBoard[move.row][move.col] = 2;
-      if (checkWin(testBoard, move.row, move.col, 2)) {
-        console.log('AI found winning move!');
-        return move;
-      }
-    }
-
-    // 2. Check for critical defensive moves (block human wins)
-    for (const move of moves) {
-      const testBoard = board.map(row => [...row]);
-      testBoard[move.row][move.col] = 1; // Test if human would win here
-      if (checkWin(testBoard, move.row, move.col, 1)) {
-        console.log('AI blocking human win!');
-        return move; // Block this winning move
-      }
-    }
-
-    // 3. Look for multiple threats (human has 2+ ways to win next turn)
-    const criticalDefense = findCriticalDefense(board);
-    if (criticalDefense) {
-      console.log('AI defending against multiple threats!');
-      return criticalDefense;
-    }
-
-    // 4. Strategic move evaluation
-    let bestMove = null;
-    let bestScore = -Infinity;
-
-    const depthMap = { easy: 1, medium: 2, hard: 3 };
-    const maxDepth = depthMap[difficulty];
-
-    for (const move of moves) {
-      const score = evaluateMove(board, move, 2, maxDepth);
-      if (score > bestScore) {
-        bestScore = score;
-        bestMove = move;
-      }
-    }
-
-    return bestMove || moves[0];
-  };
-
-  // Find critical defensive moves against multiple threats
-  const findCriticalDefense = (board: (0 | 1 | 2)[][]) => {
-    const moves = getAvailableMoves(board);
-    const humanThreats = [];
-
-    // Find all positions where human could win next turn
-    for (const move of moves) {
-      const testBoard = board.map(row => [...row]);
-      testBoard[move.row][move.col] = 1;
-      if (checkWin(testBoard, move.row, move.col, 1)) {
-        humanThreats.push(move);
-      }
-    }
-
-    // If human has 2+ winning threats, try to find a move that blocks multiple
-    if (humanThreats.length >= 2) {
-      // Look for moves that create our own threats while defending
-      for (const move of moves) {
-        const testBoard = board.map(row => [...row]);
-        testBoard[move.row][move.col] = 2;
-        
-        // Check if this move creates a winning threat for us
-        const aiThreatCount = countThreats(testBoard, 2);
-        const originalAiThreats = countThreats(board, 2);
-        
-        if (aiThreatCount > originalAiThreats) {
-          return move; // This creates a counter-threat
-        }
-      }
-      
-      // If no counter-threat possible, block the most dangerous threat
-      return humanThreats[0];
-    }
-
-    return null;
-  };
-
-  // Count the number of immediate winning threats for a player
-  const countThreats = (board: (0 | 1 | 2)[][], player: 1 | 2): number => {
-    const moves = getAvailableMoves(board);
-    let threats = 0;
-
-    for (const move of moves) {
-      const testBoard = board.map(row => [...row]);
-      testBoard[move.row][move.col] = player;
-      if (checkWin(testBoard, move.row, move.col, player)) {
-        threats++;
-      }
-    }
-
-    return threats;
-  };
-
-  // Get all available moves
-  const getAvailableMoves = (board: (0 | 1 | 2)[][]) => {
-    const moves: { row: number; col: number }[] = [];
-    for (let row = 0; row < 10; row++) {
-      for (let col = 0; col < 10; col++) {
-        if (board[row][col] === 0) {
-          moves.push({ row, col });
-        }
-      }
-    }
-    return moves;
-  };
-
-  // Evaluate a move's strategic value
-  const evaluateMove = (board: (0 | 1 | 2)[][], move: { row: number; col: number }, player: 1 | 2, depth: number): number => {
-    const newBoard = board.map(row => [...row]);
-    newBoard[move.row][move.col] = player;
-
-    // Check for immediate win
-    if (checkWin(newBoard, move.row, move.col, player)) {
-      return player === 2 ? 1000 : -1000;
-    }
-
-    if (depth === 0) {
-      return evaluatePosition(newBoard, move.row, move.col, player);
-    }
-
-    // Simple minimax for deeper analysis
-    const opponent = player === 1 ? 2 : 1;
-    const opponentMoves = getAvailableMoves(newBoard);
-    
-    if (player === 2) {
-      // Maximizing for AI
-      let maxScore = -Infinity;
-      for (const opponentMove of opponentMoves.slice(0, 5)) { // Limit for performance
-        const score = evaluateMove(newBoard, opponentMove, opponent, depth - 1);
-        maxScore = Math.max(maxScore, score);
-      }
-      return maxScore;
-    } else {
-      // Minimizing for human
-      let minScore = Infinity;
-      for (const opponentMove of opponentMoves.slice(0, 5)) { // Limit for performance
-        const score = evaluateMove(newBoard, opponentMove, opponent, depth - 1);
-        minScore = Math.min(minScore, score);
-      }
-      return minScore;
-    }
-  };
-
-  // Evaluate the strategic value of a position with strong defensive focus
-  const evaluatePosition = (board: (0 | 1 | 2)[][], row: number, col: number, player: 1 | 2): number => {
-    let score = 0;
-    const directions = [[0, 1], [1, 0], [1, 1], [1, -1]];
-
-    // Evaluate offensive potential
-    for (const [dRow, dCol] of directions) {
-      score += evaluateLine(board, row, col, dRow, dCol, player);
-    }
-
-    // Evaluate defensive value (blocking opponent)
-    const opponent = player === 1 ? 2 : 1;
-    for (const [dRow, dCol] of directions) {
-      const defensiveValue = evaluateLine(board, row, col, dRow, dCol, opponent);
-      // Defensive moves are highly valued
-      score += Math.abs(defensiveValue) * 1.5;
-    }
-
-    // Bonus for center positions
-    const centerDistance = Math.abs(row - 5) + Math.abs(col - 5);
-    score += (10 - centerDistance) * 2;
-
-    // Penalty for edge positions (less strategic value)
-    if (row === 0 || row === 9 || col === 0 || col === 9) {
-      score -= 5;
-    }
-
-    // Bonus for positions that support multiple lines
-    let lineCount = 0;
-    for (const [dRow, dCol] of directions) {
-      if (hasLineSupport(board, row, col, dRow, dCol, player)) {
-        lineCount++;
-      }
-    }
-    score += lineCount * 3;
-
-    return score;
-  };
-
-  // Check if a position supports building a line
-  const hasLineSupport = (board: (0 | 1 | 2)[][], row: number, col: number, dRow: number, dCol: number, player: 1 | 2): boolean => {
-    let supportCount = 0;
-    
-    // Check both directions for friendly pieces or empty spaces
-    for (let i = 1; i <= 4; i++) {
-      const newRow = row + i * dRow;
-      const newCol = col + i * dCol;
-      
-      if (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 10) {
-        if (board[newRow][newCol] === player || board[newRow][newCol] === 0) {
-          supportCount++;
-        } else {
-          break;
-        }
-      }
-    }
-    
-    for (let i = 1; i <= 4; i++) {
-      const newRow = row - i * dRow;
-      const newCol = col - i * dCol;
-      
-      if (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 10) {
-        if (board[newRow][newCol] === player || board[newRow][newCol] === 0) {
-          supportCount++;
-        } else {
-          break;
-        }
-      }
-    }
-    
-    return supportCount >= 4; // Need at least 4 supporting positions for a potential line
-  };
-
-  // Evaluate a line in a specific direction
-  const evaluateLine = (board: (0 | 1 | 2)[][], row: number, col: number, dRow: number, dCol: number, player: 1 | 2): number => {
-    let count = 0;
-    let blocked = 0;
-    let score = 0;
-
-    // Check positive direction
-    for (let i = 1; i < 5; i++) {
-      const newRow = row + i * dRow;
-      const newCol = col + i * dCol;
-      
-      if (newRow < 0 || newRow >= 10 || newCol < 0 || newCol >= 10) {
-        blocked++;
-        break;
-      }
-      
-      if (board[newRow][newCol] === player) {
-        count++;
-      } else if (board[newRow][newCol] !== 0) {
-        blocked++;
-        break;
-      } else {
-        break;
-      }
-    }
-
-    // Check negative direction
-    for (let i = 1; i < 5; i++) {
-      const newRow = row - i * dRow;
-      const newCol = col - i * dCol;
-      
-      if (newRow < 0 || newRow >= 10 || newCol < 0 || newCol >= 10) {
-        blocked++;
-        break;
-      }
-      
-      if (board[newRow][newCol] === player) {
-        count++;
-      } else if (board[newRow][newCol] !== 0) {
-        blocked++;
-        break;
-      } else {
-        break;
-      }
-    }
-
-    // Score based on count and blocking with enhanced defensive values
-    if (blocked === 2) return 0; // Completely blocked
-    
-    if (player === 2) { // AI scoring
-      if (count >= 4) return 1000; // AI about to win
-      if (count === 3) return blocked === 0 ? 100 : 50; // Strong position
-      if (count === 2) return blocked === 0 ? 20 : 10;
-      if (count === 1) return 5;
-    } else { // Human scoring (for defensive evaluation)
-      if (count >= 4) return -1000; // Must block human win
-      if (count === 3) return blocked === 0 ? -200 : -100; // Critical to block
-      if (count === 2) return blocked === 0 ? -40 : -20; // Important to block
-      if (count === 1) return -10;
-    }
-    
-    return score;
-  };
-
-  // Animation constants
-  const ANIMATION_DURATION = 400; // ms
-  const animationFrameRef = useRef<number | undefined>(undefined);
-
-  // Draw the game board with smooth animations
-  const drawGame = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const currentTime = Date.now();
-    let needsRedraw = false;
-
-    // Clear canvas
-    ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
-
-    // Draw background
-    ctx.fillStyle = '#87CEEB';
-    ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
-
-    // Draw cells and pieces
-    for (let row = 0; row < GRID_SIZE; row++) {
-      for (let col = 0; col < GRID_SIZE; col++) {
-        const x = col * (CELL_SIZE + BORDER_WIDTH) + BORDER_WIDTH;
-        const y = row * (CELL_SIZE + BORDER_WIDTH) + BORDER_WIDTH;
-
-        // Cell background
-        ctx.fillStyle = '#87CEEB';
-        ctx.fillRect(x, y, CELL_SIZE, CELL_SIZE);
-
-        // Draw static pieces (already placed)
-        const cellValue = board[row][col];
-        const pieceKey = `${row}-${col}`;
-        const animatingPiece = animatingPieces.get(pieceKey);
-
-        if (cellValue !== 0) {
-          let scale = 1;
-          let opacity = 1;
-
-          // Check if this piece is animating
-          if (animatingPiece) {
-            const elapsed = currentTime - animatingPiece.startTime;
-            const progress = Math.min(elapsed / ANIMATION_DURATION, 1);
-            
-            // Smooth easing function (ease-out)
-            const easeOut = 1 - Math.pow(1 - progress, 3);
-            
-            // Scale animation: start small and grow
-            scale = 0.1 + (0.9 * easeOut);
-            
-            // Opacity animation: fade in
-            opacity = easeOut;
-
-            if (progress < 1) {
-              needsRedraw = true;
-            } else {
-              // Animation complete, remove from animating pieces
-              setAnimatingPieces(prev => {
-                const newMap = new Map(prev);
-                newMap.delete(pieceKey);
-                return newMap;
-              });
-            }
-          }
-
-          // Draw piece with animation effects
-          ctx.save();
-          ctx.globalAlpha = opacity;
-          
-          const centerX = x + CELL_SIZE / 2;
-          const centerY = y + CELL_SIZE / 2;
-          const radius = (CELL_SIZE / 3) * scale;
-
-          if (cellValue === 1) {
-            ctx.fillStyle = '#000000'; // black
-          } else {
-            ctx.fillStyle = '#FFC30B'; // yellow
-          }
-
-          ctx.beginPath();
-          ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-          ctx.fill();
-
-          // Add a subtle glow effect for new pieces
-          if (animatingPiece && scale < 0.8) {
-            ctx.shadowColor = cellValue === 1 ? '#333333' : '#FFD700';
-            ctx.shadowBlur = 10 * (1 - scale);
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.shadowBlur = 0;
-          }
-
-          ctx.restore();
-        }
-
-        // Draw hover effect
-        if (hoveredCell && hoveredCell.row === row && hoveredCell.col === col && 
-            cellValue === 0 && gameActive && !aiThinking && 
-            (!isSinglePlayer || currentPlayer === 1)) {
-          ctx.save();
-          ctx.globalAlpha = 0.4;
-          
-          const centerX = x + CELL_SIZE / 2;
-          const centerY = y + CELL_SIZE / 2;
-          const radius = CELL_SIZE / 3;
-
-          if (currentPlayer === 1) {
-            ctx.fillStyle = '#000000'; // black preview
-          } else {
-            ctx.fillStyle = '#FFC30B'; // yellow preview
-          }
-
-          ctx.beginPath();
-          ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-          ctx.fill();
-          
-          ctx.restore();
-        }
-
-        // Cell borders
-        ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = BORDER_WIDTH;
-        ctx.strokeRect(x, y, CELL_SIZE, CELL_SIZE);
-      }
-    }
-
-    // Continue animation if needed
-    if (needsRedraw) {
-      animationFrameRef.current = requestAnimationFrame(drawGame);
-    }
-  }, [board, animatingPieces, hoveredCell, gameActive, aiThinking, currentPlayer, isSinglePlayer]);
-
-  // Start animation loop
-  useEffect(() => {
-    drawGame();
-    return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-    };
-  }, [drawGame]);
-
-  // Handle canvas click
-  const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!gameActive || winner > 0 || aiThinking) return;
-    if (isSinglePlayer && currentPlayer === 2) return; // AI's turn
-
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
-
-    const col = Math.floor((x - BORDER_WIDTH) / (CELL_SIZE + BORDER_WIDTH));
-    const row = Math.floor((y - BORDER_WIDTH) / (CELL_SIZE + BORDER_WIDTH));
-
-    if (row >= 0 && row < GRID_SIZE && col >= 0 && col < GRID_SIZE && board[row][col] === 0) {
-      const newBoard = board.map(r => [...r]);
-      newBoard[row][col] = currentPlayer;
-      
-      // Start animation for the new piece
-      const pieceKey = `${row}-${col}`;
-      setAnimatingPieces(prev => {
-        const newMap = new Map(prev);
-        newMap.set(pieceKey, {
-          player: currentPlayer,
-          startTime: Date.now(),
-          row,
-          col
-        });
-        return newMap;
-      });
-      
-      setBoard(newBoard);
-      
-      // Play buzz sound for piece placement
-      if (soundEnabled) {
-        soundManager.playBuzzSound();
-      }
-      
-      if (checkWin(newBoard, row, col, currentPlayer)) {
-        setWinner(currentPlayer);
-        setGameActive(false);
-        
-        // Show win popup with delay to let animation finish
-        setTimeout(() => {
-          const winnerName = isSinglePlayer 
-            ? (currentPlayer === 1 ? 'You Win!' : 'AI Wins!')
-            : (currentPlayer === 1 ? 'Black Wins!' : 'Yellow Wins!');
-          setWinMessage(winnerName);
-          setShowWinPopup(true);
-          
-          // Play victory or defeat sound
-          if (soundEnabled) {
-            if (isSinglePlayer && currentPlayer === 1) {
-              soundManager.playVictorySound(); // Human wins
-            } else if (isSinglePlayer && currentPlayer === 2) {
-              soundManager.playDefeatSound(); // AI wins
-            } else {
-              soundManager.playVictorySound(); // Multiplayer win
-            }
-          }
-        }, 500);
-      } else {
-        if (isSinglePlayer && currentPlayer === 1) {
-          // Trigger AI move
-          setCurrentPlayer(2);
-          setAiThinking(true);
-          
-          setTimeout(() => {
-            makeSmartAiMove();
-          }, 500); // Small delay for better UX
-        } else {
-          setCurrentPlayer(currentPlayer === 1 ? 2 : 1);
-        }
-      }
-    }
-  };
-
-  // Handle mouse move for hover effect
-  const handleMouseMove = (event: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
-
-    const col = Math.floor((x - BORDER_WIDTH) / (CELL_SIZE + BORDER_WIDTH));
-    const row = Math.floor((y - BORDER_WIDTH) / (CELL_SIZE + BORDER_WIDTH));
-
-    if (row >= 0 && row < GRID_SIZE && col >= 0 && col < GRID_SIZE) {
-      const newCell = { row, col };
-      const isNewHover = !hoveredCell || hoveredCell.row !== row || hoveredCell.col !== col;
-      
-      // Only play hover sound for new cells and if it's a valid move
-      if (isNewHover && board[row][col] === 0 && gameActive && !aiThinking && 
-          (!isSinglePlayer || currentPlayer === 1) && soundEnabled) {
-        soundManager.playHoverSound();
-      }
-      
-      setHoveredCell(newCell);
-    } else {
-      setHoveredCell(null);
-    }
-  };
-
-  // Handle mouse leave
-  const handleMouseLeave = () => {
-    setHoveredCell(null);
-  };
-
-  // Reset game
-  const resetGame = () => {
-    setBoard(Array(10).fill(null).map(() => Array(10).fill(0)));
-    setCurrentPlayer(1);
-    setWinner(0);
-    setGameActive(true);
-    setAiThinking(false);
-    setAnimatingPieces(new Map()); // Clear all animations
-    setShowWinPopup(false); // Hide popup
-    setWinMessage('');
-  };
+  const { gameState, handleCellClick, resetGame } = useGameLogic({
+    timeLimit
+  });
 
   // Initialize sound manager settings
-  useEffect(() => {
+  React.useEffect(() => {
     soundManager.setVolume(volume);
     soundManager.setMuted(!soundEnabled);
   }, [volume, soundEnabled]);
 
-  // Draw game when board changes
-  useEffect(() => {
-    drawGame();
-  }, [drawGame]);
-
   const getStatusMessage = () => {
-    if (winner > 0) {
-      const winnerName = winner === 1 ? 'Black (You)' : 'Yellow (AI)';
-      return isSinglePlayer ? `${winnerName} wins!` : `${winner === 1 ? 'Black' : 'Yellow'} wins!`;
+    if (gameState.winner > 0) {
+      return `${getWinnerName(gameState.winner as 1 | 2)} wins!`;
     }
-    if (aiThinking) {
-      return 'AI is thinking...';
+    if (!gameState.isGameActive && gameState.winner === 0) {
+      return 'Game Over - Draw!';
     }
-    if (isSinglePlayer) {
-      return currentPlayer === 1 ? 'Your turn (Black)' : 'AI turn (Yellow)';
+    if (gameState.timeLeft === 0) {
+      const winner = gameState.currentPlayer === 1 ? 2 : 1;
+      return `${getPlayerName(winner)} wins due to time limit!`;
     }
-    return `${currentPlayer === 1 ? 'Black' : 'Yellow'}, Play!`;
+    
+    return `${getPlayerName(gameState.currentPlayer)}, Play!`;
   };
+
+  // Calculate responsive sizes
+  const isMobile = window.innerWidth <= 768;
 
   return (
     <div style={{ 
@@ -899,71 +164,7 @@ function SimpleGame({ onBackToMenu, isSinglePlayer }: { onBackToMenu: () => void
         zIndex: 9
       }}>
         {getStatusMessage()}
-        
-        {/* AI thinking indicator */}
-        {aiThinking && (
-          <div style={{
-            marginTop: '0.5rem',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            gap: '0.5rem'
-          }}>
-            <div style={{
-              width: '6px',
-              height: '6px',
-              borderRadius: '50%',
-              backgroundColor: '#FFC30B',
-              animation: 'pulse 1s infinite'
-            }} />
-            <span style={{ fontSize: '0.9em', color: '#666' }}>AI calculating best move...</span>
-          </div>
-        )}
       </div>
-
-      {/* AI Difficulty selector for single player (mobile-optimized) */}
-      {isSinglePlayer && (
-        <div style={{
-          background: 'rgba(255, 255, 255, 0.9)',
-          padding: isMobile ? '0.5rem 1rem' : '0.75rem 1.5rem',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          gap: '1rem',
-          fontSize: isMobile ? '0.85rem' : '0.9rem',
-          borderBottom: '1px solid rgba(0,0,0,0.1)'
-        }}>
-          <label style={{ color: '#333', fontWeight: 'bold' }}>
-            AI Level:
-          </label>
-          <select 
-            value={difficulty} 
-            onChange={(e) => setDifficulty(e.target.value as 'easy' | 'medium' | 'hard')}
-            disabled={gameActive && (board.some(row => row.some(cell => cell !== 0)) || aiThinking)}
-            style={{
-              padding: '0.4rem 0.6rem',
-              borderRadius: '6px',
-              border: '2px solid #ccc',
-              backgroundColor: 'white',
-              color: '#333',
-              fontWeight: 'bold',
-              fontSize: 'inherit'
-            }}
-          >
-            <option value="easy">🟢 Easy</option>
-            <option value="medium">🟡 Medium</option>
-            <option value="hard">🔴 Hard</option>
-          </select>
-          
-          {!isMobile && (
-            <span style={{ color: '#666', fontSize: '0.8em', fontStyle: 'italic' }}>
-              {difficulty === 'easy' && '1-move lookahead'}
-              {difficulty === 'medium' && '2-move + blocking'}
-              {difficulty === 'hard' && 'impossible to win'}
-            </span>
-          )}
-        </div>
-      )}
 
       {/* Main game area - fills remaining space */}
       <div style={{
@@ -981,44 +182,1270 @@ function SimpleGame({ onBackToMenu, isSinglePlayer }: { onBackToMenu: () => void
           justifyContent: 'center',
           alignItems: 'center'
         }}>
-          <canvas
-            ref={canvasRef}
-            width={CANVAS_SIZE}
-            height={CANVAS_SIZE}
-            onClick={handleCanvasClick}
-            onMouseMove={handleMouseMove}
-            onMouseLeave={handleMouseLeave}
-            style={{
-              border: `${isMobile ? 3 : 4}px solid black`,
-              borderRadius: isMobile ? '12px' : '15px',
-              cursor: gameActive ? 'pointer' : 'default',
-              boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
-              background: 'rgba(135, 206, 235, 0.9)',
-              maxWidth: '100%',
-              maxHeight: '100%'
+            <GameCanvas
+              gameState={gameState}
+              onCellClick={handleCellClick}
+            />
+        </div>
+      </div>
+
+      {/* Volume control (only when sound is enabled) */}
+      {soundEnabled && (
+        <div style={{
+          background: 'rgba(255, 255, 255, 0.9)',
+          padding: '0.5rem 1rem',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: '1rem',
+          fontSize: '0.85rem',
+          borderTop: '1px solid rgba(0,0,0,0.1)'
+        }}>
+          <span style={{ color: '#333', fontWeight: 'bold' }}>🔊 Volume:</span>
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.1"
+            value={volume}
+            onChange={(e) => {
+              const newVolume = parseFloat(e.target.value);
+              setVolume(newVolume);
+              soundManager.setVolume(newVolume);
+            }}
+            style={{ 
+              width: isMobile ? '120px' : '150px',
+              accentColor: '#FFC30B'
             }}
           />
+          <span style={{ color: '#666', fontSize: '0.8em' }}>
+            {Math.round(volume * 100)}%
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// AI Game Component with intelligent AI opponent
+function AIGame({ onBackToMenu }: { onBackToMenu: () => void }) {
+  const [timeLimit] = useState(15);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [volume, setVolume] = useState(0.3);
+  const [aiDifficulty, setAiDifficulty] = useState('medium');
+  const [showDifficultyModal, setShowDifficultyModal] = useState(false);
+  const [playerSkillLevel, setPlayerSkillLevel] = useState(0); // Dynamic difficulty tracking
+  
+  const { gameState, handleCellClick, resetGame } = useGameLogic({
+    timeLimit
+  });
+
+  // Initialize sound manager settings
+  React.useEffect(() => {
+    soundManager.setVolume(volume);
+    soundManager.setMuted(!soundEnabled);
+  }, [volume, soundEnabled]);
+
+  // AI move logic
+  React.useEffect(() => {
+    if (gameState.currentPlayer === 2 && gameState.isGameActive && gameState.winner === 0) {
+      // AI's turn - make a move after a short delay
+      const timer = setTimeout(() => {
+        makeAIMove();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [gameState.currentPlayer, gameState.isGameActive, gameState.winner]);
+
+  // Track game results for dynamic difficulty
+  React.useEffect(() => {
+    if (gameState.winner > 0) {
+      if (gameState.winner === 1) {
+        updatePlayerSkillLevel('win'); // Human won
+      } else if (gameState.winner === 2) {
+        updatePlayerSkillLevel('loss'); // AI won
+      }
+    }
+  }, [gameState.winner]);
+
+  const makeAIMove = () => {
+    // Get available cells
+    const availableCells = [];
+    for (let row = 0; row < 10; row++) {
+      for (let col = 0; col < 10; col++) {
+        if (gameState.board[row][col] === 0) {
+          availableCells.push({ row, col });
+        }
+      }
+    }
+
+    if (availableCells.length === 0) return;
+
+    // Always call getBestAIMove to get the proper AI strategy
+    const selectedCell = getBestAIMove(availableCells);
+
+    // Make the AI move
+    handleCellClick(selectedCell.row, selectedCell.col);
+  };
+
+  const getBestAIMove = (availableCells: {row: number, col: number}[]) => {
+    if (aiDifficulty === 'easy') {
+      return getEasyAIMove(availableCells);
+    } else if (aiDifficulty === 'medium') {
+      return getMediumAIMove(availableCells);
+    } else {
+      return getHardAIMove(availableCells);
+    }
+  };
+
+  const getEasyAIMove = (availableCells: {row: number, col: number}[]) => {
+    // Easy AI: Focus on building 5-in-a-row, only block when human has 4-in-a-row
+    
+    // Priority 1: Check if AI can win in one move
+    for (let cell of availableCells) {
+      const testBoard = gameState.board.map(row => [...row]);
+      testBoard[cell.row][cell.col] = 2;
+      if (checkWinCondition(testBoard, cell.row, cell.col, 2)) {
+        return cell;
+      }
+    }
+
+    // Priority 2: Block human from winning (only when human has 4-in-a-row)
+    for (let cell of availableCells) {
+      const testBoard = gameState.board.map(row => [...row]);
+      testBoard[cell.row][cell.col] = 1;
+      if (checkWinCondition(testBoard, cell.row, cell.col, 1)) {
+        return cell;
+      }
+    }
+
+    // Priority 3: Look for AI opportunities (3-in-a-row and 4-in-a-row) - only if they can reach 5
+    const aiOpportunities = findThreatCells(availableCells, 2);
+    for (let cell of aiOpportunities) {
+      const testBoard = gameState.board.map(row => [...row]);
+      testBoard[cell.row][cell.col] = 2;
+      if (canReachFive(testBoard, cell.row, cell.col, 2)) {
+        return cell;
+      }
+    }
+
+    // Priority 4: Look for AI 2-in-a-row opportunities - only if they can reach 5
+    const aiTwoInARow = findTwoInARowCells(availableCells, 2);
+    for (let cell of aiTwoInARow) {
+      const testBoard = gameState.board.map(row => [...row]);
+      testBoard[cell.row][cell.col] = 2;
+      if (canReachFive(testBoard, cell.row, cell.col, 2)) {
+        return cell;
+      }
+    }
+
+    // Priority 5: Random move
+    return availableCells[Math.floor(Math.random() * availableCells.length)];
+  };
+
+  const getMediumAIMove = (availableCells: {row: number, col: number}[]) => {
+    // Medium AI: Fixed logic with proper threat detection
+    
+    // Priority 1: Check if AI can win in one move
+    for (let cell of availableCells) {
+      const testBoard = gameState.board.map(row => [...row]);
+      testBoard[cell.row][cell.col] = 2;
+      if (checkWinCondition(testBoard, cell.row, cell.col, 2)) {
+        return cell;
+      }
+    }
+
+    // Priority 2: Block human from winning (defend against 4-in-a-row)
+    for (let cell of availableCells) {
+      const testBoard = gameState.board.map(row => [...row]);
+      testBoard[cell.row][cell.col] = 1;
+      if (checkWinCondition(testBoard, cell.row, cell.col, 1)) {
+        return cell;
+      }
+    }
+
+    // Priority 3: Block human 3-in-a-row threats (direct simulation)
+    for (let cell of availableCells) {
+      const testBoard = gameState.board.map(row => [...row]);
+      testBoard[cell.row][cell.col] = 1;
+      if (checkThreeInARow(testBoard, cell.row, cell.col, 1)) {
+        return cell;
+      }
+    }
+
+    // Priority 4: Look for AI opportunities (3-in-a-row) - only if they can reach 5
+    for (let cell of availableCells) {
+      const testBoard = gameState.board.map(row => [...row]);
+      testBoard[cell.row][cell.col] = 2;
+      if (checkThreeInARow(testBoard, cell.row, cell.col, 2) && canReachFive(testBoard, cell.row, cell.col, 2)) {
+        return cell;
+      }
+    }
+
+    // Priority 5: Block human 2-in-a-row threats
+    for (let cell of availableCells) {
+      const testBoard = gameState.board.map(row => [...row]);
+      testBoard[cell.row][cell.col] = 1;
+      if (checkTwoInARow(testBoard, cell.row, cell.col, 1)) {
+        return cell;
+      }
+    }
+
+    // Priority 6: Look for AI 2-in-a-row opportunities - only if they can reach 5
+    for (let cell of availableCells) {
+      const testBoard = gameState.board.map(row => [...row]);
+      testBoard[cell.row][cell.col] = 2;
+      if (checkTwoInARow(testBoard, cell.row, cell.col, 2) && canReachFive(testBoard, cell.row, cell.col, 2)) {
+        return cell;
+      }
+    }
+
+    // Priority 7: Random move if no strategic options
+    return availableCells[Math.floor(Math.random() * availableCells.length)];
+  };
+
+  const getHardAIMove = (availableCells: {row: number, col: number}[]) => {
+    // Hard AI: Advanced minimax algorithm with alpha-beta pruning and deep lookahead
+    
+    // Check opening book for early game optimal moves
+    const openingMove = getAdvancedOpeningMove(availableCells);
+    if (openingMove) {
+      return openingMove;
+    }
+    
+    // CRITICAL: Always check for immediate threats first (defense priority)
+    // Priority 1: Check if AI can win in one move
+    for (let cell of availableCells) {
+      const testBoard = gameState.board.map(row => [...row]);
+      testBoard[cell.row][cell.col] = 2;
+      if (checkWinCondition(testBoard, cell.row, cell.col, 2)) {
+        return cell;
+      }
+    }
+
+    // Priority 2: Block human from winning (defend against 4-in-a-row)
+    for (let cell of availableCells) {
+      const directions = [[0, 1], [1, 0], [1, 1], [1, -1]];
+      for (let [dRow, dCol] of directions) {
+        let humanCount = 0;
+        let emptySpaces = 0;
+        
+        // Check the line in both directions
+        for (let i = -4; i <= 4; i++) {
+          const checkRow = cell.row + i * dRow;
+          const checkCol = cell.col + i * dCol;
+          if (checkRow >= 0 && checkRow < 10 && checkCol >= 0 && checkCol < 10) {
+            if (gameState.board[checkRow][checkCol] === 1) {
+              humanCount++;
+            } else if (gameState.board[checkRow][checkCol] === 0) {
+              emptySpaces++;
+            }
+          }
+        }
+        
+        // If there are 4 human pieces and at least 1 empty space, block it
+        if (humanCount >= 4 && emptySpaces >= 1) {
+          console.log('Hard AI: Blocking 4-in-a-row threat at', cell.row, cell.col);
+          return cell;
+        }
+      }
+    }
+
+    // Priority 3: Block human 3-in-a-row threats
+    for (let cell of availableCells) {
+      const directions = [[0, 1], [1, 0], [1, 1], [1, -1]];
+      for (let [dRow, dCol] of directions) {
+        let humanCount = 0;
+        let emptySpaces = 0;
+        
+        // Check the line in both directions
+        for (let i = -4; i <= 4; i++) {
+          const checkRow = cell.row + i * dRow;
+          const checkCol = cell.col + i * dCol;
+          if (checkRow >= 0 && checkRow < 10 && checkCol >= 0 && checkCol < 10) {
+            if (gameState.board[checkRow][checkCol] === 1) {
+              humanCount++;
+            } else if (gameState.board[checkRow][checkCol] === 0) {
+              emptySpaces++;
+            }
+          }
+        }
+        
+        // If there are 3 human pieces and enough empty spaces to reach 5, block it
+        if (humanCount >= 3 && emptySpaces >= 2) {
+          console.log('Hard AI: Blocking 3-in-a-row threat at', cell.row, cell.col);
+          return cell;
+        }
+      }
+    }
+
+    // Priority 4: Block human 2-in-a-row threats
+    for (let cell of availableCells) {
+      // Check if this cell would block a human 2-in-a-row threat
+      const directions = [[0, 1], [1, 0], [1, 1], [1, -1]];
+      for (let [dRow, dCol] of directions) {
+        let humanCount = 0;
+        let emptySpaces = 0;
+        
+        // Check the line in both directions
+        for (let i = -4; i <= 4; i++) {
+          const checkRow = cell.row + i * dRow;
+          const checkCol = cell.col + i * dCol;
+          if (checkRow >= 0 && checkRow < 10 && checkCol >= 0 && checkCol < 10) {
+            if (gameState.board[checkRow][checkCol] === 1) {
+              humanCount++;
+            } else if (gameState.board[checkRow][checkCol] === 0) {
+              emptySpaces++;
+            }
+          }
+        }
+        
+        // If there are 2 human pieces and enough empty spaces to reach 5, block it
+        if (humanCount >= 2 && emptySpaces >= 3) {
+          console.log('Hard AI: Blocking 2-in-a-row threat at', cell.row, cell.col);
+          return cell;
+        }
+      }
+    }
+
+    // Priority 5: Block "X X _ X" pattern
+    const gapBlockingMoves = findGapBlockingMoves(availableCells);
+    if (gapBlockingMoves.length > 0) {
+      return gapBlockingMoves[0];
+    }
+    
+    // Dynamic difficulty adjustment based on player skill
+    const adjustedDepth = getAdjustedDepth();
+    
+    // Use minimax algorithm for optimal move selection (dynamic depth)
+    // Only use minimax if no immediate threats were found above
+    const bestMove = minimax(gameState.board, adjustedDepth, -Infinity, Infinity, true, 2);
+    if (bestMove.move) {
+      return bestMove.move;
+    }
+
+    // Fallback to advanced threat detection if minimax fails
+    return getAdvancedThreatMove(availableCells);
+  };
+
+  // Dynamic difficulty adjustment based on player performance
+  const getAdjustedDepth = (): number => {
+    // Base depth is 3, adjust based on player skill level
+    const baseDepth = 3;
+    
+    if (playerSkillLevel < -2) {
+      return Math.max(1, baseDepth - 2); // Easier for struggling players
+    } else if (playerSkillLevel < 0) {
+      return Math.max(2, baseDepth - 1); // Slightly easier
+    } else if (playerSkillLevel > 2) {
+      return Math.min(4, baseDepth + 1); // Harder for skilled players
+    } else if (playerSkillLevel > 5) {
+      return Math.min(5, baseDepth + 2); // Much harder for experts
+    }
+    
+    return baseDepth; // Default depth
+  };
+
+  // Track player performance for dynamic difficulty
+  const updatePlayerSkillLevel = (gameResult: 'win' | 'loss' | 'draw') => {
+    if (gameResult === 'win') {
+      setPlayerSkillLevel(prev => Math.min(10, prev + 1)); // Player getting better
+    } else if (gameResult === 'loss') {
+      setPlayerSkillLevel(prev => Math.max(-10, prev - 1)); // Player struggling
+    }
+    // Draw doesn't change skill level
+  };
+
+  // Advanced opening book for optimal first 8-10 moves
+  const getAdvancedOpeningMove = (availableCells: {row: number, col: number}[]): {row: number, col: number} | null => {
+    const totalMoves = 100 - availableCells.length;
+    
+    // First move - always center
+    if (totalMoves === 0) {
+      const center = availableCells.find(cell => cell.row === 4 && cell.col === 4) ||
+                    availableCells.find(cell => cell.row === 5 && cell.col === 5) ||
+                    availableCells.find(cell => cell.row === 4 && cell.col === 5) ||
+                    availableCells.find(cell => cell.row === 5 && cell.col === 4);
+      return center || null;
+    }
+    
+    // Second move - adjacent to center
+    if (totalMoves === 1) {
+      const centerAdjacent = availableCells.filter(cell => {
+        const distFromCenter = Math.abs(cell.row - 4.5) + Math.abs(cell.col - 4.5);
+        return distFromCenter <= 2 && distFromCenter > 0;
+      });
+      if (centerAdjacent.length > 0) {
+        return centerAdjacent[Math.floor(Math.random() * centerAdjacent.length)];
+      }
+    }
+    
+    // Third move - strategic positioning
+    if (totalMoves === 2) {
+      const strategicCells = availableCells.filter(cell => {
+        const distFromCenter = Math.abs(cell.row - 4.5) + Math.abs(cell.col - 4.5);
+        return distFromCenter <= 3;
+      });
+      if (strategicCells.length > 0) {
+        return strategicCells[Math.floor(Math.random() * strategicCells.length)];
+      }
+    }
+    
+    // Fourth move - create threats
+    if (totalMoves === 3) {
+      const threatCells = availableCells.filter(cell => {
+        const testBoard = gameState.board.map(row => [...row]);
+        testBoard[cell.row][cell.col] = 2;
+        return checkTwoInARow(testBoard, cell.row, cell.col, 2);
+      });
+      if (threatCells.length > 0) {
+        return threatCells[0];
+      }
+    }
+    
+    // Fifth move - block human threats
+    if (totalMoves === 4) {
+      const blockCells = availableCells.filter(cell => {
+        const testBoard = gameState.board.map(row => [...row]);
+        testBoard[cell.row][cell.col] = 1;
+        return checkTwoInARow(testBoard, cell.row, cell.col, 1);
+      });
+      if (blockCells.length > 0) {
+        return blockCells[0];
+      }
+    }
+    
+    // Moves 6-8 - advanced positioning
+    if (totalMoves >= 5 && totalMoves <= 7) {
+      const strategicCells = availableCells.filter(cell => {
+        const distFromCenter = Math.abs(cell.row - 4.5) + Math.abs(cell.col - 4.5);
+        return distFromCenter <= 4;
+      });
+      if (strategicCells.length > 0) {
+        return strategicCells[Math.floor(Math.random() * strategicCells.length)];
+      }
+    }
+    
+    return null; // No opening book move available
+  };
+
+  // Advanced threat detection fallback
+  const getAdvancedThreatMove = (availableCells: {row: number, col: number}[]): {row: number, col: number} => {
+    // Priority 1: Check if AI can win in one move
+    for (let cell of availableCells) {
+      const testBoard = gameState.board.map(row => [...row]);
+      testBoard[cell.row][cell.col] = 2;
+      if (checkWinCondition(testBoard, cell.row, cell.col, 2)) {
+        return cell;
+      }
+    }
+
+    // Priority 2: Block human from winning
+    for (let cell of availableCells) {
+      const testBoard = gameState.board.map(row => [...row]);
+      testBoard[cell.row][cell.col] = 1;
+      if (checkFourInARow(testBoard, cell.row, cell.col, 1)) {
+        return cell;
+      }
+    }
+
+    // Priority 3: Block human 3-in-a-row threats
+    for (let cell of availableCells) {
+      const testBoard = gameState.board.map(row => [...row]);
+      testBoard[cell.row][cell.col] = 1;
+      if (checkThreeInARow(testBoard, cell.row, cell.col, 1)) {
+        return cell;
+      }
+    }
+
+    // Priority 4: Block human 2-in-a-row threats
+    for (let cell of availableCells) {
+      const testBoard = gameState.board.map(row => [...row]);
+      testBoard[cell.row][cell.col] = 1;
+      if (checkTwoInARow(testBoard, cell.row, cell.col, 1)) {
+        return cell;
+      }
+    }
+
+    // Priority 5: Block "X X _ X" pattern
+    const gapBlockingMoves = findGapBlockingMoves(availableCells);
+    if (gapBlockingMoves.length > 0) {
+      return gapBlockingMoves[0];
+    }
+
+    // Priority 6: Create AI 3-in-a-row opportunities
+    for (let cell of availableCells) {
+      const testBoard = gameState.board.map(row => [...row]);
+      testBoard[cell.row][cell.col] = 2;
+      if (checkThreeInARow(testBoard, cell.row, cell.col, 2) && canReachFive(testBoard, cell.row, cell.col, 2)) {
+        return cell;
+      }
+    }
+
+    // Priority 7: Create AI 2-in-a-row opportunities
+    for (let cell of availableCells) {
+      const testBoard = gameState.board.map(row => [...row]);
+      testBoard[cell.row][cell.col] = 2;
+      if (checkTwoInARow(testBoard, cell.row, cell.col, 2) && canReachFive(testBoard, cell.row, cell.col, 2)) {
+        return cell;
+      }
+    }
+
+    // Priority 8: Center control
+    const centerCells = availableCells.filter(cell => {
+      const centerRow = Math.abs(cell.row - 4.5);
+      const centerCol = Math.abs(cell.col - 4.5);
+      return centerRow <= 2 && centerCol <= 2;
+    });
+    
+    if (centerCells.length > 0) {
+      return centerCells[Math.floor(Math.random() * centerCells.length)];
+    }
+
+    // Priority 9: Random move
+    return availableCells[Math.floor(Math.random() * availableCells.length)];
+  };
+
+
+
+
+  // Minimax algorithm with alpha-beta pruning for optimal move selection
+  const minimax = (board: (0 | 1 | 2)[][], depth: number, alpha: number, beta: number, isMaximizing: boolean, player: 1 | 2): {score: number, move?: {row: number, col: number}} => {
+    // Base cases
+    if (depth === 0) {
+      return { score: evaluateBoardAdvanced(board, player) };
+    }
+
+    const availableCells = getAvailableCells(board);
+    
+    // Check for terminal states
+    for (let cell of availableCells) {
+      const testBoard = board.map(row => [...row]);
+      testBoard[cell.row][cell.col] = player;
+      if (checkWinCondition(testBoard, cell.row, cell.col, player)) {
+        return { score: isMaximizing ? 100000 : -100000, move: cell };
+      }
+    }
+
+    if (availableCells.length === 0) {
+      return { score: 0 }; // Draw
+    }
+
+    let bestMove: {row: number, col: number} | undefined;
+    
+    if (isMaximizing) {
+      let maxScore = -Infinity;
+      for (let cell of availableCells) {
+        const testBoard = board.map(row => [...row]);
+        testBoard[cell.row][cell.col] = player;
+        
+        const result = minimax(testBoard, depth - 1, alpha, beta, false, player === 1 ? 2 : 1);
+        const score = result.score;
+        
+        if (score > maxScore) {
+          maxScore = score;
+          bestMove = cell;
+        }
+        
+        alpha = Math.max(alpha, score);
+        if (beta <= alpha) {
+          break; // Alpha-beta pruning
+        }
+      }
+      return { score: maxScore, move: bestMove };
+    } else {
+      let minScore = Infinity;
+      for (let cell of availableCells) {
+        const testBoard = board.map(row => [...row]);
+        testBoard[cell.row][cell.col] = player;
+        
+        const result = minimax(testBoard, depth - 1, alpha, beta, true, player === 1 ? 2 : 1);
+        const score = result.score;
+        
+        if (score < minScore) {
+          minScore = score;
+          bestMove = cell;
+        }
+        
+        beta = Math.min(beta, score);
+        if (beta <= alpha) {
+          break; // Alpha-beta pruning
+        }
+      }
+      return { score: minScore, move: bestMove };
+    }
+  };
+
+  // Advanced evaluation function with weighted scoring
+  const evaluateBoardAdvanced = (board: (0 | 1 | 2)[][], player: 1 | 2): number => {
+    let score = 0;
+    const opponent = player === 1 ? 2 : 1;
+    
+    // Evaluate all positions on the board
+    for (let row = 0; row < 10; row++) {
+      for (let col = 0; col < 10; col++) {
+        if (board[row][col] === player) {
+          score += evaluatePositionAdvanced(board, row, col, player);
+        } else if (board[row][col] === opponent) {
+          score -= evaluatePositionAdvanced(board, row, col, opponent);
+        }
+      }
+    }
+    
+    // Bonus for center control
+    score += getCenterControlBonus(board, player);
+    
+    // Bonus for mobility (available moves)
+    score += getMobilityBonus(board);
+    
+    // Bonus for threat patterns
+    score += getThreatPatternBonus(board, player);
+    
+    return score;
+  };
+
+  const evaluatePositionAdvanced = (board: (0 | 1 | 2)[][], row: number, col: number, player: 1 | 2): number => {
+    let score = 0;
+    const directions = [[0, 1], [1, 0], [1, 1], [1, -1]];
+    
+    for (let [dr, dc] of directions) {
+      const lineScore = evaluateLineAdvanced(board, row, col, dr, dc, player);
+      score += lineScore;
+    }
+    
+    return score;
+  };
+
+  const evaluateLineAdvanced = (board: (0 | 1 | 2)[][], row: number, col: number, dr: number, dc: number, player: 1 | 2): number => {
+    let count = 1; // Count the current piece
+    let emptySpaces = 0;
+    let blocked = false;
+    
+    // Check both directions
+    for (let direction = -1; direction <= 1; direction += 2) {
+      for (let i = 1; i <= 4; i++) {
+        const newRow = row + (dr * i * direction);
+        const newCol = col + (dc * i * direction);
+        
+        if (newRow < 0 || newRow >= 10 || newCol < 0 || newCol >= 10) {
+          blocked = true;
+          break;
+        }
+        
+        if (board[newRow][newCol] === player) {
+          count++;
+        } else if (board[newRow][newCol] === 0) {
+          emptySpaces++;
+        } else {
+          blocked = true;
+          break;
+        }
+      }
+    }
+    
+    // Advanced scoring based on line potential and threats
+    if (count >= 5) return 100000; // Win
+    if (count === 4 && emptySpaces >= 1) return 10000; // 4-in-a-row
+    if (count === 3 && emptySpaces >= 2) return 1000; // 3-in-a-row
+    if (count === 2 && emptySpaces >= 3) return 100; // 2-in-a-row
+    if (count === 1 && emptySpaces >= 4) return 10; // 1-in-a-row
+    
+    // Bonus for unblocked lines
+    if (!blocked) {
+      return 5;
+    }
+    
+    return 0;
+  };
+
+  const getCenterControlBonus = (board: (0 | 1 | 2)[][], player: 1 | 2): number => {
+    let bonus = 0;
+    const centerCells = [
+      [4, 4], [4, 5], [5, 4], [5, 5],
+      [3, 4], [3, 5], [4, 3], [4, 6],
+      [5, 3], [5, 6], [6, 4], [6, 5]
+    ];
+    
+    for (let [row, col] of centerCells) {
+      if (board[row][col] === player) {
+        bonus += 10;
+      } else if (board[row][col] !== 0) {
+        bonus -= 10;
+      }
+    }
+    
+    return bonus;
+  };
+
+  const getMobilityBonus = (board: (0 | 1 | 2)[][]): number => {
+    const availableCells = getAvailableCells(board);
+    return availableCells.length * 2; // More available moves = better position
+  };
+
+  const getThreatPatternBonus = (board: (0 | 1 | 2)[][], player: 1 | 2): number => {
+    let bonus = 0;
+    
+    // Check for forks (multiple threats)
+    const forks = detectForks(board, player);
+    bonus += forks * 500;
+    
+    // Check for double threats
+    const doubleThreats = detectDoubleThreats(board, player);
+    bonus += doubleThreats * 200;
+    
+    return bonus;
+  };
+
+  const detectForks = (board: (0 | 1 | 2)[][], player: 1 | 2): number => {
+    let forkCount = 0;
+    const availableCells = getAvailableCells(board);
+    
+    for (let cell of availableCells) {
+      const testBoard = board.map(row => [...row]);
+      testBoard[cell.row][cell.col] = player;
+      
+      let threats = 0;
+      const directions = [[0, 1], [1, 0], [1, 1], [1, -1]];
+      
+      for (let _ of directions) {
+        if (checkThreeInARow(testBoard, cell.row, cell.col, player)) {
+          threats++;
+        }
+      }
+      
+      if (threats >= 2) {
+        forkCount++;
+      }
+    }
+    
+    return forkCount;
+  };
+
+  const detectDoubleThreats = (board: (0 | 1 | 2)[][], player: 1 | 2): number => {
+    let doubleThreatCount = 0;
+    const availableCells = getAvailableCells(board);
+    
+    for (let cell of availableCells) {
+      const testBoard = board.map(row => [...row]);
+      testBoard[cell.row][cell.col] = player;
+      
+      let threats = 0;
+      const directions = [[0, 1], [1, 0], [1, 1], [1, -1]];
+      
+      for (let _ of directions) {
+        if (checkTwoInARow(testBoard, cell.row, cell.col, player)) {
+          threats++;
+        }
+      }
+      
+      if (threats >= 2) {
+        doubleThreatCount++;
+      }
+    }
+    
+    return doubleThreatCount;
+  };
+
+  const getAvailableCells = (board: (0 | 1 | 2)[][]): {row: number, col: number}[] => {
+    const cells = [];
+    for (let row = 0; row < 10; row++) {
+      for (let col = 0; col < 10; col++) {
+        if (board[row][col] === 0) {
+          cells.push({ row, col });
+        }
+      }
+    }
+    return cells;
+  };
+
+  // Find moves that block the "X X _ X" pattern (3 pieces with 1 gap)
+  const findGapBlockingMoves = (availableCells: {row: number, col: number}[]): {row: number, col: number}[] => {
+    const blockingMoves = [];
+    
+    for (let cell of availableCells) {
+      const testBoard = gameState.board.map(row => [...row]);
+      testBoard[cell.row][cell.col] = 1; // Test placing human piece
+      
+      // Check if this would create a gap pattern with 2+ human pieces
+      if (hasGapPatternWithTwoPlus(testBoard, cell.row, cell.col, 1)) {
+        blockingMoves.push(cell);
+      }
+    }
+    
+    return blockingMoves;
+  };
+
+  // Check if a position has the specific "X X _ X" pattern (3 pieces with 1 gap)
+  const hasGapPatternWithTwoPlus = (board: (0 | 1 | 2)[][], row: number, col: number, player: 1 | 2): boolean => {
+    const directions = [
+      [0, 1],   // horizontal
+      [1, 0],   // vertical  
+      [1, 1],   // diagonal \
+      [1, -1]   // diagonal /
+    ];
+
+    for (let [dr, dc] of directions) {
+      // Check both directions from the placed piece
+      for (let direction = -1; direction <= 1; direction += 2) {
+        let count = 1; // Count the piece we just placed
+        let emptySpaces = 0;
+        let hasSingleGap = false;
+        
+        // Look in the specified direction
+        for (let i = 1; i <= 4; i++) {
+          const newRow = row + (dr * i * direction);
+          const newCol = col + (dc * i * direction);
           
-          {/* Row numbers for larger screens */}
-          {!isMobile && (
-            <div style={{
-              position: 'absolute',
-              left: '-2rem',
-              top: 0,
-              height: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-around',
-              alignItems: 'center',
-              fontSize: '0.8rem',
+          if (newRow < 0 || newRow >= 10 || newCol < 0 || newCol >= 10) break;
+          
+          if (board[newRow][newCol] === player) {
+            count++;
+          } else if (board[newRow][newCol] === 0) {
+            emptySpaces++;
+            if (emptySpaces === 1) {
+              hasSingleGap = true;
+            }
+            if (emptySpaces > 1) break; // Only care about single gaps
+          } else {
+            break; // Opponent piece blocks the pattern
+          }
+        }
+        
+        // Only block if we have exactly 3 pieces with exactly 1 gap (X X _ X pattern)
+        if (count === 3 && hasSingleGap && emptySpaces === 1) {
+          return true;
+        }
+      }
+    }
+    
+    return false;
+  };
+
+  // Check if a line has potential to reach 5 pieces
+  const canReachFive = (board: (0 | 1 | 2)[][], row: number, col: number, player: 1 | 2) => {
+    const directions = [
+      [0, 1],   // horizontal
+      [1, 0],   // vertical  
+      [1, 1],   // diagonal \
+      [1, -1]   // diagonal /
+    ];
+
+    for (let [dr, dc] of directions) {
+      let count = 1; // Count the piece we just placed
+      let emptySpaces = 0;
+      
+      // Check both directions from the placed piece
+      for (let direction = -1; direction <= 1; direction += 2) {
+        for (let i = 1; i <= 4; i++) {
+          const newRow = row + (dr * i * direction);
+          const newCol = col + (dc * i * direction);
+          
+          if (newRow < 0 || newRow >= 10 || newCol < 0 || newCol >= 10) break;
+          
+          if (board[newRow][newCol] === player) {
+            count++;
+          } else if (board[newRow][newCol] === 0) {
+            emptySpaces++;
+          } else {
+            break; // Opponent piece blocks the line
+          }
+        }
+      }
+      
+      // If we can potentially reach 5 pieces (count + empty spaces >= 5)
+      if (count + emptySpaces >= 5) {
+        return true;
+      }
+    }
+    
+    return false;
+  };
+
+  const findThreatCells = (availableCells: {row: number, col: number}[], player: 1 | 2) => {
+    const threats = [];
+    
+    for (let cell of availableCells) {
+      const testBoard = gameState.board.map(row => [...row]);
+      testBoard[cell.row][cell.col] = player;
+      
+      if (checkThreeInARow(testBoard, cell.row, cell.col, player)) {
+        threats.push(cell);
+      }
+    }
+    
+    return threats;
+  };
+
+
+  const findTwoInARowCells = (availableCells: {row: number, col: number}[], player: 1 | 2) => {
+    const threats = [];
+    
+    for (let cell of availableCells) {
+      const testBoard = gameState.board.map(row => [...row]);
+      testBoard[cell.row][cell.col] = player;
+      
+      if (checkTwoInARow(testBoard, cell.row, cell.col, player)) {
+        threats.push(cell);
+      }
+    }
+    
+    return threats;
+  };
+
+
+  const checkThreeInARow = (board: (0 | 1 | 2)[][], row: number, col: number, player: 1 | 2) => {
+    const directions = [
+      [0, 1],   // horizontal
+      [1, 0],   // vertical
+      [1, 1],   // diagonal /
+      [1, -1]   // diagonal \
+    ];
+
+    for (const [dRow, dCol] of directions) {
+      let count = 1;
+
+      // Check in positive direction
+      for (let i = 1; i < 4; i++) {
+        const newRow = row + i * dRow;
+        const newCol = col + i * dCol;
+        if (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 10 && board[newRow][newCol] === player) {
+          count++;
+        } else {
+          break;
+        }
+      }
+
+      // Check in negative direction
+      for (let i = 1; i < 4; i++) {
+        const newRow = row - i * dRow;
+        const newCol = col - i * dCol;
+        if (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 10 && board[newRow][newCol] === player) {
+          count++;
+        } else {
+          break;
+        }
+      }
+
+      if (count >= 3) {
+        return true;
+      }
+    }
+
+    return false;
+  };
+
+  const checkTwoInARow = (board: (0 | 1 | 2)[][], row: number, col: number, player: 1 | 2) => {
+    const directions = [
+      [0, 1],   // horizontal
+      [1, 0],   // vertical
+      [1, 1],   // diagonal /
+      [1, -1]   // diagonal \
+    ];
+
+    for (const [dRow, dCol] of directions) {
+      let count = 1;
+
+      // Check in positive direction
+      for (let i = 1; i < 3; i++) {
+        const newRow = row + i * dRow;
+        const newCol = col + i * dCol;
+        if (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 10 && board[newRow][newCol] === player) {
+          count++;
+        } else {
+          break;
+        }
+      }
+
+      // Check in negative direction
+      for (let i = 1; i < 3; i++) {
+        const newRow = row - i * dRow;
+        const newCol = col - i * dCol;
+        if (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 10 && board[newRow][newCol] === player) {
+          count++;
+        } else {
+          break;
+        }
+      }
+
+      if (count >= 2) {
+        return true;
+      }
+    }
+
+    return false;
+  };
+
+
+  const checkWinCondition = (board: (0 | 1 | 2)[][], row: number, col: number, player: 1 | 2) => {
+    const directions = [
+      [0, 1],   // horizontal
+      [1, 0],   // vertical
+      [1, 1],   // diagonal /
+      [1, -1]   // diagonal \
+    ];
+
+    for (const [dRow, dCol] of directions) {
+      let count = 1;
+
+      // Check in positive direction
+      for (let i = 1; i < 5; i++) {
+        const newRow = row + i * dRow;
+        const newCol = col + i * dCol;
+        if (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 10 && board[newRow][newCol] === player) {
+          count++;
+        } else {
+          break;
+        }
+      }
+
+      // Check in negative direction
+      for (let i = 1; i < 5; i++) {
+        const newRow = row - i * dRow;
+        const newCol = col - i * dCol;
+        if (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 10 && board[newRow][newCol] === player) {
+          count++;
+        } else {
+          break;
+        }
+      }
+
+      if (count >= 5) {
+        return true;
+      }
+    }
+
+    return false;
+  };
+
+  const checkFourInARow = (board: (0 | 1 | 2)[][], row: number, col: number, player: 1 | 2) => {
+    const directions = [
+      [0, 1],   // horizontal
+      [1, 0],   // vertical
+      [1, 1],   // diagonal /
+      [1, -1]   // diagonal \
+    ];
+
+    for (const [dRow, dCol] of directions) {
+      let count = 1;
+
+      // Check in positive direction
+      for (let i = 1; i < 4; i++) {
+        const newRow = row + i * dRow;
+        const newCol = col + i * dCol;
+        if (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 10 && board[newRow][newCol] === player) {
+          count++;
+        } else {
+          break;
+        }
+      }
+
+      // Check in negative direction
+      for (let i = 1; i < 4; i++) {
+        const newRow = row - i * dRow;
+        const newCol = col - i * dCol;
+        if (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 10 && board[newRow][newCol] === player) {
+          count++;
+        } else {
+          break;
+        }
+      }
+
+      if (count >= 4) {
+        return true;
+      }
+    }
+
+    return false;
+  };
+
+  const getStatusMessage = () => {
+    if (gameState.winner > 0) {
+      const winnerName = gameState.winner === 1 ? 'You' : 'AI';
+      return `${winnerName} win!`;
+    }
+    if (!gameState.isGameActive && gameState.winner === 0) {
+      return 'Game Over - Draw!';
+    }
+    if (gameState.timeLeft === 0) {
+      const winner = gameState.currentPlayer === 1 ? 'AI' : 'You';
+      return `${winner} wins due to time limit!`;
+    }
+    
+    return gameState.currentPlayer === 1 ? 'Your turn!' : 'AI is thinking...';
+  };
+
+  // Calculate responsive sizes
+  const isMobile = window.innerWidth <= 768;
+
+  return (
+    <div style={{ 
+      background: 'linear-gradient(135deg, #FFC30B 0%, #FFD700 50%, #FFC30B 100%)',
+      width: '100vw', 
+      height: '100vh', 
+      display: 'flex', 
+      flexDirection: 'column',
+      fontFamily: 'system-ui, -apple-system, sans-serif',
+      position: 'relative',
+      overflow: 'hidden'
+    }}>
+      {/* Mobile-optimized header */}
+      <div style={{
+        background: 'rgba(0, 0, 0, 0.9)',
+        backdropFilter: 'blur(10px)',
+        padding: isMobile ? '0.75rem 1rem' : '1rem 1.5rem',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: '0.5rem',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+        zIndex: 10
+      }}>
+        {/* Title and back button */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <button 
+            onClick={() => {
+              onBackToMenu();
+              if (soundEnabled) soundManager.playClickSound();
+            }}
+            style={{
+              padding: isMobile ? '0.5rem' : '0.5rem 0.75rem',
+              fontSize: isMobile ? '1.2em' : '1em',
+              backgroundColor: '#FFC30B',
+              color: 'black',
+              border: '2px solid black',
+              borderRadius: '8px',
+              cursor: 'pointer',
               fontWeight: 'bold',
-              color: 'rgba(0,0,0,0.6)'
-            }}>
-              {Array.from({length: GRID_SIZE}, (_, i) => (
-                <div key={i}>{i + 1}</div>
-              ))}
-            </div>
-          )}
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.25rem'
+            }}
+          >
+            {isMobile ? '🏠' : '🏠 Menu'}
+          </button>
+          
+          <h1 style={{ 
+            color: '#FFC30B', 
+            margin: 0,
+            fontSize: isMobile ? 'clamp(1.2rem, 4vw, 1.5rem)' : 'clamp(1.5rem, 3vw, 2rem)',
+            textShadow: '2px 2px 0px black',
+            fontWeight: 'bold'
+          }}>
+            🤖 AI Challenge ({aiDifficulty.charAt(0).toUpperCase() + aiDifficulty.slice(1)})
+          </h1>
+        </div>
+
+        {/* Controls - stack on mobile */}
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: isMobile ? '0.5rem' : '1rem',
+          flexWrap: 'wrap'
+        }}>
+          {/* Difficulty selection */}
+          <button
+            onClick={() => {
+              setShowDifficultyModal(true);
+              if (soundEnabled) soundManager.playClickSound();
+            }}
+            style={{
+              padding: isMobile ? '0.5rem' : '0.5rem 0.75rem',
+              fontSize: '1em',
+              backgroundColor: '#FFC30B',
+              color: 'black',
+              border: '2px solid black',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontWeight: 'bold'
+            }}
+          >
+            {isMobile ? '⚙️' : '⚙️ Difficulty'}
+          </button>
+
+          {/* Sound control */}
+          <button
+            onClick={() => {
+              const newSoundEnabled = !soundEnabled;
+              setSoundEnabled(newSoundEnabled);
+              soundManager.setMuted(!newSoundEnabled);
+              if (newSoundEnabled) soundManager.playClickSound();
+            }}
+            style={{
+              padding: isMobile ? '0.5rem' : '0.5rem 0.75rem',
+              fontSize: '1em',
+              backgroundColor: soundEnabled ? '#4CAF50' : '#f44336',
+              color: 'white',
+              border: '2px solid black',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontWeight: 'bold'
+            }}
+          >
+            {soundEnabled ? '🔊' : '🔇'}
+          </button>
+          
+          {/* New Game button */}
+          <button 
+            onClick={() => {
+              resetGame();
+              if (soundEnabled) soundManager.playClickSound();
+            }}
+            style={{
+              padding: isMobile ? '0.5rem' : '0.5rem 0.75rem',
+              fontSize: isMobile ? '1em' : '0.9em',
+              backgroundColor: '#4CAF50',
+              color: 'white',
+              border: '2px solid black',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontWeight: 'bold'
+            }}
+          >
+            {isMobile ? '🔄' : '🔄 New'}
+          </button>
+        </div>
+      </div>
+
+      {/* Game status bar */}
+      <div style={{
+        background: 'rgba(255, 255, 255, 0.95)',
+        padding: isMobile ? '0.75rem 1rem' : '1rem 1.5rem',
+        textAlign: 'center',
+        fontSize: isMobile ? 'clamp(1rem, 4vw, 1.2rem)' : 'clamp(1.1rem, 2.5vw, 1.3rem)',
+        fontWeight: 'bold',
+        color: '#333',
+        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+        zIndex: 9
+      }}>
+        {getStatusMessage()}
+      </div>
+
+      {/* Main game area - fills remaining space */}
+      <div style={{
+        flex: 1,
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: isMobile ? '1rem' : '2rem',
+        position: 'relative'
+      }}>
+        {/* Game board with responsive sizing */}
+        <div style={{
+          position: 'relative',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center'
+        }}>
+            <GameCanvas
+              gameState={gameState}
+              onCellClick={(row, col) => {
+                // Only allow human moves when it's player 1's turn
+                if (gameState.currentPlayer === 1) {
+                  handleCellClick(row, col);
+                }
+              }}
+            />
         </div>
       </div>
 
@@ -1057,146 +1484,99 @@ function SimpleGame({ onBackToMenu, isSinglePlayer }: { onBackToMenu: () => void
         </div>
       )}
 
-      {/* Winning Popup Modal */}
-      {showWinPopup && (
+      {/* Difficulty Selection Modal */}
+      {showDifficultyModal && (
         <div style={{
           position: 'fixed',
           top: 0,
           left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          width: '100%',
+          height: '100%',
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          zIndex: 1000,
-          animation: 'fadeIn 0.3s ease-out'
+          zIndex: 1000
         }}>
           <div style={{
-            backgroundColor: '#FFC30B',
-            padding: '40px',
-            borderRadius: '20px',
-            border: '4px solid black',
+            background: 'rgba(255, 255, 255, 0.95)',
+            padding: '2rem',
+            borderRadius: '15px',
             textAlign: 'center',
-            minWidth: '300px',
-            maxWidth: '90vw',
-            position: 'relative',
-            animation: 'popIn 0.5s ease-out',
-            boxShadow: '0 20px 40px rgba(0,0,0,0.3)'
+            maxWidth: '400px',
+            width: '90%',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+            backdropFilter: 'blur(10px)'
           }}>
-            {/* Celebration Icons */}
-            <div style={{
-              fontSize: '4em',
-              marginBottom: '20px',
-              animation: 'bounce 1s ease-out infinite'
+            <h2 style={{ 
+              color: '#FFC30B',
+              marginBottom: '1rem',
+              fontSize: '1.5rem',
+              textShadow: '2px 2px 0px black'
             }}>
-              {winMessage.includes('You Win') ? '🐝' : 
-               winMessage.includes('AI Wins') ? '🐝' : '🐝'}
-            </div>
-            
-            {/* Win Message */}
-            <h1 style={{
-              fontSize: '2.5em',
-              color: 'black',
-              marginBottom: '20px',
-              textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
-            }}>
-              {winMessage}
-            </h1>
-            
-            {/* Subtitle */}
-            <p style={{
-              fontSize: '1.2em',
-              color: '#333',
-              marginBottom: '30px'
-            }}>
-              {winMessage.includes('You Win') ? 'Sweet victory! 🍯' :
-               winMessage.includes('AI Wins') ? 'The hive strikes back! 🍯' :
-               'Game Over!'}
+              Select AI Difficulty
+            </h2>
+            <p style={{ marginBottom: '1.5rem', color: '#333' }}>
+              Choose the difficulty level for the AI opponent:
             </p>
-            
-            {/* Action Buttons */}
-            <div style={{
-              display: 'flex',
-              gap: '15px',
-              justifyContent: 'center',
-              flexWrap: 'wrap'
+            <div style={{ 
+              position: 'relative',
+              marginBottom: '1.5rem'
             }}>
-              <button 
-                onClick={() => {
-                  resetGame();
+              <select
+                value={aiDifficulty}
+                onChange={(e) => {
+                  setAiDifficulty(e.target.value);
                   if (soundEnabled) soundManager.playClickSound();
                 }}
                 style={{
-                  padding: '12px 24px',
-                  fontSize: '1.1em',
+                  width: '100%',
+                  padding: '0.75rem 1rem',
+                  fontSize: '1rem',
                   fontWeight: 'bold',
-                  backgroundColor: '#4CAF50',
-                  color: 'white',
-                  border: '2px solid black',
-                  borderRadius: '10px',
+                  backgroundColor: '#f5f5f5',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: '6px',
                   cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                  minWidth: '120px'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = 'none';
+                  appearance: 'none',
+                  backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23333' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
+                  backgroundPosition: 'right 0.75rem center',
+                  backgroundRepeat: 'no-repeat',
+                  backgroundSize: '1rem',
+                  paddingRight: '2.5rem',
+                  color: '#333',
+                  fontFamily: 'system-ui, -apple-system, sans-serif'
                 }}
               >
-                Play Again
-              </button>
-              
-              <button 
-                onClick={() => {
-                  onBackToMenu();
-                  if (soundEnabled) soundManager.playClickSound();
-                }}
-                style={{
-                  padding: '12px 24px',
-                  fontSize: '1.1em',
-                  fontWeight: 'bold',
-                  backgroundColor: '#2196F3',
-                  color: 'white',
-                  border: '2px solid black',
-                  borderRadius: '10px',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                  minWidth: '120px'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
-              >
-                Main Menu
-              </button>
+                <option value="easy" style={{ padding: '0.5rem', backgroundColor: 'white' }}>
+                  🟢 Easy
+                </option>
+                <option value="medium" style={{ padding: '0.5rem', backgroundColor: 'white' }}>
+                  🟡 Medium
+                </option>
+                <option value="hard" style={{ padding: '0.5rem', backgroundColor: 'white' }}>
+                  🔴 Hard
+                </option>
+              </select>
             </div>
-            
-            {/* Close button */}
             <button
-              onClick={() => setShowWinPopup(false)}
+              onClick={() => {
+                setShowDifficultyModal(false);
+                if (soundEnabled) soundManager.playClickSound();
+              }}
               style={{
-                position: 'absolute',
-                top: '10px',
-                right: '15px',
-                background: 'none',
-                border: 'none',
-                fontSize: '1.5em',
+                padding: '0.75rem 1.5rem',
+                fontSize: '1rem',
+                backgroundColor: '#4CAF50',
+                color: 'white',
+                border: '2px solid black',
+                borderRadius: '8px',
                 cursor: 'pointer',
-                color: 'black',
-                fontWeight: 'bold'
+                fontWeight: 'bold',
+                transition: 'all 0.3s ease'
               }}
             >
-              ×
+              Start Game
             </button>
           </div>
         </div>
@@ -1207,18 +1587,18 @@ function SimpleGame({ onBackToMenu, isSinglePlayer }: { onBackToMenu: () => void
 
 // Simple inline welcome component to avoid import issues
 function SimpleWelcome() {
-  const [gameMode, setGameMode] = useState<'menu' | 'local-multiplayer' | 'single-player' | 'online-lobby' | 'online-game'>('menu');
+  const [gameMode, setGameMode] = useState<'menu' | 'local-multiplayer' | 'online-lobby' | 'online-game' | 'ai-game'>('menu');
   const [currentRoom, setCurrentRoom] = useState<RoomInfo | null>(null);
   const [playerNumber, setPlayerNumber] = useState<1 | 2>(1);
 
-  // Handle single-player mode
-  if (gameMode === 'single-player') {
-    return <SimpleGame onBackToMenu={() => setGameMode('menu')} isSinglePlayer={true} />;
-  }
-
   // Handle local multiplayer mode
   if (gameMode === 'local-multiplayer') {
-    return <SimpleGame onBackToMenu={() => setGameMode('menu')} isSinglePlayer={false} />;
+    return <SimpleGame onBackToMenu={() => setGameMode('menu')} />;
+  }
+
+  // Handle AI game mode
+  if (gameMode === 'ai-game') {
+    return <AIGame onBackToMenu={() => setGameMode('menu')} />;
   }
 
   // Handle online multiplayer lobby
@@ -1329,43 +1709,6 @@ function SimpleWelcome() {
           <button 
             onClick={() => {
               soundManager.playClickSound();
-              setGameMode('single-player');
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
-            }}
-            style={{
-              padding: 'clamp(0.75rem, 3vw, 1rem) clamp(1rem, 4vw, 1.5rem)',
-              fontSize: 'clamp(0.9rem, 2.5vw, 1.1rem)',
-              fontWeight: 'bold',
-              backgroundColor: 'black',
-              color: '#FFC30B',
-              border: '3px solid #FFC30B',
-              borderRadius: 'clamp(8px, 2vw, 12px)',
-              cursor: 'pointer',
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.5rem',
-              minHeight: '60px',
-              width: '100%',
-              maxWidth: '300px'
-            }}
-          >
-            <span style={{ fontSize: '1.2em' }}>🤖</span>
-            <span>vs AI</span>
-          </button>
-
-          <button 
-            onClick={() => {
-              soundManager.playClickSound();
               setGameMode('local-multiplayer');
             }}
             onMouseEnter={(e) => {
@@ -1435,9 +1778,45 @@ function SimpleWelcome() {
           >
             <span style={{ fontSize: '1.2em' }}>🌐</span>
             <span>Online Play</span>
-        </button>
-        </div>
+          </button>
 
+          <button 
+            onClick={() => {
+              soundManager.playClickSound();
+              setGameMode('ai-game');
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
+            }}
+            style={{
+              padding: 'clamp(0.75rem, 3vw, 1rem) clamp(1rem, 4vw, 1.5rem)',
+              fontSize: 'clamp(0.9rem, 2.5vw, 1.1rem)',
+              fontWeight: 'bold',
+              backgroundColor: 'black',
+              color: '#FFC30B',
+              border: '3px solid #FFC30B',
+              borderRadius: 'clamp(8px, 2vw, 12px)',
+              cursor: 'pointer',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.5rem',
+              minHeight: '60px',
+              width: '100%',
+              maxWidth: '300px'
+            }}
+          >
+            <span style={{ fontSize: '1.2em' }}>🤖</span>
+            <span>Play AI</span>
+          </button>
+        </div>
 
         {/* How to play */}
         <div style={{ 

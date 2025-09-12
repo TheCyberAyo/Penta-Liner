@@ -1,19 +1,15 @@
-import React, { useState } from 'react';
-import GameCanvas from './GameCanvas';
+import React from 'react';
 import { useGameLogic } from '../hooks/useGameLogic';
+import GameCanvas from './GameCanvas';
 
 interface GamePageProps {
-  isSinglePlayer: boolean;
   onBackToWelcome: () => void;
 }
 
-const GamePage: React.FC<GamePageProps> = ({ isSinglePlayer, onBackToWelcome }) => {
-  const [difficulty, setDifficulty] = useState<'medium' | 'hard'>('medium');
-  const [timeLimit] = useState(15);
+const GamePage: React.FC<GamePageProps> = ({ onBackToWelcome }) => {
+  const [timeLimit] = React.useState(15);
   
   const { gameState, handleCellClick, resetGame, updateGameState } = useGameLogic({
-    isSinglePlayer,
-    difficulty,
     timeLimit
   });
 
@@ -34,30 +30,12 @@ const GamePage: React.FC<GamePageProps> = ({ isSinglePlayer, onBackToWelcome }) 
     return `${currentPlayerName}, Play!`;
   };
 
-  const handleDifficultyChange = (newDifficulty: 'medium' | 'hard') => {
-    setDifficulty(newDifficulty);
-  };
-
   return (
     <div className="game-page">
       <div className="game-header">
         <h1 className="game-title">
           Bee-<span>Five</span>
         </h1>
-        
-        {isSinglePlayer && (
-          <div className="difficulty-selector">
-            <label>AI Difficulty:</label>
-            <select 
-              value={difficulty} 
-              onChange={(e) => handleDifficultyChange(e.target.value as 'medium' | 'hard')}
-              disabled={gameState.isGameActive && gameState.board.some(row => row.some(cell => cell !== 0))}
-            >
-              <option value="medium">Medium (Easy)</option>
-              <option value="hard">Impossible to Win</option>
-            </select>
-          </div>
-        )}
         
         <div className="timer">
           Time Left: {gameState.timeLeft}s
@@ -69,7 +47,6 @@ const GamePage: React.FC<GamePageProps> = ({ isSinglePlayer, onBackToWelcome }) 
           gameState={gameState}
           onCellClick={handleCellClick}
           onGameStateChange={updateGameState}
-          isSinglePlayer={isSinglePlayer}
         />
       </div>
 

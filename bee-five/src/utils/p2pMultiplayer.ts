@@ -95,7 +95,7 @@ class P2PMultiplayerClient {
 
       return roomId;
     } catch (error) {
-      console.error('Failed to create room:', error);
+      // console.error('Failed to create room:', error);
       if (this.onError) {
         this.onError('Failed to create room');
       }
@@ -106,7 +106,7 @@ class P2PMultiplayerClient {
   // Join an existing room
   async joinRoom(roomCode: string, playerName: string): Promise<void> {
     try {
-      console.log('🔄 Starting room join process...');
+      // console.log('🔄 Starting room join process...');
       this.playerName = playerName;
       this.isHost = false;
 
@@ -117,7 +117,7 @@ class P2PMultiplayerClient {
       }
 
       const parsedRoomData = JSON.parse(roomData);
-      console.log('📋 Found room data:', parsedRoomData);
+      // console.log('📋 Found room data:', parsedRoomData);
       
       // Check if room is still active
       if (Date.now() > parsedRoomData.expires) {
@@ -146,27 +146,27 @@ class P2PMultiplayerClient {
         hostId: parsedRoomData.hostId
       };
 
-      console.log('🏠 Created room info:', this.currentRoom);
+      // console.log('🏠 Created room info:', this.currentRoom);
 
       // Call onRoomJoined immediately - no WebRTC complexity for now
-      console.log('🚀 Calling onRoomJoined callback...');
+      // console.log('🚀 Calling onRoomJoined callback...');
       if (this.onRoomJoined) {
         this.onRoomJoined(this.currentRoom);
-        console.log('✅ onRoomJoined callback called successfully');
+        // console.log('✅ onRoomJoined callback called successfully');
       } else {
-        console.error('❌ onRoomJoined callback is not set!');
+        // console.error('❌ onRoomJoined callback is not set!');
       }
 
       // Set up WebRTC in background (optional)
       try {
         await this.setupPeerConnection();
-        console.log('🔗 WebRTC setup completed in background');
+        // console.log('🔗 WebRTC setup completed in background');
       } catch (webrtcError) {
-        console.warn('⚠️ WebRTC setup failed, but continuing with simplified mode:', webrtcError);
+        // console.warn('⚠️ WebRTC setup failed, but continuing with simplified mode:', webrtcError);
       }
 
     } catch (error) {
-      console.error('❌ Failed to join room:', error);
+      // console.error('❌ Failed to join room:', error);
       if (this.onError) {
         this.onError('Failed to join room: ' + (error instanceof Error ? error.message : String(error)));
       }
@@ -189,25 +189,25 @@ class P2PMultiplayerClient {
     // Set up event handlers
     this.peerConnection.onicecandidate = (event) => {
       if (event.candidate) {
-        console.log('🧊 ICE candidate generated');
+        // console.log('🧊 ICE candidate generated');
         // Store ICE candidate for the other peer
         this.storeIceCandidate(event.candidate);
       } else {
-        console.log('🧊 ICE gathering complete');
+        // console.log('🧊 ICE gathering complete');
       }
     };
 
     this.peerConnection.onconnectionstatechange = () => {
       const state = this.peerConnection?.connectionState;
-      console.log('🔗 Connection state changed:', state);
+      // console.log('🔗 Connection state changed:', state);
       
       if (state === 'connected') {
-        console.log('✅ WebRTC connection established!');
+        // console.log('✅ WebRTC connection established!');
         if (this.onConnected) {
           this.onConnected();
         }
       } else if (state === 'disconnected' || state === 'failed' || state === 'closed') {
-        console.log('❌ WebRTC connection failed:', state);
+        // console.log('❌ WebRTC connection failed:', state);
         if (this.onDisconnected) {
           this.onDisconnected();
         }
@@ -215,8 +215,7 @@ class P2PMultiplayerClient {
     };
 
     this.peerConnection.oniceconnectionstatechange = () => {
-      const iceState = this.peerConnection?.iceConnectionState;
-      console.log('🧊 ICE connection state:', iceState);
+      // console.log('🧊 ICE connection state:', this.peerConnection?.iceConnectionState);
     };
 
     if (this.isHost) {
@@ -229,7 +228,7 @@ class P2PMultiplayerClient {
     } else {
       // Guest waits for data channel from host
       this.peerConnection.ondatachannel = (event) => {
-        console.log('📡 Data channel received from host');
+        // console.log('📡 Data channel received from host');
         this.dataChannel = event.channel;
         this.setupDataChannel(this.dataChannel);
       };
@@ -243,7 +242,7 @@ class P2PMultiplayerClient {
     if (!this.dataChannel) return;
 
     this.dataChannel.onopen = () => {
-      console.log('📡 Data channel opened - connection established!');
+      // console.log('📡 Data channel opened - connection established!');
       if (this.onConnected) {
         this.onConnected();
       }
@@ -252,22 +251,22 @@ class P2PMultiplayerClient {
     this.dataChannel.onmessage = (event) => {
       try {
         const message: P2PMessage = JSON.parse(event.data);
-        console.log('📨 Received message:', message.type);
+        // console.log('📨 Received message:', message.type);
         this.handleMessage(message);
       } catch (error) {
-        console.error('Error parsing message:', error);
+        // console.error('Error parsing message:', error);
       }
     };
 
     this.dataChannel.onclose = () => {
-      console.log('📡 Data channel closed');
+      // console.log('📡 Data channel closed');
       if (this.onDisconnected) {
         this.onDisconnected();
       }
     };
 
-    this.dataChannel.onerror = (error) => {
-      console.error('📡 Data channel error:', error);
+    this.dataChannel.onerror = () => {
+      // console.error('📡 Data channel error');
     };
   }
 
@@ -316,7 +315,7 @@ class P2PMultiplayerClient {
       pollCount++;
       
       if (pollCount > maxPolls) {
-        console.log('Stopped polling for offers after 5 minutes');
+        // console.log('Stopped polling for offers after 5 minutes');
         return;
       }
 
@@ -338,7 +337,7 @@ class P2PMultiplayerClient {
             return;
           }
         } catch (error) {
-          console.error('Error parsing connection data:', error);
+          // console.error('Error parsing connection data:', error);
           localStorage.removeItem(`bee5_connection_${this.currentRoom!.roomId}`);
         }
       }
@@ -391,7 +390,7 @@ class P2PMultiplayerClient {
       }, 1000);
 
     } catch (error) {
-      console.error('Error handling offer:', error);
+      // console.error('Error handling offer:', error);
     }
   }
 

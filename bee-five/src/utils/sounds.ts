@@ -17,7 +17,7 @@ class SoundGenerator {
       this.masterGain.connect(this.audioContext.destination);
       this.masterGain.gain.setValueAtTime(this.volume, this.audioContext.currentTime);
     } catch (error) {
-      console.warn('Web Audio API not supported:', error);
+      // console.warn('Web Audio API not supported:', error);
     }
   }
 
@@ -59,31 +59,6 @@ class SoundGenerator {
     oscillator.stop(now + 0.25);
   }
 
-  // Generate a higher pitched buzz for AI moves
-  playAIBuzzSound() {
-    if (!this.ensureAudioContext() || this.isMuted) return;
-
-    const now = this.audioContext!.currentTime;
-    const oscillator = this.audioContext!.createOscillator();
-    const gainNode = this.audioContext!.createGain();
-
-    // Higher pitched buzz for AI
-    oscillator.type = 'sawtooth';
-    oscillator.frequency.setValueAtTime(300, now);
-    oscillator.frequency.exponentialRampToValueAtTime(350, now + 0.1);
-    oscillator.frequency.exponentialRampToValueAtTime(280, now + 0.2);
-
-    gainNode.gain.setValueAtTime(0, now);
-    gainNode.gain.exponentialRampToValueAtTime(0.15, now + 0.02);
-    gainNode.gain.exponentialRampToValueAtTime(0.08, now + 0.1);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-
-    oscillator.connect(gainNode);
-    gainNode.connect(this.masterGain!);
-
-    oscillator.start(now);
-    oscillator.stop(now + 0.3);
-  }
 
   // Generate a sweet victory sound (ascending melody)
   playVictorySound() {

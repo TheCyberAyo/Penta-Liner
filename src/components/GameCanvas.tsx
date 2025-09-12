@@ -12,7 +12,6 @@ export interface GameCanvasProps {
   gameState: GameState;
   onCellClick: (row: number, col: number) => void;
   onGameStateChange: (newState: Partial<GameState>) => void;
-  isSinglePlayer: boolean;
 }
 
 const GRID_SIZE = 10;
@@ -23,8 +22,7 @@ const CANVAS_SIZE = GRID_SIZE * CELL_SIZE + (GRID_SIZE + 1) * BORDER_WIDTH;
 const GameCanvas: React.FC<GameCanvasProps> = ({ 
   gameState, 
   onCellClick, 
-  onGameStateChange,
-  isSinglePlayer 
+  onGameStateChange
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameRef = useRef<number>();

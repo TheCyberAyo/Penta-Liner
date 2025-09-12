@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface WelcomePageProps {
-  onGameModeSelect: (isSinglePlayer: boolean) => void;
+  onGameModeSelect: (gameMode: 'local' | 'online' | 'ai') => void;
 }
 
 const WelcomePage: React.FC<WelcomePageProps> = ({ onGameModeSelect }) => {
@@ -17,15 +17,21 @@ const WelcomePage: React.FC<WelcomePageProps> = ({ onGameModeSelect }) => {
             <div className="mode-selection">
               <button 
                 className="mode-button"
-                onClick={() => onGameModeSelect(false)}
+                onClick={() => onGameModeSelect('local')}
               >
-                Human vs Human
+                Take Turns
               </button>
               <button 
                 className="mode-button"
-                onClick={() => onGameModeSelect(true)}
+                onClick={() => onGameModeSelect('online')}
               >
-                Human vs Robot
+                Online Play
+              </button>
+              <button 
+                className="mode-button"
+                onClick={() => onGameModeSelect('ai')}
+              >
+                Play AI
               </button>
             </div>
           </div>

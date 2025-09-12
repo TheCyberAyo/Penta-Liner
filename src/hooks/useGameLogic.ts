@@ -2,16 +2,12 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { GameState } from '../components/GameCanvas';
 
 export interface UseGameLogicOptions {
-  isSinglePlayer: boolean;
-  difficulty: 'medium' | 'hard';
   timeLimit: number;
 }
 
 export const useGameLogic = (options: UseGameLogicOptions) => {
-  const { isSinglePlayer, difficulty, timeLimit } = options;
-  const workerRef = useRef<Worker | null>(null);
+  const { timeLimit } = options;
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const requestIdRef = useRef(0);
 
   // Initialize empty board
   const createEmptyBoard = (): (0 | 1 | 2)[][] => {
@@ -25,53 +21,6 @@ export const useGameLogic = (options: UseGameLogicOptions) => {
     winner: 0,
     timeLeft: timeLimit
   });
-
-  // Initialize Web Worker
-  useEffect(() => {
-    if (isSinglePlayer) {
-      workerRef.current = new Worker('/aiWorker.js');
-      
-      workerRef.current.onmessage = (e) => {
-        const { type, move, computationTime, id } = e.data;
-        
-        if (type === 'bestMoveFound' && move) {
-          // Apply AI move
-          setGameState(prevState => {
-            const newBoard = prevState.board.map(row => [...row]);
-            newBoard[move.row][move.col] = 2; // AI is player 2
-            
-            const winner = checkWinCondition(newBoard, move.row, move.col, 2);
-            
-            return {
-              ...prevState,
-              board: newBoard,
-              currentPlayer: winner ? prevState.currentPlayer : 1,
-              winner: winner ? 2 : 0,
-              isGameActive: !winner && !isBoardFull(newBoard),
-              timeLeft: timeLimit
-            };
-          });
-        }
-        
-        if (type === 'error') {
-          console.error('AI Worker error:', e.data.message);
-          // Fallback to random move
-          makeRandomMove();
-        }
-      };
-      
-      workerRef.current.onerror = (error) => {
-        console.error('Worker error:', error);
-        makeRandomMove();
-      };
-    }
-    
-    return () => {
-      if (workerRef.current) {
-        workerRef.current.terminate();
-      }
-    };
-  }, [isSinglePlayer]);
 
   // Timer management
   useEffect(() => {
@@ -150,38 +99,6 @@ export const useGameLogic = (options: UseGameLogicOptions) => {
     return board.every(row => row.every(cell => cell !== 0));
   }, []);
 
-  // Make random move (fallback)
-  const makeRandomMove = useCallback(() => {
-    setGameState(prevState => {
-      const emptyCells: { row: number; col: number }[] = [];
-      
-      for (let row = 0; row < 10; row++) {
-        for (let col = 0; col < 10; col++) {
-          if (prevState.board[row][col] === 0) {
-            emptyCells.push({ row, col });
-          }
-        }
-      }
-      
-      if (emptyCells.length === 0) return prevState;
-      
-      const randomCell = emptyCells[Math.floor(Math.random() * emptyCells.length)];
-      const newBoard = prevState.board.map(row => [...row]);
-      newBoard[randomCell.row][randomCell.col] = 2;
-      
-      const winner = checkWinCondition(newBoard, randomCell.row, randomCell.col, 2);
-      
-      return {
-        ...prevState,
-        board: newBoard,
-        currentPlayer: winner ? prevState.currentPlayer : 1,
-        winner: winner ? 2 : 0,
-        isGameActive: !winner && !isBoardFull(newBoard),
-        timeLeft: timeLimit
-      };
-    });
-  }, [checkWinCondition, isBoardFull, timeLimit]);
-
   // Handle cell click
   const handleCellClick = useCallback((row: number, col: number) => {
     if (!gameState.isGameActive || gameState.board[row][col] !== 0) {
@@ -195,7 +112,7 @@ export const useGameLogic = (options: UseGameLogicOptions) => {
       const winner = checkWinCondition(newBoard, row, col, prevState.currentPlayer);
       const boardFull = isBoardFull(newBoard);
 
-      const newState = {
+      return {
         ...prevState,
         board: newBoard,
         currentPlayer: winner || boardFull ? prevState.currentPlayer : (prevState.currentPlayer === 1 ? 2 : 1) as 1 | 2,
@@ -203,28 +120,8 @@ export const useGameLogic = (options: UseGameLogicOptions) => {
         isGameActive: !winner && !boardFull,
         timeLeft: timeLimit
       };
-
-      // Trigger AI move if it's single player and game is still active
-      if (isSinglePlayer && !winner && !boardFull && prevState.currentPlayer === 1) {
-        // Use Web Worker for AI move
-        setTimeout(() => {
-          if (workerRef.current) {
-            const requestId = ++requestIdRef.current;
-            workerRef.current.postMessage({
-              type: 'findBestMove',
-              board: newBoard,
-              difficulty,
-              id: requestId
-            });
-          } else {
-            makeRandomMove();
-          }
-        }, 500); // Small delay for better UX
-      }
-
-      return newState;
     });
-  }, [gameState.isGameActive, gameState.board, checkWinCondition, isBoardFull, isSinglePlayer, difficulty, makeRandomMove, timeLimit]);
+  }, [gameState.isGameActive, gameState.board, checkWinCondition, isBoardFull, timeLimit]);
 
   // Reset game
   const resetGame = useCallback(() => {
