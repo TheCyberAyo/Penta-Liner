@@ -120,10 +120,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
     const rect = canvas.getBoundingClientRect();
     
-    // Account for device pixel ratio for more precise coordinates
-    const devicePixelRatio = window.devicePixelRatio || 1;
-    const x = (event.clientX - rect.left) * devicePixelRatio;
-    const y = (event.clientY - rect.top) * devicePixelRatio;
+    // Use CSS pixels directly (no device pixel ratio multiplication)
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
 
     // Convert canvas coordinates to grid coordinates
     const col = Math.floor((x - BORDER_WIDTH) / (currentCellSize + BORDER_WIDTH));
@@ -147,31 +146,21 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     const rect = canvas.getBoundingClientRect();
     const touch = event.touches[0];
     
-    // Account for device pixel ratio for more precise touch coordinates
-    const devicePixelRatio = window.devicePixelRatio || 1;
-    const x = (touch.clientX - rect.left) * devicePixelRatio;
-    const y = (touch.clientY - rect.top) * devicePixelRatio;
+    // Use CSS pixels directly (no device pixel ratio multiplication)
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
 
     // Store touch start information for tap detection
     setTouchStartTime(Date.now());
     setTouchStartPosition({ x, y });
 
-    // Convert canvas coordinates to grid coordinates with better precision
+    // Convert canvas coordinates to grid coordinates
     const col = Math.floor((x - BORDER_WIDTH) / (currentCellSize + BORDER_WIDTH));
     const row = Math.floor((y - BORDER_WIDTH) / (currentCellSize + BORDER_WIDTH));
 
-    // Add touch target padding - allow tapping slightly outside the cell
-    const touchPadding = currentCellSize * 0.1; // 10% padding around each cell
-    const adjustedCol = Math.floor((x - BORDER_WIDTH + touchPadding) / (currentCellSize + BORDER_WIDTH));
-    const adjustedRow = Math.floor((y - BORDER_WIDTH + touchPadding) / (currentCellSize + BORDER_WIDTH));
-
-    // Use the adjusted coordinates if they're within bounds, otherwise use original
-    const finalCol = (adjustedCol >= 0 && adjustedCol < GRID_SIZE) ? adjustedCol : col;
-    const finalRow = (adjustedRow >= 0 && adjustedRow < GRID_SIZE) ? adjustedRow : row;
-
-    if (finalRow >= 0 && finalRow < GRID_SIZE && finalCol >= 0 && finalCol < GRID_SIZE) {
+    if (row >= 0 && row < GRID_SIZE && col >= 0 && col < GRID_SIZE) {
       // Show touch feedback immediately
-      setTouchedCell({ row: finalRow, col: finalCol });
+      setTouchedCell({ row, col });
     }
   };
 
@@ -192,10 +181,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     const rect = canvas.getBoundingClientRect();
     const touch = event.changedTouches[0];
     
-    // Account for device pixel ratio for more precise touch coordinates
-    const devicePixelRatio = window.devicePixelRatio || 1;
-    const x = (touch.clientX - rect.left) * devicePixelRatio;
-    const y = (touch.clientY - rect.top) * devicePixelRatio;
+    // Use CSS pixels directly (no device pixel ratio multiplication)
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
 
     // Calculate touch duration and distance
     const touchDuration = Date.now() - touchStartTime;
@@ -213,16 +201,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       const col = Math.floor((x - BORDER_WIDTH) / (currentCellSize + BORDER_WIDTH));
       const row = Math.floor((y - BORDER_WIDTH) / (currentCellSize + BORDER_WIDTH));
 
-      // Add touch target padding
-      const touchPadding = currentCellSize * 0.1;
-      const adjustedCol = Math.floor((x - BORDER_WIDTH + touchPadding) / (currentCellSize + BORDER_WIDTH));
-      const adjustedRow = Math.floor((y - BORDER_WIDTH + touchPadding) / (currentCellSize + BORDER_WIDTH));
-
-      const finalCol = (adjustedCol >= 0 && adjustedCol < GRID_SIZE) ? adjustedCol : col;
-      const finalRow = (adjustedRow >= 0 && adjustedRow < GRID_SIZE) ? adjustedRow : row;
-
-      if (finalRow >= 0 && finalRow < GRID_SIZE && finalCol >= 0 && finalCol < GRID_SIZE) {
-        onCellClick(finalRow, finalCol);
+      if (row >= 0 && row < GRID_SIZE && col >= 0 && col < GRID_SIZE) {
+        onCellClick(row, col);
       }
     }
 
@@ -242,10 +222,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
     const rect = canvas.getBoundingClientRect();
     
-    // Account for device pixel ratio for more precise coordinates
-    const devicePixelRatio = window.devicePixelRatio || 1;
-    const x = (event.clientX - rect.left) * devicePixelRatio;
-    const y = (event.clientY - rect.top) * devicePixelRatio;
+    // Use CSS pixels directly (no device pixel ratio multiplication)
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
 
     const col = Math.floor((x - BORDER_WIDTH) / (currentCellSize + BORDER_WIDTH));
     const row = Math.floor((y - BORDER_WIDTH) / (currentCellSize + BORDER_WIDTH));
