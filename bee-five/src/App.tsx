@@ -1718,17 +1718,16 @@ function AIGame({ onBackToMenu, initialDifficulty = 'medium' }: { onBackToMenu: 
           {isMobile ? '🏠' : '🏠 Menu'}
         </button>
         
-        {/* Centered Title */}
+        {/* Left-aligned Title */}
         <h1 style={{ 
           color: '#FFC30B', 
           margin: 0,
           fontSize: isMobile ? 'clamp(1.2rem, 4vw, 1.5rem)' : 'clamp(1.5rem, 3vw, 2rem)',
           textShadow: '2px 2px 0px black',
           fontWeight: 'bold',
-          textAlign: 'center',
+          textAlign: 'left',
           position: 'absolute',
-          left: '50%',
-          transform: 'translateX(-50%)'
+          left: '1rem'
         }}>
           🤖 AI
         </h1>
@@ -2211,8 +2210,7 @@ function SimpleWelcome() {
               maxWidth: '300px'
             }}
           >
-            <span style={{ fontSize: '1.2em' }}>🤖</span>
-            <span>Play AI</span>
+          <span style={{ fontSize: '1.5em' }}>🤖</span>
           </button>
 
           <button 
