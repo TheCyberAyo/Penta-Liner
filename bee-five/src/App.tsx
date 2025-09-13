@@ -382,7 +382,7 @@ function AIGame({ onBackToMenu, initialDifficulty = 'medium' }: { onBackToMenu: 
   const [timeLimit] = useState(15);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [volume, setVolume] = useState(0.3);
-  const [aiDifficulty, setAiDifficulty] = useState(initialDifficulty);
+  const [aiDifficulty] = useState(initialDifficulty);
   const [playerSkillLevel, setPlayerSkillLevel] = useState(0); // Dynamic difficulty tracking
   const [showWinPopup, setShowWinPopup] = useState(false);
   const [winMessage, setWinMessage] = useState('');
@@ -400,7 +400,7 @@ function AIGame({ onBackToMenu, initialDifficulty = 'medium' }: { onBackToMenu: 
   // Show popup when game ends
   React.useEffect(() => {
     if (gameState.winner > 0) {
-      const winnerName = gameState.winner === 1 ? 'You' : 'You';
+      // const winnerName = gameState.winner === 1 ? 'You' : 'You';
       const winText = gameState.winner === 1 ? 'You win!' : 'You lost!';
       setWinMessage(`${winText} 🐝`);
       setShowWinPopup(true);
@@ -414,7 +414,7 @@ function AIGame({ onBackToMenu, initialDifficulty = 'medium' }: { onBackToMenu: 
       setWinMessage('Game Over - Draw! 🐝');
       setShowWinPopup(true);
     } else if (gameState.timeLeft === 0) {
-      const winner = gameState.currentPlayer === 1 ? 'You lost' : 'You';
+      // const winner = gameState.currentPlayer === 1 ? 'You lost' : 'You';
       const winText = gameState.currentPlayer === 1 ? 'You lost due to time limit!' : 'You win due to time limit!';
       setWinMessage(`${winText} 🐝`);
       setShowWinPopup(true);
@@ -758,6 +758,46 @@ function AIGame({ onBackToMenu, initialDifficulty = 'medium' }: { onBackToMenu: 
     return pos.row >= 0 && pos.row < 10 && pos.col >= 0 && pos.col < 10;
   };
 
+  // Helper function to check if a line has potential to reach 5 pieces
+  const canReachFive = (board: (0 | 1 | 2)[][], row: number, col: number, player: 1 | 2): boolean => {
+    const directions = [
+      [0, 1],   // horizontal
+      [1, 0],   // vertical  
+      [1, 1],   // diagonal \
+      [1, -1]   // diagonal /
+    ];
+
+    for (let [dr, dc] of directions) {
+      let count = 1; // Count the piece we just placed
+      let emptySpaces = 0;
+      
+      // Check both directions from the placed piece
+      for (let direction = -1; direction <= 1; direction += 2) {
+        for (let i = 1; i <= 4; i++) {
+          const newRow = row + (dr * i * direction);
+          const newCol = col + (dc * i * direction);
+          
+          if (newRow < 0 || newRow >= 10 || newCol < 0 || newCol >= 10) break;
+          
+          if (board[newRow][newCol] === player) {
+            count++;
+          } else if (board[newRow][newCol] === 0) {
+            emptySpaces++;
+          } else {
+            break; // Opponent piece blocks the line
+          }
+        }
+      }
+      
+      // If we can potentially reach 5 pieces (count + empty spaces >= 5)
+      if (count + emptySpaces >= 5) {
+        return true;
+      }
+    }
+    
+    return false;
+  };
+
   // Helper function to find double threat moves (moves that create or block two winning chances)
   const findDoubleThreatMoves = (availableCells: {row: number, col: number}[], player: 1 | 2): {row: number, col: number}[] => {
     const doubleThreatMoves: {row: number, col: number}[] = [];
@@ -984,23 +1024,23 @@ function AIGame({ onBackToMenu, initialDifficulty = 'medium' }: { onBackToMenu: 
     return posOpen || negOpen;
   };
 
-  // Dynamic difficulty adjustment based on player performance
-  const getAdjustedDepth = (): number => {
-    // Base depth is 3, adjust based on player skill level
-    const baseDepth = 3;
-    
-    if (playerSkillLevel < -2) {
-      return Math.max(1, baseDepth - 2); // Easier for struggling players
-    } else if (playerSkillLevel < 0) {
-      return Math.max(2, baseDepth - 1); // Slightly easier
-    } else if (playerSkillLevel > 2) {
-      return Math.min(4, baseDepth + 1); // Harder for skilled players
-    } else if (playerSkillLevel > 5) {
-      return Math.min(5, baseDepth + 2); // Much harder for experts
-    }
-    
-    return baseDepth; // Default depth
-  };
+  // Dynamic difficulty adjustment based on player performance (currently unused)
+  // const getAdjustedDepth = (): number => {
+  //   // Base depth is 3, adjust based on player skill level
+  //   const baseDepth = 3;
+  //   
+  //   if (playerSkillLevel < -2) {
+  //     return Math.max(1, baseDepth - 2); // Easier for struggling players
+  //   } else if (playerSkillLevel < 0) {
+  //     return Math.max(2, baseDepth - 1); // Slightly easier
+  //   } else if (playerSkillLevel > 2) {
+  //     return Math.min(4, baseDepth + 1); // Harder for skilled players
+  //   } else if (playerSkillLevel > 5) {
+  //     return Math.min(5, baseDepth + 2); // Much harder for experts
+  //   }
+  //   
+  //   return baseDepth; // Default depth
+  // };
 
   // Track player performance for dynamic difficulty
   const updatePlayerSkillLevel = (gameResult: 'win' | 'loss' | 'draw') => {
@@ -1012,155 +1052,155 @@ function AIGame({ onBackToMenu, initialDifficulty = 'medium' }: { onBackToMenu: 
     // Draw doesn't change skill level
   };
 
-  // Advanced opening book for optimal first 8-10 moves
-  const getAdvancedOpeningMove = (availableCells: {row: number, col: number}[]): {row: number, col: number} | null => {
-    const totalMoves = 100 - availableCells.length;
-    
-    // First move - always center
-    if (totalMoves === 0) {
-      const center = availableCells.find(cell => cell.row === 4 && cell.col === 4) ||
-                    availableCells.find(cell => cell.row === 5 && cell.col === 5) ||
-                    availableCells.find(cell => cell.row === 4 && cell.col === 5) ||
-                    availableCells.find(cell => cell.row === 5 && cell.col === 4);
-      return center || null;
-    }
-    
-    // Second move - adjacent to center
-    if (totalMoves === 1) {
-      const centerAdjacent = availableCells.filter(cell => {
-        const distFromCenter = Math.abs(cell.row - 4.5) + Math.abs(cell.col - 4.5);
-        return distFromCenter <= 2 && distFromCenter > 0;
-      });
-      if (centerAdjacent.length > 0) {
-        return centerAdjacent[Math.floor(Math.random() * centerAdjacent.length)];
-      }
-    }
-    
-    // Third move - strategic positioning
-    if (totalMoves === 2) {
-      const strategicCells = availableCells.filter(cell => {
-        const distFromCenter = Math.abs(cell.row - 4.5) + Math.abs(cell.col - 4.5);
-        return distFromCenter <= 3;
-      });
-      if (strategicCells.length > 0) {
-        return strategicCells[Math.floor(Math.random() * strategicCells.length)];
-      }
-    }
-    
-    // Fourth move - create threats
-    if (totalMoves === 3) {
-      const threatCells = availableCells.filter(cell => {
-        const testBoard = gameState.board.map(row => [...row]);
-        testBoard[cell.row][cell.col] = 2;
-        return checkTwoInARow(testBoard, cell.row, cell.col, 2);
-      });
-      if (threatCells.length > 0) {
-        return threatCells[0];
-      }
-    }
-    
-    // Fifth move - block human threats
-    if (totalMoves === 4) {
-      const blockCells = availableCells.filter(cell => {
-        const testBoard = gameState.board.map(row => [...row]);
-        testBoard[cell.row][cell.col] = 1;
-        return checkTwoInARow(testBoard, cell.row, cell.col, 1);
-      });
-      if (blockCells.length > 0) {
-        return blockCells[0];
-      }
-    }
-    
-    // Moves 6-8 - advanced positioning
-    if (totalMoves >= 5 && totalMoves <= 7) {
-      const strategicCells = availableCells.filter(cell => {
-        const distFromCenter = Math.abs(cell.row - 4.5) + Math.abs(cell.col - 4.5);
-        return distFromCenter <= 4;
-      });
-      if (strategicCells.length > 0) {
-        return strategicCells[Math.floor(Math.random() * strategicCells.length)];
-      }
-    }
-    
-    return null; // No opening book move available
-  };
+  // Advanced opening book for optimal first 8-10 moves (currently unused)
+  // const getAdvancedOpeningMove = (availableCells: {row: number, col: number}[]): {row: number, col: number} | null => {
+  //   const totalMoves = 100 - availableCells.length;
+  //   
+  //   // First move - always center
+  //   if (totalMoves === 0) {
+  //     const center = availableCells.find(cell => cell.row === 4 && cell.col === 4) ||
+  //                   availableCells.find(cell => cell.row === 5 && cell.col === 5) ||
+  //                   availableCells.find(cell => cell.row === 4 && cell.col === 5) ||
+  //                   availableCells.find(cell => cell.row === 5 && cell.col === 4);
+  //     return center || null;
+  //   }
+  //   
+  //   // Second move - adjacent to center
+  //   if (totalMoves === 1) {
+  //     const centerAdjacent = availableCells.filter(cell => {
+  //       const distFromCenter = Math.abs(cell.row - 4.5) + Math.abs(cell.col - 4.5);
+  //       return distFromCenter <= 2 && distFromCenter > 0;
+  //     });
+  //     if (centerAdjacent.length > 0) {
+  //       return centerAdjacent[Math.floor(Math.random() * centerAdjacent.length)];
+  //     }
+  //   }
+  //   
+  //   // Third move - strategic positioning
+  //   if (totalMoves === 2) {
+  //     const strategicCells = availableCells.filter(cell => {
+  //       const distFromCenter = Math.abs(cell.row - 4.5) + Math.abs(cell.col - 4.5);
+  //       return distFromCenter <= 3;
+  //     });
+  //     if (strategicCells.length > 0) {
+  //       return strategicCells[Math.floor(Math.random() * strategicCells.length)];
+  //     }
+  //   }
+  //   
+  //   // Fourth move - create threats
+  //   if (totalMoves === 3) {
+  //     const threatCells = availableCells.filter(cell => {
+  //       const testBoard = gameState.board.map(row => [...row]);
+  //       testBoard[cell.row][cell.col] = 2;
+  //       return checkTwoInARow(testBoard, cell.row, cell.col, 2);
+  //     });
+  //     if (threatCells.length > 0) {
+  //       return threatCells[0];
+  //     }
+  //   }
+  //   
+  //   // Fifth move - block human threats
+  //   if (totalMoves === 4) {
+  //     const blockCells = availableCells.filter(cell => {
+  //       const testBoard = gameState.board.map(row => [...row]);
+  //       testBoard[cell.row][cell.col] = 1;
+  //       return checkTwoInARow(testBoard, cell.row, cell.col, 1);
+  //     });
+  //     if (blockCells.length > 0) {
+  //       return blockCells[0];
+  //     }
+  //   }
+  //   
+  //   // Moves 6-8 - advanced positioning
+  //   if (totalMoves >= 5 && totalMoves <= 7) {
+  //     const strategicCells = availableCells.filter(cell => {
+  //       const distFromCenter = Math.abs(cell.row - 4.5) + Math.abs(cell.col - 4.5);
+  //       return distFromCenter <= 4;
+  //     });
+  //     if (strategicCells.length > 0) {
+  //       return strategicCells[Math.floor(Math.random() * strategicCells.length)];
+  //     }
+  //   }
+  //   
+  //   return null; // No opening book move available
+  // };
 
-  // Advanced threat detection fallback
-  const getAdvancedThreatMove = (availableCells: {row: number, col: number}[]): {row: number, col: number} => {
-    // Priority 1: Check if AI can win in one move
-    for (let cell of availableCells) {
-      const testBoard = gameState.board.map(row => [...row]);
-      testBoard[cell.row][cell.col] = 2;
-      if (checkWinCondition(testBoard, cell.row, cell.col, 2)) {
-        return cell;
-      }
-    }
+  // Advanced threat detection fallback (currently unused)
+  // const getAdvancedThreatMove = (availableCells: {row: number, col: number}[]): {row: number, col: number} => {
+  //   // Priority 1: Check if AI can win in one move
+  //   for (let cell of availableCells) {
+  //     const testBoard = gameState.board.map(row => [...row]);
+  //     testBoard[cell.row][cell.col] = 2;
+  //     if (checkWinCondition(testBoard, cell.row, cell.col, 2)) {
+  //       return cell;
+  //     }
+  //   }
 
-    // Priority 2: Block human from winning
-    for (let cell of availableCells) {
-      const testBoard = gameState.board.map(row => [...row]);
-      testBoard[cell.row][cell.col] = 1;
-      if (checkFourInARow(testBoard, cell.row, cell.col, 1)) {
-        return cell;
-      }
-    }
+  //   // Priority 2: Block human from winning
+  //   for (let cell of availableCells) {
+  //     const testBoard = gameState.board.map(row => [...row]);
+  //     testBoard[cell.row][cell.col] = 1;
+  //     if (checkFourInARow(testBoard, cell.row, cell.col, 1)) {
+  //       return cell;
+  //     }
+  //   }
 
-    // Priority 3: Block human 3-in-a-row threats
-    for (let cell of availableCells) {
-      const testBoard = gameState.board.map(row => [...row]);
-      testBoard[cell.row][cell.col] = 1;
-      if (checkThreeInARow(testBoard, cell.row, cell.col, 1)) {
-        return cell;
-      }
-    }
+  //   // Priority 3: Block human 3-in-a-row threats
+  //   for (let cell of availableCells) {
+  //     const testBoard = gameState.board.map(row => [...row]);
+  //     testBoard[cell.row][cell.col] = 1;
+  //     if (checkThreeInARow(testBoard, cell.row, cell.col, 1)) {
+  //       return cell;
+  //     }
+  //   }
 
-    // Priority 4: Block human 2-in-a-row threats
-    for (let cell of availableCells) {
-      const testBoard = gameState.board.map(row => [...row]);
-      testBoard[cell.row][cell.col] = 1;
-      if (checkTwoInARow(testBoard, cell.row, cell.col, 1)) {
-        return cell;
-      }
-    }
+  //   // Priority 4: Block human 2-in-a-row threats
+  //   for (let cell of availableCells) {
+  //     const testBoard = gameState.board.map(row => [...row]);
+  //     testBoard[cell.row][cell.col] = 1;
+  //     if (checkTwoInARow(testBoard, cell.row, cell.col, 1)) {
+  //       return cell;
+  //     }
+  //   }
 
-    // Priority 5: Block "X X _ X" pattern
-    const gapBlockingMoves = findGapBlockingMoves(availableCells);
-    if (gapBlockingMoves.length > 0) {
-      return gapBlockingMoves[0];
-    }
+  //   // Priority 5: Block "X X _ X" pattern
+  //   const gapBlockingMoves = findGapBlockingMoves(availableCells);
+  //   if (gapBlockingMoves.length > 0) {
+  //     return gapBlockingMoves[0];
+  //   }
 
-    // Priority 6: Create AI 3-in-a-row opportunities
-    for (let cell of availableCells) {
-      const testBoard = gameState.board.map(row => [...row]);
-      testBoard[cell.row][cell.col] = 2;
-      if (checkThreeInARow(testBoard, cell.row, cell.col, 2) && canReachFive(testBoard, cell.row, cell.col, 2)) {
-        return cell;
-      }
-    }
+  //   // Priority 6: Create AI 3-in-a-row opportunities
+  //   for (let cell of availableCells) {
+  //     const testBoard = gameState.board.map(row => [...row]);
+  //     testBoard[cell.row][cell.col] = 2;
+  //     if (checkThreeInARow(testBoard, cell.row, cell.col, 2) && canReachFive(testBoard, cell.row, cell.col, 2)) {
+  //       return cell;
+  //     }
+  //   }
 
-    // Priority 7: Create AI 2-in-a-row opportunities
-    for (let cell of availableCells) {
-      const testBoard = gameState.board.map(row => [...row]);
-      testBoard[cell.row][cell.col] = 2;
-      if (checkTwoInARow(testBoard, cell.row, cell.col, 2) && canReachFive(testBoard, cell.row, cell.col, 2)) {
-        return cell;
-      }
-    }
+  //   // Priority 7: Create AI 2-in-a-row opportunities
+  //   for (let cell of availableCells) {
+  //     const testBoard = gameState.board.map(row => [...row]);
+  //     testBoard[cell.row][cell.col] = 2;
+  //     if (checkTwoInARow(testBoard, cell.row, cell.col, 2) && canReachFive(testBoard, cell.row, cell.col, 2)) {
+  //       return cell;
+  //     }
+  //   }
 
-    // Priority 8: Center control
-    const centerCells = availableCells.filter(cell => {
-      const centerRow = Math.abs(cell.row - 4.5);
-      const centerCol = Math.abs(cell.col - 4.5);
-      return centerRow <= 2 && centerCol <= 2;
-    });
-    
-    if (centerCells.length > 0) {
-      return centerCells[Math.floor(Math.random() * centerCells.length)];
-    }
+  //   // Priority 8: Center control
+  //   const centerCells = availableCells.filter(cell => {
+  //     const centerRow = Math.abs(cell.row - 4.5);
+  //     const centerCol = Math.abs(cell.col - 4.5);
+  //     return centerRow <= 2 && centerCol <= 2;
+  //   });
+  //   
+  //   if (centerCells.length > 0) {
+  //     return centerCells[Math.floor(Math.random() * centerCells.length)];
+  //   }
 
-    // Priority 9: Random move
-    return availableCells[Math.floor(Math.random() * availableCells.length)];
-  };
+  //   // Priority 9: Random move
+  //   return availableCells[Math.floor(Math.random() * availableCells.length)];
+  // };
 
 
 
