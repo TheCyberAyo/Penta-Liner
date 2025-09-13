@@ -336,27 +336,6 @@ body {
   transform: translateZ(0);
 }
 
-/* Mobile touch optimizations */
-@media (max-width: 768px) {
-  .game-content canvas {
-    /* Ensure canvas is properly sized for mobile */
-    width: min(90vw, 600px) !important;
-    height: min(90vw, 600px) !important;
-    /* Improve touch responsiveness */
-    touch-action: none;
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-  }
-  
-  /* Prevent zoom on double tap */
-  .game-page {
-    touch-action: manipulation;
-  }
-}
-
 .control-button:active {
   transform: translateY(0);
 }
