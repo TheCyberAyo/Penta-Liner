@@ -1695,42 +1695,44 @@ function AIGame({ onBackToMenu, initialDifficulty = 'medium' }: { onBackToMenu: 
         boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
         zIndex: 10
       }}>
-        {/* Back button */}
-        <button 
-          onClick={() => {
-            onBackToMenu();
-            if (soundEnabled) soundManager.playClickSound();
-          }}
-          style={{
-            padding: isMobile ? '0.5rem' : '0.5rem 0.75rem',
-            fontSize: isMobile ? '1.2em' : '1em',
-            backgroundColor: '#FFC30B',
-            color: 'black',
-            border: '2px solid black',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            fontWeight: 'bold',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.25rem'
-          }}
-        >
-          {isMobile ? '🏠' : '🏠 Menu'}
-        </button>
-        
-        {/* Left-aligned Title */}
-        <h1 style={{ 
-          color: '#FFC30B', 
-          margin: 0,
-          fontSize: isMobile ? 'clamp(1.2rem, 4vw, 1.5rem)' : 'clamp(1.5rem, 3vw, 2rem)',
-          textShadow: '2px 2px 0px black',
-          fontWeight: 'bold',
-          textAlign: 'left',
-          position: 'absolute',
-          left: '1rem'
+        {/* Left side: Menu button and title */}
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '1rem' 
         }}>
-          🤖 AI
-        </h1>
+          <button 
+            onClick={() => {
+              onBackToMenu();
+              if (soundEnabled) soundManager.playClickSound();
+            }}
+            style={{
+              padding: isMobile ? '0.5rem' : '0.5rem 0.75rem',
+              fontSize: isMobile ? '1.2em' : '1em',
+              backgroundColor: '#FFC30B',
+              color: 'black',
+              border: '2px solid black',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.25rem'
+            }}
+          >
+            {isMobile ? '🏠' : '🏠 Menu'}
+          </button>
+          
+          <h1 style={{ 
+            color: '#FFC30B', 
+            margin: 0,
+            fontSize: isMobile ? 'clamp(1.2rem, 4vw, 1.5rem)' : 'clamp(1.5rem, 3vw, 2rem)',
+            textShadow: '2px 2px 0px black',
+            fontWeight: 'bold'
+          }}>
+            🤖 AI
+          </h1>
+        </div>
 
         {/* Controls - stack on mobile */}
         <div style={{ 
@@ -1763,7 +1765,7 @@ function AIGame({ onBackToMenu, initialDifficulty = 'medium' }: { onBackToMenu: 
                 height: '40px'
               }}
             >
-              ▶️ Play
+              ▶️
             </button>
           )}
 
@@ -2210,7 +2212,8 @@ function SimpleWelcome() {
               maxWidth: '300px'
             }}
           >
-          <span style={{ fontSize: '1.5em' }}>🤖</span>
+            <span style={{ fontSize: '1.2em' }}>🤖</span>
+            <span>Play AI</span>
           </button>
 
           <button 
