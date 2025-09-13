@@ -383,7 +383,7 @@ function AIGame({ onBackToMenu, initialDifficulty = 'medium' }: { onBackToMenu: 
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [volume, setVolume] = useState(0.3);
   const [aiDifficulty] = useState(initialDifficulty);
-  const [playerSkillLevel, setPlayerSkillLevel] = useState(0); // Dynamic difficulty tracking
+  // const [playerSkillLevel, setPlayerSkillLevel] = useState(0); // Dynamic difficulty tracking (currently unused)
   const [showWinPopup, setShowWinPopup] = useState(false);
   const [winMessage, setWinMessage] = useState('');
   
@@ -436,9 +436,9 @@ function AIGame({ onBackToMenu, initialDifficulty = 'medium' }: { onBackToMenu: 
   React.useEffect(() => {
     if (gameState.winner > 0) {
       if (gameState.winner === 1) {
-        updatePlayerSkillLevel('win'); // Human won
+        // updatePlayerSkillLevel('win'); // Human won (currently unused)
       } else if (gameState.winner === 2) {
-        updatePlayerSkillLevel('loss'); // AI won
+        // updatePlayerSkillLevel('loss'); // AI won (currently unused)
       }
     }
   }, [gameState.winner]);
@@ -1042,15 +1042,15 @@ function AIGame({ onBackToMenu, initialDifficulty = 'medium' }: { onBackToMenu: 
   //   return baseDepth; // Default depth
   // };
 
-  // Track player performance for dynamic difficulty
-  const updatePlayerSkillLevel = (gameResult: 'win' | 'loss' | 'draw') => {
-    if (gameResult === 'win') {
-      setPlayerSkillLevel(prev => Math.min(10, prev + 1)); // Player getting better
-    } else if (gameResult === 'loss') {
-      setPlayerSkillLevel(prev => Math.max(-10, prev - 1)); // Player struggling
-    }
-    // Draw doesn't change skill level
-  };
+  // Track player performance for dynamic difficulty (currently unused)
+  // const updatePlayerSkillLevel = (gameResult: 'win' | 'loss' | 'draw') => {
+  //   if (gameResult === 'win') {
+  //     setPlayerSkillLevel(prev => Math.min(10, prev + 1)); // Player getting better
+  //   } else if (gameResult === 'loss') {
+  //     setPlayerSkillLevel(prev => Math.max(-10, prev - 1)); // Player struggling
+  //   }
+  //   // Draw doesn't change skill level
+  // };
 
   // Advanced opening book for optimal first 8-10 moves (currently unused)
   // const getAdvancedOpeningMove = (availableCells: {row: number, col: number}[]): {row: number, col: number} | null => {
@@ -1611,46 +1611,46 @@ function AIGame({ onBackToMenu, initialDifficulty = 'medium' }: { onBackToMenu: 
     return false;
   };
 
-  const checkFourInARow = (board: (0 | 1 | 2)[][], row: number, col: number, player: 1 | 2) => {
-    const directions = [
-      [0, 1],   // horizontal
-      [1, 0],   // vertical
-      [1, 1],   // diagonal /
-      [1, -1]   // diagonal \
-    ];
+  // const checkFourInARow = (board: (0 | 1 | 2)[][], row: number, col: number, player: 1 | 2) => {
+  //   const directions = [
+  //     [0, 1],   // horizontal
+  //     [1, 0],   // vertical
+  //     [1, 1],   // diagonal /
+  //     [1, -1]   // diagonal \
+  //   ];
 
-    for (const [dRow, dCol] of directions) {
-      let count = 1;
+  //   for (const [dRow, dCol] of directions) {
+  //     let count = 1;
 
-      // Check in positive direction
-      for (let i = 1; i < 4; i++) {
-        const newRow = row + i * dRow;
-        const newCol = col + i * dCol;
-        if (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 10 && board[newRow][newCol] === player) {
-          count++;
-        } else {
-          break;
-        }
-      }
+  //     // Check in positive direction
+  //     for (let i = 1; i < 4; i++) {
+  //       const newRow = row + i * dRow;
+  //       const newCol = col + i * dCol;
+  //       if (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 10 && board[newRow][newCol] === player) {
+  //         count++;
+  //       } else {
+  //         break;
+  //       }
+  //     }
 
-      // Check in negative direction
-      for (let i = 1; i < 4; i++) {
-        const newRow = row - i * dRow;
-        const newCol = col - i * dCol;
-        if (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 10 && board[newRow][newCol] === player) {
-          count++;
-        } else {
-          break;
-        }
-      }
+  //     // Check in negative direction
+  //     for (let i = 1; i < 4; i++) {
+  //       const newRow = row - i * dRow;
+  //       const newCol = col - i * dCol;
+  //       if (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 10 && board[newRow][newCol] === player) {
+  //         count++;
+  //       } else {
+  //         break;
+  //       }
+  //     }
 
-      if (count >= 4) {
-        return true;
-      }
-    }
+  //     if (count >= 4) {
+  //       return true;
+  //     }
+  //   }
 
-    return false;
-  };
+  //   return false;
+  // };
 
   const getStatusMessage = () => {
     if (gameState.winner > 0) {
