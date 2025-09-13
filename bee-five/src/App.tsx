@@ -382,7 +382,7 @@ function AIGame({ onBackToMenu, initialDifficulty = 'medium' }: { onBackToMenu: 
   const [timeLimit] = useState(15);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [volume, setVolume] = useState(0.3);
-  const [aiDifficulty] = useState(initialDifficulty);
+  const [aiDifficulty, setAiDifficulty] = useState(initialDifficulty);
   // const [playerSkillLevel, setPlayerSkillLevel] = useState(0); // Dynamic difficulty tracking (currently unused)
   const [showWinPopup, setShowWinPopup] = useState(false);
   const [winMessage, setWinMessage] = useState('');
@@ -421,6 +421,16 @@ function AIGame({ onBackToMenu, initialDifficulty = 'medium' }: { onBackToMenu: 
       setShowWinPopup(true);
     }
   }, [gameState.winner, gameState.isGameActive, gameState.timeLeft, gameState.currentPlayer]);
+
+  // Handle difficulty change - end current game
+  const handleDifficultyChange = (newDifficulty: string) => {
+    setAiDifficulty(newDifficulty);
+    // End the current game by resetting it
+    resetGame();
+    // Close settings dropdown
+    setShowMobileSettings(false);
+    if (soundEnabled) soundManager.playClickSound();
+  };
 
   // AI move logic
   React.useEffect(() => {
@@ -1770,44 +1780,37 @@ function AIGame({ onBackToMenu, initialDifficulty = 'medium' }: { onBackToMenu: 
             </button>
           )}
 
-          {/* Level display - hidden on mobile */}
+          {/* Difficulty selector - hidden on mobile */}
           {!isMobile && (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              border: '2px solid black',
-              borderRadius: '8px',
-              overflow: 'hidden',
-              minWidth: '120px',
-              height: '40px'
-            }}>
-              <div style={{
-                backgroundColor: 'black',
-                color: '#FFC30B',
+            <select
+              value={aiDifficulty}
+              onChange={(e) => handleDifficultyChange(e.target.value)}
+              style={{
                 padding: '0.5rem 0.75rem',
                 fontSize: '0.9em',
                 fontWeight: 'bold',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flex: '1'
-              }}>
-                Level
-              </div>
-              <div style={{
                 backgroundColor: '#FFC30B',
                 color: 'black',
-                padding: '0.5rem 0.75rem',
-                fontSize: '0.9em',
-                fontWeight: 'bold',
+                border: '2px solid black',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                minWidth: '120px',
+                height: '40px',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                flex: '1'
-              }}>
-                {aiDifficulty.charAt(0).toUpperCase() + aiDifficulty.slice(1)}
-              </div>
-            </div>
+                justifyContent: 'center'
+              }}
+            >
+              <option value="easy" style={{ backgroundColor: 'white', color: 'black' }}>
+                🟢 Easy
+              </option>
+              <option value="medium" style={{ backgroundColor: 'white', color: 'black' }}>
+                🟡 Medium
+              </option>
+              <option value="hard" style={{ backgroundColor: 'white', color: 'black' }}>
+                🔴 Hard
+              </option>
+            </select>
           )}
 
           {/* Sound control - hidden on mobile */}
@@ -1984,7 +1987,7 @@ function AIGame({ onBackToMenu, initialDifficulty = 'medium' }: { onBackToMenu: 
             Settings
           </h3>
           
-          {/* Level Display */}
+          {/* Difficulty Selector */}
           <div style={{
             marginBottom: '1rem',
             display: 'flex',
@@ -1992,29 +1995,32 @@ function AIGame({ onBackToMenu, initialDifficulty = 'medium' }: { onBackToMenu: 
             justifyContent: 'space-between',
             gap: '0.5rem'
           }}>
-            <span style={{ fontWeight: 'bold', color: '#333' }}>Level:</span>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              border: '2px solid black',
-              borderRadius: '6px',
-              overflow: 'hidden',
-              minWidth: '80px'
-            }}>
-              <div style={{
-                backgroundColor: '#FFC30B',
-                color: 'black',
+            <span style={{ fontWeight: 'bold', color: '#333' }}>Difficulty:</span>
+            <select
+              value={aiDifficulty}
+              onChange={(e) => handleDifficultyChange(e.target.value)}
+              style={{
                 padding: '0.4rem 0.6rem',
                 fontSize: '0.9em',
                 fontWeight: 'bold',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flex: '1'
-              }}>
-                {aiDifficulty.charAt(0).toUpperCase() + aiDifficulty.slice(1)}
-              </div>
-            </div>
+                backgroundColor: '#FFC30B',
+                color: 'black',
+                border: '2px solid black',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                minWidth: '80px'
+              }}
+            >
+              <option value="easy" style={{ backgroundColor: 'white', color: 'black' }}>
+                🟢 Easy
+              </option>
+              <option value="medium" style={{ backgroundColor: 'white', color: 'black' }}>
+                🟡 Medium
+              </option>
+              <option value="hard" style={{ backgroundColor: 'white', color: 'black' }}>
+                🔴 Hard
+              </option>
+            </select>
           </div>
 
           {/* Sound Control */}
