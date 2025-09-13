@@ -147,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (checkWin(selectedCell, 'yellow', cells)) {
             setTimeout(() => {
-                statusText.textContent = 'AI wins!';
+                statusText.textContent = 'You lost!';
                 clearInterval(countdownInterval);
                 isGameActive = false;
             }, 100);
