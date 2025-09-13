@@ -386,6 +386,7 @@ function AIGame({ onBackToMenu, initialDifficulty = 'medium' }: { onBackToMenu: 
   // const [playerSkillLevel, setPlayerSkillLevel] = useState(0); // Dynamic difficulty tracking (currently unused)
   const [showWinPopup, setShowWinPopup] = useState(false);
   const [winMessage, setWinMessage] = useState('');
+  const [showMobileSettings, setShowMobileSettings] = useState(false);
   
   const { gameState, handleCellClick, resetGame } = useGameLogic({
     timeLimit
@@ -1769,65 +1770,96 @@ function AIGame({ onBackToMenu, initialDifficulty = 'medium' }: { onBackToMenu: 
             </button>
           )}
 
-          {/* Level display */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            border: '2px solid black',
-            borderRadius: '8px',
-            overflow: 'hidden',
-            minWidth: '120px',
-            height: '40px'
-          }}>
+          {/* Level display - hidden on mobile */}
+          {!isMobile && (
             <div style={{
-              backgroundColor: 'black',
-              color: '#FFC30B',
-              padding: '0.5rem 0.75rem',
-              fontSize: '0.9em',
-              fontWeight: 'bold',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              flex: '1'
-            }}>
-              Level
-            </div>
-            <div style={{
-              backgroundColor: '#FFC30B',
-              color: 'black',
-              padding: '0.5rem 0.75rem',
-              fontSize: '0.9em',
-              fontWeight: 'bold',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flex: '1'
-            }}>
-              {aiDifficulty.charAt(0).toUpperCase() + aiDifficulty.slice(1)}
-            </div>
-          </div>
-
-          {/* Sound control */}
-          <button
-            onClick={() => {
-              const newSoundEnabled = !soundEnabled;
-              setSoundEnabled(newSoundEnabled);
-              soundManager.setMuted(!newSoundEnabled);
-              if (newSoundEnabled) soundManager.playClickSound();
-            }}
-            style={{
-              padding: isMobile ? '0.5rem' : '0.5rem 0.75rem',
-              fontSize: '1em',
-              backgroundColor: soundEnabled ? '#4CAF50' : '#f44336',
-              color: 'white',
               border: '2px solid black',
               borderRadius: '8px',
-              cursor: 'pointer',
-              fontWeight: 'bold'
-            }}
-          >
-            {soundEnabled ? '🔊' : '🔇'}
-          </button>
+              overflow: 'hidden',
+              minWidth: '120px',
+              height: '40px'
+            }}>
+              <div style={{
+                backgroundColor: 'black',
+                color: '#FFC30B',
+                padding: '0.5rem 0.75rem',
+                fontSize: '0.9em',
+                fontWeight: 'bold',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flex: '1'
+              }}>
+                Level
+              </div>
+              <div style={{
+                backgroundColor: '#FFC30B',
+                color: 'black',
+                padding: '0.5rem 0.75rem',
+                fontSize: '0.9em',
+                fontWeight: 'bold',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flex: '1'
+              }}>
+                {aiDifficulty.charAt(0).toUpperCase() + aiDifficulty.slice(1)}
+              </div>
+            </div>
+          )}
+
+          {/* Sound control - hidden on mobile */}
+          {!isMobile && (
+            <button
+              onClick={() => {
+                const newSoundEnabled = !soundEnabled;
+                setSoundEnabled(newSoundEnabled);
+                soundManager.setMuted(!newSoundEnabled);
+                if (newSoundEnabled) soundManager.playClickSound();
+              }}
+              style={{
+                padding: isMobile ? '0.5rem' : '0.5rem 0.75rem',
+                fontSize: '1em',
+                backgroundColor: soundEnabled ? '#4CAF50' : '#f44336',
+                color: 'white',
+                border: '2px solid black',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: 'bold'
+              }}
+            >
+              {soundEnabled ? '🔊' : '🔇'}
+            </button>
+          )}
+
+          {/* Mobile Settings Icon */}
+          {isMobile && (
+            <button
+              onClick={() => {
+                setShowMobileSettings(!showMobileSettings);
+                if (soundEnabled) soundManager.playClickSound();
+              }}
+              style={{
+                padding: '0.5rem',
+                fontSize: '1em',
+                backgroundColor: '#FFC30B',
+                color: 'black',
+                border: '2px solid black',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minWidth: '40px',
+                height: '40px'
+              }}
+            >
+              ⚙️
+            </button>
+          )}
           
           {/* Timer display */}
           <div style={{
@@ -1926,6 +1958,148 @@ function AIGame({ onBackToMenu, initialDifficulty = 'medium' }: { onBackToMenu: 
         </div>
       )}
 
+      {/* Mobile Settings Dropdown */}
+      {isMobile && showMobileSettings && (
+        <div style={{
+          position: 'fixed',
+          top: '80px',
+          right: '10px',
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          borderRadius: '10px',
+          border: '2px solid black',
+          padding: '1rem',
+          minWidth: '200px',
+          maxWidth: '90vw',
+          boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+          zIndex: 1000,
+          backdropFilter: 'blur(10px)'
+        }}>
+          <h3 style={{ 
+            margin: '0 0 1rem 0', 
+            color: '#FFC30B', 
+            textAlign: 'center',
+            fontSize: '1.1em',
+            fontWeight: 'bold'
+          }}>
+            Settings
+          </h3>
+          
+          {/* Level Display */}
+          <div style={{
+            marginBottom: '1rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '0.5rem'
+          }}>
+            <span style={{ fontWeight: 'bold', color: '#333' }}>Level:</span>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              border: '2px solid black',
+              borderRadius: '6px',
+              overflow: 'hidden',
+              minWidth: '80px'
+            }}>
+              <div style={{
+                backgroundColor: '#FFC30B',
+                color: 'black',
+                padding: '0.4rem 0.6rem',
+                fontSize: '0.9em',
+                fontWeight: 'bold',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flex: '1'
+              }}>
+                {aiDifficulty.charAt(0).toUpperCase() + aiDifficulty.slice(1)}
+              </div>
+            </div>
+          </div>
+
+          {/* Sound Control */}
+          <div style={{
+            marginBottom: '1rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '0.5rem'
+          }}>
+            <span style={{ fontWeight: 'bold', color: '#333' }}>Sound:</span>
+            <button
+              onClick={() => {
+                const newSoundEnabled = !soundEnabled;
+                setSoundEnabled(newSoundEnabled);
+                soundManager.setMuted(!newSoundEnabled);
+                if (newSoundEnabled) soundManager.playClickSound();
+              }}
+              style={{
+                padding: '0.4rem 0.6rem',
+                fontSize: '1em',
+                backgroundColor: soundEnabled ? '#4CAF50' : '#f44336',
+                color: 'white',
+                border: '2px solid black',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontWeight: 'bold'
+              }}
+            >
+              {soundEnabled ? '🔊 On' : '🔇 Off'}
+            </button>
+          </div>
+
+          {/* Volume Control */}
+          {soundEnabled && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '0.5rem'
+            }}>
+              <span style={{ fontWeight: 'bold', color: '#333' }}>Volume:</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.1"
+                  value={volume}
+                  onChange={(e) => {
+                    const newVolume = parseFloat(e.target.value);
+                    setVolume(newVolume);
+                    soundManager.setVolume(newVolume);
+                  }}
+                  style={{ 
+                    width: '80px',
+                    accentColor: '#FFC30B'
+                  }}
+                />
+                <span style={{ color: '#666', fontSize: '0.8em', minWidth: '30px' }}>
+                  {Math.round(volume * 100)}%
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Close button */}
+          <button
+            onClick={() => setShowMobileSettings(false)}
+            style={{
+              position: 'absolute',
+              top: '5px',
+              right: '8px',
+              background: 'none',
+              border: 'none',
+              fontSize: '1.2em',
+              cursor: 'pointer',
+              color: '#666',
+              fontWeight: 'bold'
+            }}
+          >
+            ×
+          </button>
+        </div>
+      )}
 
       {/* Winning Popup Modal */}
       {showWinPopup && (
