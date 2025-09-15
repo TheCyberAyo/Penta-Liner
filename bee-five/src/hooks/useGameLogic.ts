@@ -11,15 +11,16 @@ export interface GameState {
 
 export interface UseGameLogicOptions {
   timeLimit: number;
+  startingPlayer?: 1 | 2;
 }
 
 export const useGameLogic = (options: UseGameLogicOptions) => {
-  const { timeLimit } = options;
+  const { timeLimit, startingPlayer = 1 } = options;
   const timerRef = useRef<number | null>(null);
 
   const [gameState, setGameState] = useState<GameState>({
     board: createEmptyBoard(),
-    currentPlayer: 1,
+    currentPlayer: startingPlayer,
     isGameActive: true,
     winner: 0,
     timeLeft: timeLimit
@@ -50,15 +51,15 @@ export const useGameLogic = (options: UseGameLogicOptions) => {
   }, [gameState.isGameActive, gameState.board, gameState.currentPlayer, checkWinCondition, isBoardFull, timeLimit]);
 
   // Reset game
-  const resetGame = useCallback(() => {
+  const resetGame = useCallback((newStartingPlayer?: 1 | 2) => {
     setGameState({
       board: createEmptyBoard(),
-      currentPlayer: 1,
+      currentPlayer: newStartingPlayer || startingPlayer,
       isGameActive: true,
       winner: 0,
       timeLeft: timeLimit
     });
-  }, [timeLimit]);
+  }, [timeLimit, startingPlayer]);
 
   // Update game state (for external updates)
   const updateGameState = useCallback((newState: Partial<GameState>) => {

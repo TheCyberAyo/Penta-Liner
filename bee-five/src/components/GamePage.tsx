@@ -55,7 +55,7 @@ const GamePage: React.FC<GamePageProps> = ({ onBackToWelcome }) => {
       </div>
 
       <div className="game-controls">
-        <button className="control-button restart-button" onClick={resetGame}>
+        <button className="control-button restart-button" onClick={() => resetGame()}>
           Restart
         </button>
         <button className="control-button back-button" onClick={onBackToWelcome}>

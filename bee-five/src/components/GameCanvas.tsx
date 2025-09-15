@@ -15,11 +15,38 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const animationFrameRef = useRef<number | undefined>(undefined);
   const [hoveredCell, setHoveredCell] = useState<{ row: number; col: number } | null>(null);
   const [touchedCell, setTouchedCell] = useState<{ row: number; col: number } | null>(null);
+  const [windowSize, setWindowSize] = useState({ width: window.innerWidth, height: window.innerHeight });
   
-  // Detect mobile device for better touch experience
-  const isMobile = window.innerWidth <= 768;
-  const currentCellSize = isMobile ? MULTIPLAYER_CELL_SIZE : CELL_SIZE;
-  const currentCanvasSize = isMobile ? MULTIPLAYER_CANVAS_SIZE : CANVAS_SIZE;
+  // Handle window resize
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  
+  // Detect device type and calculate optimal sizing
+  const isMobile = windowSize.width <= 768;
+  const isTablet = windowSize.width <= 1024 && windowSize.width > 768;
+  
+  // Calculate optimal cell size based on screen size
+  let currentCellSize: number;
+  let currentCanvasSize: number;
+  
+  if (isMobile) {
+    currentCellSize = MULTIPLAYER_CELL_SIZE;
+    currentCanvasSize = MULTIPLAYER_CANVAS_SIZE;
+  } else if (isTablet) {
+    // Medium size for tablets
+    currentCellSize = 50;
+    currentCanvasSize = GRID_SIZE * currentCellSize + (GRID_SIZE + 1) * BORDER_WIDTH;
+  } else {
+    // Full size for desktop
+    currentCellSize = CELL_SIZE;
+    currentCanvasSize = CANVAS_SIZE;
+  }
 
   // Optimized rendering function
   const drawGame = useCallback((ctx: CanvasRenderingContext2D) => {
@@ -229,10 +256,14 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         border: '2px solid #FFC30B',
         borderRadius: '8px',
         cursor: gameState.isGameActive ? 'pointer' : 'default',
-        maxWidth: '90vw',
-        maxHeight: '90vw',
+        maxWidth: isMobile ? '90vw' : 'min(80vw, 80vh, 700px)',
+        maxHeight: isMobile ? '90vw' : 'min(80vw, 80vh, 700px)',
+        width: 'auto',
+        height: 'auto',
         objectFit: 'contain',
-        touchAction: 'none' // Prevent default touch behaviors
+        touchAction: 'none', // Prevent default touch behaviors
+        display: 'block',
+        margin: '0 auto'
       }}
     />
   );

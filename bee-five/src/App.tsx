@@ -5,6 +5,7 @@ import { type RoomInfo } from './utils/p2pMultiplayer';
 import { getPlayerName, getWinnerName } from './utils/gameLogic';
 import { MultiplayerLobby } from './components/MultiplayerLobby';
 import { MultiplayerGame } from './components/MultiplayerGame';
+import FriendGame from './components/FriendGame';
 import { useGameLogic } from './hooks/useGameLogic';
 import GameCanvas from './components/GameCanvas';
 
@@ -2238,7 +2239,7 @@ function AIGame({ onBackToMenu, initialDifficulty = 'medium' }: { onBackToMenu: 
 
 // Simple inline welcome component to avoid import issues
 function SimpleWelcome() {
-  const [gameMode, setGameMode] = useState<'menu' | 'local-multiplayer' | 'online-lobby' | 'online-game' | 'ai-game'>('menu');
+  const [gameMode, setGameMode] = useState<'menu' | 'local-multiplayer' | 'online-lobby' | 'online-game' | 'ai-game' | 'tournament' | 'show-take-turns-submenu'>('menu');
   const [currentRoom, setCurrentRoom] = useState<RoomInfo | null>(null);
   const [playerNumber, setPlayerNumber] = useState<1 | 2>(1);
   const [showDifficultyModal, setShowDifficultyModal] = useState(false);
@@ -2252,6 +2253,11 @@ function SimpleWelcome() {
   // Handle AI game mode
   if (gameMode === 'ai-game') {
     return <AIGame onBackToMenu={() => setGameMode('menu')} initialDifficulty={aiDifficulty} />;
+  }
+
+  // Handle tournament mode
+  if (gameMode === 'tournament') {
+    return <FriendGame onBackToMenu={() => setGameMode('menu')} />;
   }
 
   // Handle online multiplayer lobby
@@ -2277,6 +2283,208 @@ function SimpleWelcome() {
         onBackToLobby={() => setGameMode('online-lobby')}
         useCrossDevice={true}
       />
+    );
+  }
+
+  // Handle Take Turns submenu
+  if (gameMode === 'show-take-turns-submenu') {
+    return (
+      <div style={{ 
+        background: 'linear-gradient(135deg, #FFC30B 0%, #FFD700 50%, #FFC30B 100%)',
+        minHeight: '100vh',
+        width: '100%',
+        maxWidth: '100vw',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 'clamp(0.5rem, 2vw, 1rem)',
+        fontFamily: 'system-ui, -apple-system, sans-serif',
+        position: 'relative',
+        overflow: 'hidden',
+        boxSizing: 'border-box'
+      }}>
+        {/* Decorative bee pattern background */}
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          opacity: 0.05,
+          fontSize: 'clamp(2rem, 8vw, 4rem)',
+          pointerEvents: 'none',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))',
+          gap: '2rem',
+          padding: '2rem',
+          zIndex: 0
+        }}>
+          {['🐝', '🍯', '🐝', '🍯', '🐝', '🍯', '🐝', '🍯', '🐝'].map((emoji, i) => (
+            <div key={i} style={{ textAlign: 'center', transform: `rotate(${i * 15}deg)` }}>
+              {emoji}
+            </div>
+          ))}
+        </div>
+
+        {/* Main content card */}
+        <div style={{
+          background: 'rgba(255, 255, 255, 0.95)',
+          borderRadius: 'clamp(15px, 3vw, 25px)',
+          padding: 'clamp(1rem, 3vw, 2rem)',
+          width: '100%',
+          maxWidth: 'min(90vw, 450px)',
+          boxShadow: '0 20px 40px rgba(0,0,0,0.1), 0 0 0 3px rgba(0,0,0,0.1)',
+          backdropFilter: 'blur(10px)',
+          textAlign: 'center',
+          position: 'relative',
+          zIndex: 1,
+          animation: 'slideIn 0.6s ease-out',
+          margin: '0 auto',
+          boxSizing: 'border-box'
+        }}>
+          {/* Title */}
+          <div style={{ marginBottom: 'clamp(1.5rem, 4vw, 2.5rem)' }}>
+            <h1 style={{ 
+              fontSize: 'clamp(2.5rem, 8vw, 4rem)', 
+              color: '#FFC30B',
+              textShadow: '3px 3px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black',
+              margin: '0 0 clamp(0.5rem, 2vw, 1rem) 0',
+              lineHeight: '1.1',
+              fontWeight: 'bold'
+            }}>
+              👥 Take Turns 👥
+            </h1>
+            <p style={{
+              fontSize: 'clamp(1rem, 3vw, 1.2rem)',
+              color: '#333',
+              margin: '0 0 clamp(1rem, 3vw, 1.5rem) 0',
+              fontWeight: 'bold'
+            }}>
+              Choose your game mode:
+            </p>
+          </div>
+
+          {/* Submenu buttons */}
+          <div style={{ 
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 'clamp(0.75rem, 2vw, 1rem)',
+            marginBottom: 'clamp(1.5rem, 4vw, 2rem)',
+            width: '100%',
+            maxWidth: '100%',
+            alignItems: 'center'
+          }}>
+            <button 
+              onClick={() => {
+                soundManager.playClickSound();
+                setGameMode('local-multiplayer');
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
+              }}
+              style={{
+                padding: 'clamp(0.75rem, 3vw, 1rem) clamp(1rem, 4vw, 1.5rem)',
+                fontSize: 'clamp(0.9rem, 2.5vw, 1.1rem)',
+                fontWeight: 'bold',
+                backgroundColor: 'black',
+                color: '#FFC30B',
+                border: '3px solid #FFC30B',
+                borderRadius: 'clamp(8px, 2vw, 12px)',
+                cursor: 'pointer',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                minHeight: '60px',
+                width: '100%',
+                maxWidth: '300px'
+              }}
+            >
+              <span style={{ fontSize: '1.2em' }}>🎮</span>
+              <span>Single Game</span>
+            </button>
+
+            <button 
+              onClick={() => {
+                soundManager.playClickSound();
+                setGameMode('tournament');
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
+              }}
+              style={{
+                padding: 'clamp(0.75rem, 3vw, 1rem) clamp(1rem, 4vw, 1.5rem)',
+                fontSize: 'clamp(0.9rem, 2.5vw, 1.1rem)',
+                fontWeight: 'bold',
+                backgroundColor: 'black',
+                color: '#FFC30B',
+                border: '3px solid #FFC30B',
+                borderRadius: 'clamp(8px, 2vw, 12px)',
+                cursor: 'pointer',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                minHeight: '60px',
+                width: '100%',
+                maxWidth: '300px'
+              }}
+            >
+              <span style={{ fontSize: '1.2em' }}>🏆</span>
+              <span>Tournament</span>
+            </button>
+          </div>
+
+          {/* Back button */}
+          <button
+            onClick={() => {
+              soundManager.playClickSound();
+              setGameMode('menu');
+            }}
+            style={{
+              padding: '0.75rem 1.5rem',
+              fontSize: '1rem',
+              fontWeight: 'bold',
+              backgroundColor: '#666',
+              color: 'white',
+              border: '2px solid black',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease'
+            }}
+          >
+            ← Back to Menu
+          </button>
+        </div>
+
+        {/* Footer */}
+        <footer style={{ 
+          marginTop: 'clamp(1rem, 3vw, 2rem)',
+          color: 'rgba(0,0,0,0.6)',
+          fontSize: 'clamp(0.7rem, 2vw, 0.8rem)',
+          textAlign: 'center',
+          zIndex: 1
+        }}>
+          <p style={{ margin: 0 }}>
+            &copy; 2025 Bee-Five. Made with 🐝 and ❤️
+          </p>
+        </footer>
+      </div>
     );
   }
 
@@ -2399,7 +2607,7 @@ function SimpleWelcome() {
           <button 
             onClick={() => {
               soundManager.playClickSound();
-              setGameMode('local-multiplayer');
+              setGameMode('show-take-turns-submenu');
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'translateY(-2px)';
