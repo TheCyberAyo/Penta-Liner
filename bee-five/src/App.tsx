@@ -6,6 +6,7 @@ import { getPlayerName, getWinnerName } from './utils/gameLogic';
 import { MultiplayerLobby } from './components/MultiplayerLobby';
 import { MultiplayerGame } from './components/MultiplayerGame';
 import FriendGame from './components/FriendGame';
+import AdventureGame from './components/AdventureGame';
 import { useGameLogic } from './hooks/useGameLogic';
 import GameCanvas from './components/GameCanvas';
 
@@ -682,7 +683,7 @@ function AIGame({ onBackToMenu, initialDifficulty = 'medium' }: { onBackToMenu: 
   };
 
   // Helper function to check for gap patterns (like X _ X X or X X _ X)
-  const checkGapPattern = (board: (0 | 1 | 2)[][], row: number, col: number, dRow: number, dCol: number, player: 1 | 2): boolean => {
+  const checkGapPattern = (board: (0 | 1 | 2 | 3)[][], row: number, col: number, dRow: number, dCol: number, player: 1 | 2): boolean => {
     // Check patterns: _ X X X _, X _ X X, X X _ X, X _ _ X X, X X _ _ X, etc.
     const patterns = [
       // Pattern: _ X X X _ (gaps on both sides - very dangerous!)
@@ -771,7 +772,7 @@ function AIGame({ onBackToMenu, initialDifficulty = 'medium' }: { onBackToMenu: 
   };
 
   // Helper function to check if a line has potential to reach 5 pieces
-  const canReachFive = (board: (0 | 1 | 2)[][], row: number, col: number, player: 1 | 2): boolean => {
+  const canReachFive = (board: (0 | 1 | 2 | 3)[][], row: number, col: number, player: 1 | 2): boolean => {
     const directions = [
       [0, 1],   // horizontal
       [1, 0],   // vertical  
@@ -957,7 +958,7 @@ function AIGame({ onBackToMenu, initialDifficulty = 'medium' }: { onBackToMenu: 
   };
 
   // Helper function to check if a line is open (can extend to 5)
-  const checkOpenLine = (board: (0 | 1 | 2)[][], row: number, col: number, dRow: number, dCol: number, player: 1 | 2, targetCount: number): boolean => {
+  const checkOpenLine = (board: (0 | 1 | 2 | 3)[][], row: number, col: number, dRow: number, dCol: number, player: 1 | 2, targetCount: number): boolean => {
     let count = 1; // Count the current piece
     
     // Count in positive direction
@@ -997,7 +998,7 @@ function AIGame({ onBackToMenu, initialDifficulty = 'medium' }: { onBackToMenu: 
   };
 
   // Helper function to check if a line is semi-open (can extend to 5 in one direction)
-  const checkSemiOpenLine = (board: (0 | 1 | 2)[][], row: number, col: number, dRow: number, dCol: number, player: 1 | 2, targetCount: number): boolean => {
+  const checkSemiOpenLine = (board: (0 | 1 | 2 | 3)[][], row: number, col: number, dRow: number, dCol: number, player: 1 | 2, targetCount: number): boolean => {
     let count = 1; // Count the current piece
     
     // Count in positive direction
@@ -1499,7 +1500,7 @@ function AIGame({ onBackToMenu, initialDifficulty = 'medium' }: { onBackToMenu: 
   };
 
 
-  const checkThreeInARow = (board: (0 | 1 | 2)[][], row: number, col: number, player: 1 | 2) => {
+  const checkThreeInARow = (board: (0 | 1 | 2 | 3)[][], row: number, col: number, player: 1 | 2) => {
     const directions = [
       [0, 1],   // horizontal
       [1, 0],   // vertical
@@ -1540,7 +1541,7 @@ function AIGame({ onBackToMenu, initialDifficulty = 'medium' }: { onBackToMenu: 
     return false;
   };
 
-  const checkTwoInARow = (board: (0 | 1 | 2)[][], row: number, col: number, player: 1 | 2) => {
+  const checkTwoInARow = (board: (0 | 1 | 2 | 3)[][], row: number, col: number, player: 1 | 2) => {
     const directions = [
       [0, 1],   // horizontal
       [1, 0],   // vertical
@@ -1582,7 +1583,7 @@ function AIGame({ onBackToMenu, initialDifficulty = 'medium' }: { onBackToMenu: 
   };
 
 
-  const checkWinCondition = (board: (0 | 1 | 2)[][], row: number, col: number, player: 1 | 2) => {
+  const checkWinCondition = (board: (0 | 1 | 2 | 3)[][], row: number, col: number, player: 1 | 2) => {
     const directions = [
       [0, 1],   // horizontal
       [1, 0],   // vertical
@@ -2239,10 +2240,11 @@ function AIGame({ onBackToMenu, initialDifficulty = 'medium' }: { onBackToMenu: 
 
 // Simple inline welcome component to avoid import issues
 function SimpleWelcome() {
-  const [gameMode, setGameMode] = useState<'menu' | 'local-multiplayer' | 'online-lobby' | 'online-game' | 'ai-game' | 'tournament' | 'show-take-turns-submenu'>('menu');
+  const [gameMode, setGameMode] = useState<'menu' | 'local-multiplayer' | 'online-lobby' | 'online-game' | 'ai-game' | 'adventure-game' | 'tournament' | 'show-take-turns-submenu'>('menu');
   const [currentRoom, setCurrentRoom] = useState<RoomInfo | null>(null);
   const [playerNumber, setPlayerNumber] = useState<1 | 2>(1);
   const [showDifficultyModal, setShowDifficultyModal] = useState(false);
+  const [showClassicModal, setShowClassicModal] = useState(false);
   const [aiDifficulty, setAiDifficulty] = useState('medium');
 
   // Handle local multiplayer mode
@@ -2253,6 +2255,11 @@ function SimpleWelcome() {
   // Handle AI game mode
   if (gameMode === 'ai-game') {
     return <AIGame onBackToMenu={() => setGameMode('menu')} initialDifficulty={aiDifficulty} />;
+  }
+
+  // Handle Adventure game mode
+  if (gameMode === 'adventure-game') {
+    return <AdventureGame onBackToMenu={() => setGameMode('menu')} />;
   }
 
   // Handle tournament mode
@@ -2737,7 +2744,7 @@ function SimpleWelcome() {
         }
       `}</style>
 
-      {/* Difficulty Selection Modal */}
+      {/* AI Mode Selection Modal */}
       {showDifficultyModal && (
         <div style={{
           position: 'fixed',
@@ -2768,7 +2775,130 @@ function SimpleWelcome() {
               marginBottom: '20px',
               textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
             }}>
-              Select AI Difficulty
+              Choose AI Mode
+            </h2>
+            <p style={{
+              fontSize: '1.1em',
+              color: '#333',
+              marginBottom: '30px'
+            }}>
+              Select your preferred AI game mode:
+            </p>
+            
+            <div style={{ 
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1rem',
+              marginBottom: '1.5rem'
+            }}>
+              <button
+                onClick={() => {
+                  setShowDifficultyModal(false);
+                  setShowClassicModal(true);
+                  soundManager.playClickSound();
+                }}
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  fontSize: '1rem',
+                  fontWeight: 'bold',
+                  backgroundColor: '#4CAF50',
+                  color: 'white',
+                  border: '2px solid black',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem'
+                }}
+              >
+                <span style={{ fontSize: '1.2em' }}>🎯</span>
+                <span>Classic</span>
+              </button>
+              
+              <button
+                onClick={() => {
+                  setShowDifficultyModal(false);
+                  setGameMode('adventure-game');
+                  soundManager.playClickSound();
+                }}
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  fontSize: '1rem',
+                  fontWeight: 'bold',
+                  backgroundColor: '#2196F3',
+                  color: 'white',
+                  border: '2px solid black',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem'
+                }}
+              >
+                <span style={{ fontSize: '1.2em' }}>🗺️</span>
+                <span>Adventure</span>
+              </button>
+            </div>
+            
+            <button
+              onClick={() => {
+                setShowDifficultyModal(false);
+                soundManager.playClickSound();
+              }}
+              style={{
+                padding: '0.5rem 1rem',
+                fontSize: '0.9rem',
+                backgroundColor: '#666',
+                color: 'white',
+                border: '2px solid black',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                transition: 'all 0.3s ease'
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Classic Difficulty Selection Modal */}
+      {showClassicModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: '#FFC30B',
+            padding: '40px',
+            borderRadius: '20px',
+            border: '4px solid black',
+            textAlign: 'center',
+            minWidth: '300px',
+            maxWidth: '90vw',
+            position: 'relative',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.3)'
+          }}>
+            <h2 style={{
+              fontSize: '2em',
+              color: 'black',
+              marginBottom: '20px',
+              textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
+            }}>
+              Classic Mode
             </h2>
             <p style={{
               fontSize: '1.1em',
@@ -2817,26 +2947,49 @@ function SimpleWelcome() {
                 </option>
               </select>
             </div>
-            <button
-              onClick={() => {
-                setShowDifficultyModal(false);
-                setGameMode('ai-game');
-                soundManager.playClickSound();
-              }}
-              style={{
-                padding: '0.75rem 1.5rem',
-                fontSize: '1rem',
-                backgroundColor: '#4CAF50',
-                color: 'white',
-                border: '2px solid black',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontWeight: 'bold',
-                transition: 'all 0.3s ease'
-              }}
-            >
-              Start Game
-            </button>
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+              <button
+                onClick={() => {
+                  setShowClassicModal(false);
+                  setGameMode('ai-game');
+                  soundManager.playClickSound();
+                }}
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  fontSize: '1rem',
+                  backgroundColor: '#4CAF50',
+                  color: 'white',
+                  border: '2px solid black',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                Start Game
+              </button>
+              
+              <button
+                onClick={() => {
+                  setShowClassicModal(false);
+                  setShowDifficultyModal(true);
+                  soundManager.playClickSound();
+                }}
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  fontSize: '1rem',
+                  backgroundColor: '#666',
+                  color: 'white',
+                  border: '2px solid black',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                Back
+              </button>
+            </div>
           </div>
         </div>
       )}

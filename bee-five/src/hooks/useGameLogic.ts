@@ -1,8 +1,8 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { checkWinCondition, isBoardFull, createEmptyBoard } from '../utils/gameLogic';
+import { checkWinCondition, isBoardFull, createEmptyBoard, createBoardWithBlocks } from '../utils/gameLogic';
 
 export interface GameState {
-  board: (0 | 1 | 2)[][];
+  board: (0 | 1 | 2 | 3)[][];
   currentPlayer: 1 | 2;
   isGameActive: boolean;
   winner: 0 | 1 | 2;
@@ -12,19 +12,28 @@ export interface GameState {
 export interface UseGameLogicOptions {
   timeLimit: number;
   startingPlayer?: 1 | 2;
+  gameNumber?: number;
 }
 
 export const useGameLogic = (options: UseGameLogicOptions) => {
-  const { timeLimit, startingPlayer = 1 } = options;
+  const { timeLimit, startingPlayer = 1, gameNumber = 1 } = options;
   const timerRef = useRef<number | null>(null);
 
   const [gameState, setGameState] = useState<GameState>({
-    board: createEmptyBoard(),
+    board: gameNumber ? createBoardWithBlocks(gameNumber) : createEmptyBoard(),
     currentPlayer: startingPlayer,
     isGameActive: true,
     winner: 0,
     timeLeft: timeLimit
   });
+
+  // Update time limit when game number changes
+  useEffect(() => {
+    setGameState(prevState => ({
+      ...prevState,
+      timeLeft: timeLimit
+    }));
+  }, [timeLimit]);
 
 
   // Handle cell click
@@ -53,13 +62,13 @@ export const useGameLogic = (options: UseGameLogicOptions) => {
   // Reset game
   const resetGame = useCallback((newStartingPlayer?: 1 | 2) => {
     setGameState({
-      board: createEmptyBoard(),
+      board: gameNumber ? createBoardWithBlocks(gameNumber) : createEmptyBoard(),
       currentPlayer: newStartingPlayer || startingPlayer,
       isGameActive: true,
       winner: 0,
       timeLeft: timeLimit
     });
-  }, [timeLimit, startingPlayer]);
+  }, [timeLimit, startingPlayer, gameNumber]);
 
   // Update game state (for external updates)
   const updateGameState = useCallback((newState: Partial<GameState>) => {

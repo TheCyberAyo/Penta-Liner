@@ -5,11 +5,13 @@ import { GRID_SIZE, CELL_SIZE, BORDER_WIDTH, CANVAS_SIZE, MULTIPLAYER_CELL_SIZE,
 export interface GameCanvasProps {
   gameState: GameState;
   onCellClick: (row: number, col: number) => void;
+  gridColor?: string;
 }
 
 const GameCanvas: React.FC<GameCanvasProps> = ({ 
   gameState, 
-  onCellClick
+  onCellClick,
+  gridColor = '#87CEEB'
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameRef = useRef<number | undefined>(undefined);
@@ -54,7 +56,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     ctx.clearRect(0, 0, currentCanvasSize, currentCanvasSize);
 
     // Draw grid background
-    ctx.fillStyle = '#87CEEB'; // skyblue
+    ctx.fillStyle = gridColor;
     ctx.fillRect(0, 0, currentCanvasSize, currentCanvasSize);
 
     // Draw cells
@@ -64,7 +66,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         const y = row * (currentCellSize + BORDER_WIDTH) + BORDER_WIDTH;
 
         // Cell background
-        ctx.fillStyle = '#87CEEB';
+        ctx.fillStyle = gridColor;
         ctx.fillRect(x, y, currentCellSize, currentCellSize);
 
         // Cell content based on game state
@@ -79,16 +81,27 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           ctx.beginPath();
           ctx.arc(x + currentCellSize / 2, y + currentCellSize / 2, currentCellSize / 3, 0, Math.PI * 2);
           ctx.fill();
+        } else if (cellValue === 3) {
+          // Blocked cell with bee picture
+          ctx.fillStyle = '#8B4513'; // brown background
+          ctx.fillRect(x, y, currentCellSize, currentCellSize);
+          
+          // Draw bee emoji
+          ctx.font = `${currentCellSize * 0.6}px Arial`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillStyle = '#000000';
+          ctx.fillText('🐝', x + currentCellSize / 2, y + currentCellSize / 2);
         }
 
-        // Touch feedback effect (stronger than hover)
+        // Touch feedback effect (stronger than hover) - only on empty cells
         if (touchedCell && touchedCell.row === row && touchedCell.col === col && cellValue === 0) {
           ctx.fillStyle = gameState.currentPlayer === 1 ? 'rgba(0,0,0,0.5)' : 'rgba(255,195,11,0.5)';
           ctx.beginPath();
           ctx.arc(x + currentCellSize / 2, y + currentCellSize / 2, currentCellSize / 2.5, 0, Math.PI * 2);
           ctx.fill();
         }
-        // Hover effect (only show if not touched)
+        // Hover effect (only show if not touched) - only on empty cells
         else if (hoveredCell && hoveredCell.row === row && hoveredCell.col === col && cellValue === 0) {
           ctx.fillStyle = gameState.currentPlayer === 1 ? 'rgba(0,0,0,0.3)' : 'rgba(255,195,11,0.3)';
           ctx.beginPath();
@@ -107,7 +120,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     if (gameState.winner > 0) {
       drawWinningLine(ctx);
     }
-  }, [gameState, hoveredCell, touchedCell, currentCellSize, currentCanvasSize]);
+  }, [gameState, hoveredCell, touchedCell, currentCellSize, currentCanvasSize, gridColor]);
 
   const drawWinningLine = (ctx: CanvasRenderingContext2D) => {
     // This would be enhanced to show the actual winning line
