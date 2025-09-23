@@ -4,12 +4,14 @@ import GameCanvas from './GameCanvas';
 import AdventureMap from './AdventureMap';
 import { soundManager } from '../utils/sounds';
 import { getTimeLimitForLevel } from '../utils/gameLogic';
+import { useTheme } from '../hooks/useTheme';
+import BeeLifeStageEffects from './BeeLifeStageEffects';
 
 interface AdventureGameProps {
   onBackToMenu: () => void;
 }
 
-// Stage names and descriptions for every 100 games
+// Stage names and descriptions for every 200 games
 const ADVENTURE_STAGES = [
   {
     name: "The Whispering Egg",
@@ -19,47 +21,47 @@ const ADVENTURE_STAGES = [
   {
     name: "Larva of Legends", 
     description: "A tiny creature begins its fabled journey of growth.",
-    games: 101
+    games: 201
   },
   {
     name: "Chamber of Royal Nectar",
     description: "A mystical hall where power and destiny are forged.",
-    games: 201
+    games: 401
   },
   {
     name: "Silken Cocoon of Secrets",
     description: "Spinning a magical shell to transform.",
-    games: 301
+    games: 601
   },
   {
     name: "Dreams of the Pupa Realm",
     description: "Visions of wings and future battles stir inside.",
-    games: 401
+    games: 801
   },
   {
     name: "Wings of Dawn",
     description: "Breaking free and taking the first heroic flight.",
-    games: 501
+    games: 1001
   },
   {
     name: "Hive of Trials",
     description: "Training in ancient duties and learning hidden arts.",
-    games: 601
+    games: 1201
   },
   {
     name: "Trails of Golden Pollen",
     description: "Quests across wildflower kingdoms to gather treasure.",
-    games: 701
+    games: 1401
   },
   {
     name: "Sentinel of the Hiveheart",
     description: "Standing guard against dark invaders.",
-    games: 801
+    games: 1601
   },
   {
     name: "Crown of the Queen-Bee",
     description: "Ascend the throne, lead the swarm, or begin a new dynasty.",
-    games: 901
+    games: 1801
   }
 ];
 
@@ -91,6 +93,9 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
     timeLimit: getTimeLimitForLevel(currentGame),
     gameNumber: currentGame
   });
+
+  // Use theme system
+  const { currentTheme } = useTheme({ gameNumber: currentGame });
 
   // Helper functions for match system
   const isMultipleOf10 = (gameNumber: number): boolean => {
@@ -195,7 +200,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
 
   // Check for stage transitions
   useEffect(() => {
-    const stageIndex = Math.floor((currentGame - 1) / 100);
+    const stageIndex = Math.floor((currentGame - 1) / 200);
     if (stageIndex !== currentStage && stageIndex < ADVENTURE_STAGES.length) {
       setCurrentStage(stageIndex);
       setShowStageTransition(true);
@@ -1005,16 +1010,17 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
   }
 
   return (
-    <div style={{ 
-      background: 'linear-gradient(135deg, #FFC30B 0%, #FFD700 50%, #FFC30B 100%)',
-      width: '100vw', 
-      height: '100vh', 
-      display: 'flex', 
-      flexDirection: 'column',
-      fontFamily: 'system-ui, -apple-system, sans-serif',
-      position: 'relative',
-      overflow: 'hidden'
-    }}>
+    <BeeLifeStageEffects theme={currentTheme}>
+      <div style={{ 
+        background: currentTheme.backgroundGradient,
+        width: '100vw', 
+        height: '100vh', 
+        display: 'flex', 
+        flexDirection: 'column',
+        fontFamily: 'system-ui, -apple-system, sans-serif',
+        position: 'relative',
+        overflow: 'hidden'
+      }}>
       {/* Mobile-optimized header */}
       <div style={{
         background: 'rgba(0, 0, 0, 0.6)',
@@ -1043,7 +1049,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
             style={{
               padding: isMobile ? '0.5rem' : '0.5rem 0.75rem',
               fontSize: isMobile ? '1.2em' : '1em',
-              backgroundColor: requiresMatchSystem(currentGame) && !isMatchComplete ? '#ccc' : '#FFC30B',
+              backgroundColor: requiresMatchSystem(currentGame) && !isMatchComplete ? '#ccc' : currentTheme.buttonColor,
               color: 'black',
               border: '2px solid black',
               borderRadius: '8px',
@@ -1138,7 +1144,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
               style={{
                 padding: '0.5rem',
                 fontSize: '1em',
-                backgroundColor: '#FFC30B',
+                backgroundColor: currentTheme.buttonColor,
                 color: 'black',
                 border: '2px solid black',
                 borderRadius: '8px',
@@ -1159,7 +1165,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
           <div style={{
             padding: isMobile ? '0.5rem' : '0.5rem 0.75rem',
             fontSize: isMobile ? '0.9em' : '0.9em',
-            backgroundColor: '#FFC30B',
+            backgroundColor: currentTheme.cardBackground,
             color: 'black',
             border: '2px solid black',
             borderRadius: '8px',
@@ -1170,7 +1176,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
             minWidth: '120px',
             justifyContent: 'center'
           }}>
-            🎯 {currentGame}/1000
+            🎯 {currentGame}/2000
             {requiresMatchSystem(currentGame) && (
               <span style={{ fontSize: '0.8em', marginLeft: '0.25rem' }}>
                 ({currentMatch}/{getTotalGames(currentGame)})
@@ -1182,7 +1188,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
           <div style={{
             padding: isMobile ? '0.5rem' : '0.5rem 0.75rem',
             fontSize: isMobile ? '1em' : '0.9em',
-            backgroundColor: '#FFC30B',
+            backgroundColor: currentTheme.cardBackground,
             color: 'black',
             border: '2px solid black',
             borderRadius: '8px',
@@ -1231,6 +1237,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
             <GameCanvas
               gameState={gameState}
               gridColor={getMatchGridColor(currentGame, currentMatch)}
+              gameNumber={currentGame}
               onCellClick={(row, col) => {
                 // Only allow human moves when it's player 1's turn
                 if (gameState.currentPlayer === 1) {
@@ -1402,10 +1409,10 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
           animation: 'fadeIn 0.3s ease-out'
         }}>
           <div style={{
-            backgroundColor: '#FFC30B',
+            backgroundColor: currentTheme.cardBackground,
             padding: '40px',
             borderRadius: '20px',
-            border: '4px solid black',
+            border: `4px solid ${currentTheme.borderColor}`,
             textAlign: 'center',
             minWidth: '400px',
             maxWidth: '90vw',
@@ -1429,7 +1436,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
               marginBottom: '20px',
               textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
             }}>
-              {ADVENTURE_STAGES[currentStage]?.name}
+              {currentTheme.stageEmoji} {currentTheme.name}
             </h1>
             
             {/* Stage Description */}
@@ -1439,7 +1446,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
               marginBottom: '30px',
               fontStyle: 'italic'
             }}>
-              {ADVENTURE_STAGES[currentStage]?.description}
+              {currentTheme.description || 'Continue your journey through the bee life cycle!'}
             </p>
             
             {/* Progress Info */}
@@ -1449,7 +1456,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
               marginBottom: '30px',
               fontWeight: 'bold'
             }}>
-              Games {ADVENTURE_STAGES[currentStage]?.games} - {ADVENTURE_STAGES[currentStage]?.games + 99}
+              Games {currentGame - (currentGame % 200) + 1} - {Math.min(currentGame - (currentGame % 200) + 200, 2000)}
             </div>
             
             {/* Continue Button */}
@@ -1490,10 +1497,10 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
           animation: 'fadeIn 0.3s ease-out'
         }}>
           <div style={{
-            backgroundColor: '#FFC30B',
+            backgroundColor: currentTheme.cardBackground,
             padding: '40px',
             borderRadius: '20px',
-            border: '4px solid black',
+            border: `4px solid ${currentTheme.borderColor}`,
             textAlign: 'center',
             minWidth: '300px',
             maxWidth: '90vw',
@@ -1526,7 +1533,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
               color: '#333',
               marginBottom: '30px'
             }}>
-              Game {currentGame} of 1000 | Wins: {gamesWon}
+              Game {currentGame} of 2000 | Wins: {gamesWon}
               {requiresMatchSystem(currentGame) && (
                 <div style={{ fontSize: '1em', marginTop: '10px' }}>
                   Match Progress: {playerWins} - {aiWins}
@@ -1645,10 +1652,10 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
           animation: 'fadeIn 0.3s ease-out'
         }}>
           <div style={{
-            backgroundColor: '#FFC30B',
+            backgroundColor: currentTheme.cardBackground,
             padding: '40px',
             borderRadius: '20px',
-            border: '4px solid black',
+            border: `4px solid ${currentTheme.borderColor}`,
             textAlign: 'center',
             minWidth: '400px',
             maxWidth: '90vw',
@@ -1697,7 +1704,8 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </BeeLifeStageEffects>
   );
 };
 

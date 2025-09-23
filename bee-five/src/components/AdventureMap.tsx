@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { soundManager } from '../utils/sounds';
+import { useTheme, ADVENTURE_THEMES } from '../hooks/useTheme';
+import BeeLifeStageEffects from './BeeLifeStageEffects';
 
 interface AdventureMapProps {
   currentGame: number;
@@ -8,69 +10,7 @@ interface AdventureMapProps {
   onBackToMenu: () => void;
 }
 
-// Stage names and descriptions for every 100 games
-const ADVENTURE_STAGES = [
-  {
-    name: "The Whispering Egg",
-    description: "The prophecy of a hero is laid within a golden cell.",
-    games: 1,
-    color: "#FFD700"
-  },
-  {
-    name: "Larva of Legends", 
-    description: "A tiny creature begins its fabled journey of growth.",
-    games: 101,
-    color: "#FFA500"
-  },
-  {
-    name: "Chamber of Royal Nectar",
-    description: "A mystical hall where power and destiny are forged.",
-    games: 201,
-    color: "#FF6347"
-  },
-  {
-    name: "Silken Cocoon of Secrets",
-    description: "Spinning a magical shell to transform.",
-    games: 301,
-    color: "#9370DB"
-  },
-  {
-    name: "Dreams of the Pupa Realm",
-    description: "Visions of wings and future battles stir inside.",
-    games: 401,
-    color: "#4169E1"
-  },
-  {
-    name: "Wings of Dawn",
-    description: "Breaking free and taking the first heroic flight.",
-    games: 501,
-    color: "#00CED1"
-  },
-  {
-    name: "Hive of Trials",
-    description: "Training in ancient duties and learning hidden arts.",
-    games: 601,
-    color: "#32CD32"
-  },
-  {
-    name: "Trails of Golden Pollen",
-    description: "Quests across wildflower kingdoms to gather treasure.",
-    games: 701,
-    color: "#FFC30B"
-  },
-  {
-    name: "Sentinel of the Hiveheart",
-    description: "Standing guard against dark invaders.",
-    games: 801,
-    color: "#DC143C"
-  },
-  {
-    name: "Crown of the Queen-Bee",
-    description: "Ascend the throne, lead the swarm, or begin a new dynasty.",
-    games: 901,
-    color: "#8B008B"
-  }
-];
+// Use the centralized adventure stages from the theme system
 
 const AdventureMap: React.FC<AdventureMapProps> = ({ 
   currentGame, 
@@ -79,9 +19,11 @@ const AdventureMap: React.FC<AdventureMapProps> = ({
   onBackToMenu 
 }) => {
   const [selectedGame, setSelectedGame] = useState<number | null>(null);
-  const [showStageInfo, setShowStageInfo] = useState<number | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [volume, setVolume] = useState(0.3);
+  
+  // Use theme system
+  const { currentTheme, getStageIndex } = useTheme({ gameNumber: currentGame });
 
   // Initialize sound manager settings
   React.useEffect(() => {
@@ -89,16 +31,16 @@ const AdventureMap: React.FC<AdventureMapProps> = ({
     soundManager.setMuted(!soundEnabled);
   }, [volume, soundEnabled]);
 
-  const getGameStatus = (gameNumber: number) => {
+  const getGameStatus = (gameNumber: number): 'completed' | 'current' | 'available' => {
+    // Unlock all stages for development
     if (gamesCompleted.includes(gameNumber)) return 'completed';
     if (gameNumber === currentGame) return 'current';
-    return 'available'; // All games are now accessible
+    return 'available'; // All games are now accessible for development
   };
 
   const getGameColor = (gameNumber: number) => {
     const status = getGameStatus(gameNumber);
-    const stageIndex = Math.floor((gameNumber - 1) / 100);
-    const stage = ADVENTURE_STAGES[stageIndex];
+    const stageIndex = Math.floor((gameNumber - 1) / 200);
     
     switch (status) {
       case 'completed':
@@ -106,9 +48,48 @@ const AdventureMap: React.FC<AdventureMapProps> = ({
       case 'current':
         return '#FFC30B'; // Yellow for current
       case 'available':
-        return stage?.color || '#2196F3'; // Stage color for available
+        return ADVENTURE_THEMES[stageIndex]?.primaryColor || '#2196F3'; // Stage color for available
       default:
         return '#2196F3';
+    }
+  };
+
+  // Get location emoji based on game number and stage
+  const getLocationEmoji = (gameNumber: number) => {
+    const stageIndex = getStageIndex(gameNumber);
+    const positionInStage = ((gameNumber - 1) % 200) + 1;
+    
+    // Special emojis for milestone levels
+    if (positionInStage === 1) return '🏁'; // Stage start
+    if (positionInStage === 50) return '⛰️'; // Mid-stage checkpoint
+    if (positionInStage === 100) return '🏔️'; // High checkpoint
+    if (positionInStage === 150) return '🗻'; // Higher checkpoint
+    if (positionInStage === 200) return '🏆'; // Stage end
+    
+    // Stage-specific location emojis
+    switch (stageIndex) {
+      case 0: // Egg stage
+        return ['🥚', '🍳', '⚪', '🔴', '🟡'][positionInStage % 5];
+      case 1: // Larva stage
+        return ['🐛', '🪱', '🟢', '🟤', '🟫'][positionInStage % 5];
+      case 2: // Nectar stage
+        return ['🍯', '🍯', '🟨', '🟧', '🟠'][positionInStage % 5];
+      case 3: // Cocoon stage
+        return ['🕸️', '🕷️', '🟣', '🟪', '🟦'][positionInStage % 5];
+      case 4: // Pupa stage
+        return ['🦋', '💭', '☁️', '🌫️', '💙'][positionInStage % 5];
+      case 5: // Emergence stage
+        return ['🌅', '🌄', '🌞', '☀️', '🌤️'][positionInStage % 5];
+      case 6: // Nurse stage
+        return ['🏠', '🏡', '🏘️', '🌱', '🌿'][positionInStage % 5];
+      case 7: // Forager stage
+        return ['🌻', '🌸', '🌺', '🌼', '🌷'][positionInStage % 5];
+      case 8: // Guard stage
+        return ['🛡️', '⚔️', '🗡️', '🔰', '🛡️'][positionInStage % 5];
+      case 9: // Queen stage
+        return ['👑', '💎', '🔮', '✨', '🌟'][positionInStage % 5];
+      default:
+        return '📍';
     }
   };
 
@@ -125,12 +106,13 @@ const AdventureMap: React.FC<AdventureMapProps> = ({
   };
 
   const getStageForGame = (gameNumber: number) => {
-    return ADVENTURE_STAGES[Math.floor((gameNumber - 1) / 100)];
+    return ADVENTURE_THEMES[Math.floor((gameNumber - 1) / 200)];
   };
 
   const renderGameNode = (gameNumber: number) => {
     const status = getGameStatus(gameNumber);
     const stage = getStageForGame(gameNumber);
+    const locationEmoji = getLocationEmoji(gameNumber);
     
     return (
       <div
@@ -141,7 +123,7 @@ const AdventureMap: React.FC<AdventureMapProps> = ({
           height: '20px',
           borderRadius: '50%',
           backgroundColor: getGameColor(gameNumber),
-          border: selectedGame === gameNumber ? '3px solid #000' : '2px solid #000',
+          border: selectedGame === gameNumber ? '2px solid #000' : '1px solid #fff',
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
@@ -149,90 +131,122 @@ const AdventureMap: React.FC<AdventureMapProps> = ({
           fontSize: '8px',
           fontWeight: 'bold',
           color: status === 'completed' ? '#000' : '#fff',
+          textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
           transition: 'all 0.3s ease',
-          position: 'relative',
-          zIndex: 1
+          transform: status === 'current' ? 'scale(1.2)' : selectedGame === gameNumber ? 'scale(1.1)' : 'scale(1)',
+          zIndex: status === 'current' ? 10 : selectedGame === gameNumber ? 5 : 1,
+          boxShadow: status === 'current' ? '0 0 8px rgba(255, 195, 11, 0.8)' : 'none'
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.transform = 'scale(1.2)';
           e.currentTarget.style.zIndex = '10';
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.transform = 'scale(1)';
-          e.currentTarget.style.zIndex = '1';
+          e.currentTarget.style.transform = status === 'current' ? 'scale(1.2)' : 'scale(1)';
+          e.currentTarget.style.zIndex = status === 'current' ? '10' : '1';
         }}
-        title={`Game ${gameNumber} - ${stage?.name || 'Unknown Stage'}`}
+        title={`${locationEmoji} Game ${gameNumber} - ${stage?.name || 'Unknown Stage'}\n${stage?.beeLifeStage || ''}`}
       >
-        {status === 'completed' ? '✓' : status === 'current' ? '●' : gameNumber % 100 === 1 ? '★' : ''}
+        {locationEmoji}
       </div>
     );
   };
 
-  const renderStageSection = (stageIndex: number) => {
-    const stage = ADVENTURE_STAGES[stageIndex];
-    const startGame = stageIndex * 100 + 1;
-    const endGame = Math.min((stageIndex + 1) * 100, 1000);
-    const games = Array.from({ length: endGame - startGame + 1 }, (_, i) => startGame + i);
+  // Render all stages as a map (for development)
+  const renderAllStagesMap = () => {
+    // Show all 2000 games for development
+    const allGames = Array.from({ length: 2000 }, (_, i) => i + 1);
     
     return (
-      <div key={stageIndex} style={{ marginBottom: '2rem' }}>
-        {/* Stage Header */}
-        <div 
-          style={{
-            background: `linear-gradient(135deg, ${stage.color}20, ${stage.color}40)`,
-            padding: '1rem',
-            borderRadius: '10px',
-            marginBottom: '1rem',
-            border: `2px solid ${stage.color}`,
-            cursor: 'pointer'
-          }}
-          onClick={() => setShowStageInfo(showStageInfo === stageIndex ? null : stageIndex)}
-        >
-          <h3 style={{ 
-            margin: 0, 
-            color: stage.color,
-            fontSize: '1.2rem',
+      <div style={{ 
+        position: 'relative',
+        background: `linear-gradient(135deg, ${currentTheme.backgroundColor}80, ${currentTheme.gridColor}60)`,
+        borderRadius: '20px',
+        padding: '2rem',
+        border: `3px solid ${currentTheme.primaryColor}`,
+        boxShadow: `0 0 20px ${currentTheme.shadowColor}`,
+        minHeight: '600px'
+      }}>
+        {/* Map Title */}
+        <div style={{
+          textAlign: 'center',
+          marginBottom: '2rem'
+        }}>
+          <h2 style={{
+            margin: '0 0 0.5rem 0',
+            color: currentTheme.primaryColor,
+            fontSize: '2rem',
             fontWeight: 'bold',
-            textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '1rem'
           }}>
-            {stage.name}
-          </h3>
-          <p style={{ 
-            margin: '0.5rem 0 0 0', 
-            fontSize: '0.9rem',
-            color: '#333',
+            <span style={{ fontSize: '2.5rem' }}>🗺️</span>
+            Complete Adventure Map (Development)
+          </h2>
+          <p style={{
+            margin: 0,
+            color: currentTheme.textColor,
+            fontSize: '1.1rem',
             fontStyle: 'italic'
           }}>
-            Games {startGame} - {endGame}
+            🐝 All bee life stages unlocked for development
           </p>
         </div>
 
-        {/* Stage Description */}
-        {showStageInfo === stageIndex && (
-          <div style={{
-            background: 'rgba(255, 255, 255, 0.9)',
-            padding: '1rem',
-            borderRadius: '8px',
-            marginBottom: '1rem',
-            border: '1px solid #ddd'
-          }}>
-            <p style={{ margin: 0, fontSize: '0.9rem', color: '#333' }}>
-              {stage.description}
-            </p>
-          </div>
-        )}
-
-        {/* Games Grid */}
+        {/* Map Legend */}
         <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(10, 1fr)',
-          gap: '0.5rem',
-          padding: '1rem',
-          background: 'rgba(255, 255, 255, 0.8)',
-          borderRadius: '8px',
-          border: '1px solid #ddd'
+          display: 'flex',
+          justifyContent: 'center',
+          gap: '2rem',
+          marginBottom: '2rem',
+          flexWrap: 'wrap'
         }}>
-          {games.map(gameNumber => renderGameNode(gameNumber))}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: '#4CAF50', border: '2px solid white' }}></div>
+            <span>Completed</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: '#FFC30B', border: '2px solid white', boxShadow: '0 0 8px rgba(255, 195, 11, 0.8)' }}></div>
+            <span>Current</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: currentTheme.primaryColor, border: '2px solid white' }}></div>
+            <span>Available</span>
+          </div>
+        </div>
+
+        {/* Map Container */}
+        <div style={{
+          position: 'relative',
+          width: '100%',
+          height: '600px',
+          background: `radial-gradient(circle at center, ${currentTheme.backgroundColor}40, ${currentTheme.gridColor}20)`,
+          borderRadius: '15px',
+          border: `2px solid ${currentTheme.borderColor}`,
+          overflow: 'auto',
+          padding: '1rem'
+        }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(40, 1fr)',
+            gap: '2px',
+            width: 'fit-content'
+          }}>
+            {allGames.map(gameNumber => renderGameNode(gameNumber))}
+          </div>
+        </div>
+
+        {/* Progress Info */}
+        <div style={{
+          textAlign: 'center',
+          marginTop: '1rem',
+          color: currentTheme.textColor
+        }}>
+          <p style={{ margin: 0, fontSize: '1rem' }}>
+            Progress: {gamesCompleted.length} / 2000 levels completed
+          </p>
         </div>
       </div>
     );
@@ -240,8 +254,9 @@ const AdventureMap: React.FC<AdventureMapProps> = ({
 
 
   return (
+    <BeeLifeStageEffects theme={currentTheme}>
     <div style={{ 
-      background: 'linear-gradient(135deg, #FFC30B 0%, #FFD700 50%, #FFC30B 100%)',
+        background: currentTheme.backgroundGradient,
       minHeight: '100vh',
       padding: '1rem',
       fontFamily: 'system-ui, -apple-system, sans-serif'
@@ -249,7 +264,7 @@ const AdventureMap: React.FC<AdventureMapProps> = ({
       {/* Header */}
       <div style={{
         background: 'rgba(0, 0, 0, 0.8)',
-        color: '#FFC30B',
+        color: currentTheme.primaryColor,
         padding: '1rem',
         borderRadius: '10px',
         marginBottom: '1rem',
@@ -263,21 +278,17 @@ const AdventureMap: React.FC<AdventureMapProps> = ({
           🗺️ Adventure Map
         </h1>
         <p style={{ margin: '0.5rem 0 0 0', fontSize: '1rem' }}>
-          Current Game: {currentGame} | Completed: {gamesCompleted.length}/1000
+          Current Game: {currentGame} | Completed: {gamesCompleted.length}/2000
         </p>
       </div>
 
-      {/* Map Content */}
+      {/* All Stages Map */}
       <div style={{
-        background: 'rgba(255, 255, 255, 0.95)',
-        borderRadius: '15px',
-        padding: '1.5rem',
-        marginBottom: '1rem',
-        maxHeight: '70vh',
-        overflowY: 'auto'
+        marginBottom: '1rem'
       }}>
-        {ADVENTURE_STAGES.map((_, index) => renderStageSection(index))}
+        {renderAllStagesMap()}
       </div>
+
 
       {/* Game Selection Panel */}
       {selectedGame && (
@@ -289,11 +300,15 @@ const AdventureMap: React.FC<AdventureMapProps> = ({
           border: '2px solid #FFC30B',
           textAlign: 'center'
         }}>
-          <h3 style={{ margin: '0 0 1rem 0', color: '#333' }}>
-            Selected Game: {selectedGame}
+          <h3 style={{ margin: '0 0 1rem 0', color: '#333', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+            <span style={{ fontSize: '1.5rem' }}>{getLocationEmoji(selectedGame)}</span>
+            Selected: Game {selectedGame}
           </h3>
-          <p style={{ margin: '0 0 1rem 0', color: '#666' }}>
+          <p style={{ margin: '0 0 0.5rem 0', color: '#666', fontSize: '1.1rem', fontWeight: 'bold' }}>
             {getStageForGame(selectedGame)?.name}
+          </p>
+          <p style={{ margin: '0 0 1rem 0', color: currentTheme.primaryColor, fontSize: '0.9rem' }}>
+            🐝 {getStageForGame(selectedGame)?.beeLifeStage}
           </p>
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
             <button
@@ -402,7 +417,7 @@ const AdventureMap: React.FC<AdventureMapProps> = ({
             padding: '0.75rem 1.5rem',
             fontSize: '1rem',
             fontWeight: 'bold',
-            backgroundColor: '#FFC30B',
+            backgroundColor: currentTheme.buttonColor,
             color: 'black',
             border: '2px solid black',
             borderRadius: '8px',
@@ -450,6 +465,7 @@ const AdventureMap: React.FC<AdventureMapProps> = ({
         </div>
       </div>
     </div>
+    </BeeLifeStageEffects>
   );
 };
 

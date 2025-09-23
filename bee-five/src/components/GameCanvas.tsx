@@ -1,18 +1,29 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { type GameState } from '../hooks/useGameLogic';
 import { GRID_SIZE, CELL_SIZE, BORDER_WIDTH, CANVAS_SIZE, MULTIPLAYER_CELL_SIZE, MULTIPLAYER_CANVAS_SIZE } from '../constants/gameConstants';
+import { useTheme } from '../hooks/useTheme';
 
 export interface GameCanvasProps {
   gameState: GameState;
   onCellClick: (row: number, col: number) => void;
   gridColor?: string;
+  gameNumber?: number;
 }
 
 const GameCanvas: React.FC<GameCanvasProps> = ({ 
   gameState, 
   onCellClick,
-  gridColor = '#87CEEB'
+  gridColor = '#87CEEB',
+  gameNumber
 }) => {
+  // Use theme system
+  const { currentTheme } = useTheme({ gameNumber });
+  
+  // Use theme colors if gameNumber is provided, otherwise fall back to gridColor prop
+  const effectiveGridColor = gameNumber ? currentTheme.gridColor : gridColor;
+  const effectivePlayer1Color = gameNumber ? currentTheme.player1Color : '#000000';
+  const effectivePlayer2Color = gameNumber ? currentTheme.player2Color : '#FFC30B';
+  const effectiveBorderColor = gameNumber ? currentTheme.borderColor : '#FFC30B';
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameRef = useRef<number | undefined>(undefined);
   const [hoveredCell, setHoveredCell] = useState<{ row: number; col: number } | null>(null);
@@ -56,7 +67,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     ctx.clearRect(0, 0, currentCanvasSize, currentCanvasSize);
 
     // Draw grid background
-    ctx.fillStyle = gridColor;
+    ctx.fillStyle = effectiveGridColor;
     ctx.fillRect(0, 0, currentCanvasSize, currentCanvasSize);
 
     // Draw cells
@@ -66,44 +77,60 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         const y = row * (currentCellSize + BORDER_WIDTH) + BORDER_WIDTH;
 
         // Cell background
-        ctx.fillStyle = gridColor;
+        ctx.fillStyle = effectiveGridColor;
         ctx.fillRect(x, y, currentCellSize, currentCellSize);
 
         // Cell content based on game state
         const cellValue = gameState.board[row][col];
         if (cellValue === 1) {
-          ctx.fillStyle = '#000000'; // black
+          ctx.fillStyle = effectivePlayer1Color;
           ctx.beginPath();
           ctx.arc(x + currentCellSize / 2, y + currentCellSize / 2, currentCellSize / 3, 0, Math.PI * 2);
           ctx.fill();
         } else if (cellValue === 2) {
-          ctx.fillStyle = '#FFC30B'; // yellow
+          ctx.fillStyle = effectivePlayer2Color;
           ctx.beginPath();
           ctx.arc(x + currentCellSize / 2, y + currentCellSize / 2, currentCellSize / 3, 0, Math.PI * 2);
           ctx.fill();
         } else if (cellValue === 3) {
-          // Blocked cell with bee picture
-          ctx.fillStyle = '#8B4513'; // brown background
+          // Blocked cell with bee picture - use theme accent color for background
+          ctx.fillStyle = gameNumber ? currentTheme.accentColor : '#8B4513';
           ctx.fillRect(x, y, currentCellSize, currentCellSize);
           
           // Draw bee emoji
           ctx.font = `${currentCellSize * 0.6}px Arial`;
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillStyle = '#000000';
+          ctx.fillStyle = effectivePlayer1Color;
           ctx.fillText('🐝', x + currentCellSize / 2, y + currentCellSize / 2);
         }
 
-        // Touch feedback effect (stronger than hover) - only on empty cells
-        if (touchedCell && touchedCell.row === row && touchedCell.col === col && cellValue === 0) {
-          ctx.fillStyle = gameState.currentPlayer === 1 ? 'rgba(0,0,0,0.5)' : 'rgba(255,195,11,0.5)';
+        // Draw mud zones (brown background with mud emoji)
+        if (gameState.mudZones && gameState.mudZones.some(zone => zone.row === row && zone.col === col)) {
+          ctx.fillStyle = '#8B4513'; // Brown color for mud
+          ctx.fillRect(x, y, currentCellSize, currentCellSize);
+          
+          // Draw mud emoji
+          ctx.font = `${currentCellSize * 0.6}px Arial`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillText('🟤', x + currentCellSize / 2, y + currentCellSize / 2);
+        }
+
+        // Touch feedback effect (stronger than hover) - only on empty cells (not mud zones)
+        const isMudZone = gameState.mudZones && gameState.mudZones.some(zone => zone.row === row && zone.col === col);
+        if (touchedCell && touchedCell.row === row && touchedCell.col === col && cellValue === 0 && !isMudZone) {
+          const playerColor = gameState.currentPlayer === 1 ? effectivePlayer1Color : effectivePlayer2Color;
+          ctx.fillStyle = playerColor.replace('rgb', 'rgba').replace(')', ', 0.5)');
           ctx.beginPath();
           ctx.arc(x + currentCellSize / 2, y + currentCellSize / 2, currentCellSize / 2.5, 0, Math.PI * 2);
           ctx.fill();
         }
-        // Hover effect (only show if not touched) - only on empty cells
-        else if (hoveredCell && hoveredCell.row === row && hoveredCell.col === col && cellValue === 0) {
-          ctx.fillStyle = gameState.currentPlayer === 1 ? 'rgba(0,0,0,0.3)' : 'rgba(255,195,11,0.3)';
+        // Hover effect (only show if not touched) - only on empty cells (not mud zones)
+        else if (hoveredCell && hoveredCell.row === row && hoveredCell.col === col && cellValue === 0 && !isMudZone) {
+          const playerColor = gameState.currentPlayer === 1 ? effectivePlayer1Color : effectivePlayer2Color;
+          ctx.fillStyle = playerColor.replace('rgb', 'rgba').replace(')', ', 0.3)');
           ctx.beginPath();
           ctx.arc(x + currentCellSize / 2, y + currentCellSize / 2, currentCellSize / 3, 0, Math.PI * 2);
           ctx.fill();
@@ -120,12 +147,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     if (gameState.winner > 0) {
       drawWinningLine(ctx);
     }
-  }, [gameState, hoveredCell, touchedCell, currentCellSize, currentCanvasSize, gridColor]);
+  }, [gameState, hoveredCell, touchedCell, currentCellSize, currentCanvasSize, effectiveGridColor, effectivePlayer1Color, effectivePlayer2Color, gameNumber, currentTheme]);
 
   const drawWinningLine = (ctx: CanvasRenderingContext2D) => {
     // This would be enhanced to show the actual winning line
     // For now, just highlight the winner
-    ctx.strokeStyle = gameState.winner === 1 ? '#000000' : '#FFC30B';
+    ctx.strokeStyle = gameState.winner === 1 ? effectivePlayer1Color : effectivePlayer2Color;
     ctx.lineWidth = 4;
     ctx.setLineDash([5, 5]);
     ctx.strokeRect(2, 2, currentCanvasSize - 4, currentCanvasSize - 4);
@@ -153,7 +180,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     const row = Math.floor((y - BORDER_WIDTH) / (currentCellSize + BORDER_WIDTH));
 
     if (row >= 0 && row < GRID_SIZE && col >= 0 && col < GRID_SIZE) {
-      onCellClick(row, col);
+      // Check if the cell is empty and not a mud zone
+      const isMudZone = gameState.mudZones && gameState.mudZones.some(zone => zone.row === row && zone.col === col);
+      if (gameState.board[row][col] === 0 && !isMudZone) {
+        onCellClick(row, col);
+      }
     }
   };
 
@@ -182,6 +213,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     const row = Math.floor((y - BORDER_WIDTH) / (currentCellSize + BORDER_WIDTH));
 
     if (row >= 0 && row < GRID_SIZE && col >= 0 && col < GRID_SIZE) {
+      // Check if the cell is empty and not a mud zone
+      const isMudZone = gameState.mudZones && gameState.mudZones.some(zone => zone.row === row && zone.col === col);
+      
       // Show touch feedback
       setTouchedCell({ row, col });
       
@@ -190,7 +224,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         setTouchedCell(null);
       }, 150);
       
-      onCellClick(row, col);
+      if (gameState.board[row][col] === 0 && !isMudZone) {
+        onCellClick(row, col);
+      }
     }
   };
 
@@ -266,7 +302,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       style={{
-        border: '2px solid #FFC30B',
+        border: `2px solid ${effectiveBorderColor}`,
         borderRadius: '8px',
         cursor: gameState.isGameActive ? 'pointer' : 'default',
         maxWidth: isMobile ? '90vw' : 'min(80vw, 80vh, 700px)',
