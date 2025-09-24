@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { checkWinCondition, isBoardFull, createEmptyBoard, createBoardWithBlocks, removeTwoBlockedCells, gameEndsWith3, gameEndsWith7Or8After1000, isMultipleOf7Between500And1000, isMultipleOf4From1000, getProgressiveBlockRules, addProgressiveBlocks, shiftAllBlocks, removeOldestPiecesOfPlayer, ageAllPieces, initializePieceAges, generateMudZones, isInMudZone, processMudZoneEffects } from '../utils/gameLogic';
+import { checkWinCondition, isBoardFull, createEmptyBoard, createBoardWithBlocks, removeTwoBlockedCells, gameEndsWith3, gameEndsWith7Or8After1000, isMultipleOf7Between500And1000, isMultipleOf4From1000, getProgressiveBlockRules, addProgressiveBlocks, shiftAllBlocks, removeOldestPiecesOfPlayer, ageAllPieces, initializePieceAges, generateMudZones, isInMudZone, processMudZoneEffects, gameEndsWith1InSpecifiedRanges, addStrategicBlock, gameEndsWith2SpecificPattern, isMultipleOf50Match2, isMultipleOf13, enforcePieceCapacity, shouldRearrangeBoard, rearrangeBoard } from '../utils/gameLogic';
 
 export interface GameState {
   board: (0 | 1 | 2 | 3)[][];
@@ -13,20 +13,23 @@ export interface GameState {
   player2MoveCount: number; // Track moves made by player 2
   mudZones: { row: number; col: number }[]; // Track mud zone positions
   stuckPieces: { [key: string]: number }; // Track pieces stuck in mud (key: "row,col", value: turns remaining)
+  isBlindPlay: boolean; // Track if game is in blind play mode
+  totalMoveCount: number; // Track total moves made in the game
 }
 
 export interface UseGameLogicOptions {
   timeLimit: number;
   startingPlayer?: 1 | 2;
   gameNumber?: number;
+  currentMatch?: number;
 }
 
 export const useGameLogic = (options: UseGameLogicOptions) => {
-  const { timeLimit, startingPlayer = 1, gameNumber = 1 } = options;
+  const { timeLimit, startingPlayer = 1, gameNumber = 1, currentMatch = 1 } = options;
   const timerRef = useRef<number | null>(null);
 
   const [gameState, setGameState] = useState<GameState>({
-    board: gameNumber ? createBoardWithBlocks(gameNumber) : createEmptyBoard(),
+    board: gameNumber ? createBoardWithBlocks(gameNumber, gameEndsWith2SpecificPattern(gameNumber) || isMultipleOf50Match2(gameNumber, currentMatch)) : createEmptyBoard(),
     currentPlayer: startingPlayer,
     isGameActive: true,
     winner: 0,
@@ -36,7 +39,9 @@ export const useGameLogic = (options: UseGameLogicOptions) => {
     player1MoveCount: 0,
     player2MoveCount: 0,
     mudZones: gameNumber ? generateMudZones(gameNumber) : [],
-    stuckPieces: {}
+    stuckPieces: {},
+    isBlindPlay: gameNumber ? (gameEndsWith2SpecificPattern(gameNumber) || isMultipleOf50Match2(gameNumber, currentMatch)) : false,
+    totalMoveCount: 0
   });
 
   // Update time limit when game number changes
@@ -51,7 +56,7 @@ export const useGameLogic = (options: UseGameLogicOptions) => {
   useEffect(() => {
     setGameState(prevState => ({
       ...prevState,
-      board: gameNumber ? createBoardWithBlocks(gameNumber) : createEmptyBoard(),
+      board: gameNumber ? createBoardWithBlocks(gameNumber, gameEndsWith2SpecificPattern(gameNumber) || isMultipleOf50Match2(gameNumber, currentMatch)) : createEmptyBoard(),
       currentPlayer: startingPlayer,
       isGameActive: true,
       winner: 0,
@@ -61,14 +66,21 @@ export const useGameLogic = (options: UseGameLogicOptions) => {
       player1MoveCount: 0,
       player2MoveCount: 0,
       mudZones: gameNumber ? generateMudZones(gameNumber) : [],
-      stuckPieces: {}
+      stuckPieces: {},
+      isBlindPlay: gameNumber ? (gameEndsWith2SpecificPattern(gameNumber) || isMultipleOf50Match2(gameNumber, currentMatch)) : false,
+      totalMoveCount: 0
     }));
-  }, [gameNumber, startingPlayer, timeLimit]);
+  }, [gameNumber, startingPlayer, timeLimit, currentMatch]);
 
 
   // Handle cell click
   const handleCellClick = useCallback((row: number, col: number) => {
     if (!gameState.isGameActive || gameState.board[row][col] !== 0) {
+      return;
+    }
+
+    // In blind play mode, also check if the cell is not in a mud zone
+    if (gameState.isBlindPlay && isInMudZone(row, col, gameState.mudZones)) {
       return;
     }
 
@@ -97,9 +109,19 @@ export const useGameLogic = (options: UseGameLogicOptions) => {
     const newPlayer1MoveCount = gameState.currentPlayer === 1 ? gameState.player1MoveCount + 1 : gameState.player1MoveCount;
     const newPlayer2MoveCount = gameState.currentPlayer === 2 ? gameState.player2MoveCount + 1 : gameState.player2MoveCount;
     
-    // Handle disappearing pieces based on individual player move counts (Adventure Game only, within specified ranges)
-    let finalBoard = newBoard;
+    // Increment total move count
+    const newTotalMoveCount = gameState.totalMoveCount + 1;
     
+    // Handle piece capacity limitation for multiples of 13 levels (max 35 pieces)
+    let finalBoard = newBoard;
+    if (gameNumber && isMultipleOf13(gameNumber)) {
+      // Enforce 35 piece capacity - remove oldest pieces when 36th piece is played
+      let result = enforcePieceCapacity(newBoard, updatedPieceAges, 35);
+      finalBoard = result.board;
+      updatedPieceAges = result.pieceAges;
+    }
+
+    // Handle disappearing pieces based on individual player move counts (Adventure Game only, within specified ranges)
     if (gameNumber && (isMultipleOf7Between500And1000(gameNumber) || isMultipleOf4From1000(gameNumber))) {
       const currentPlayerMoveCount = gameState.currentPlayer === 1 ? newPlayer1MoveCount : newPlayer2MoveCount;
       
@@ -108,7 +130,7 @@ export const useGameLogic = (options: UseGameLogicOptions) => {
         const opponent = gameState.currentPlayer === 1 ? 2 : 1;
         
         // Remove 2 oldest pieces of the opponent
-        let result = removeOldestPiecesOfPlayer(newBoard, updatedPieceAges, opponent, 2);
+        let result = removeOldestPiecesOfPlayer(finalBoard, updatedPieceAges, opponent, 2);
         
         finalBoard = result.board;
         updatedPieceAges = result.pieceAges;
@@ -138,6 +160,16 @@ export const useGameLogic = (options: UseGameLogicOptions) => {
         if (rules.blocksToAdd > 0 && newHumanMoveCount % rules.movesInterval === 0) {
           updatedBoard = addProgressiveBlocks(finalBoard, rules.blocksToAdd);
         }
+      } else if (gameNumber && gameNumber % 50 === 0 && currentMatch === 1) {
+        // First match of best-of-5 levels only (200, 250, 300, etc.): Every 8 human moves, add 1 strategic block
+        if (newHumanMoveCount % 8 === 0) {
+          updatedBoard = addStrategicBlock(finalBoard);
+        }
+      } else if (gameNumber && gameEndsWith1InSpecifiedRanges(gameNumber)) {
+        // Games ending with 1 in ranges 11-191 and 1001-1591: Every 8 human moves, add 1 strategic block
+        if (newHumanMoveCount % 8 === 0) {
+          updatedBoard = addStrategicBlock(finalBoard);
+        }
       }
     }
     
@@ -146,6 +178,15 @@ export const useGameLogic = (options: UseGameLogicOptions) => {
       // Shift all blocks one position each turn (after any move)
       updatedBoard = shiftAllBlocks(updatedBoard);
       // Note: Block shifting doesn't affect piece ages since it only moves blocks, not pieces
+    }
+
+    // Handle board rearrangement for multiples of 10 from 799-1999 (excluding multiples of 50) in match 1/3
+    // Only rearrange after multiples of 23 moves
+    if (gameNumber && shouldRearrangeBoard(gameNumber) && currentMatch === 1 && newTotalMoveCount % 23 === 0) {
+      // Rearrange board while preserving all pieces and win conditions
+      let result = rearrangeBoard(updatedBoard, updatedPieceAges);
+      updatedBoard = result.board;
+      updatedPieceAges = result.pieceAges;
     }
 
     setGameState(prevState => ({
@@ -159,14 +200,15 @@ export const useGameLogic = (options: UseGameLogicOptions) => {
       pieceAges: updatedPieceAges,
       player1MoveCount: newPlayer1MoveCount,
       player2MoveCount: newPlayer2MoveCount,
-      stuckPieces: finalStuckPieces
+      stuckPieces: finalStuckPieces,
+      totalMoveCount: newTotalMoveCount
     }));
   }, [gameState.isGameActive, gameState.board, gameState.currentPlayer, gameState.humanMoveCount, gameState.player1MoveCount, gameState.player2MoveCount, gameState.mudZones, gameState.stuckPieces, gameNumber, checkWinCondition, isBoardFull, timeLimit]);
 
   // Reset game
   const resetGame = useCallback((newStartingPlayer?: 1 | 2) => {
     setGameState({
-      board: gameNumber ? createBoardWithBlocks(gameNumber) : createEmptyBoard(),
+      board: gameNumber ? createBoardWithBlocks(gameNumber, gameEndsWith2SpecificPattern(gameNumber) || isMultipleOf50Match2(gameNumber, currentMatch)) : createEmptyBoard(),
       currentPlayer: newStartingPlayer || startingPlayer,
       isGameActive: true,
       winner: 0,
@@ -176,9 +218,11 @@ export const useGameLogic = (options: UseGameLogicOptions) => {
       player1MoveCount: 0,
       player2MoveCount: 0,
       mudZones: gameNumber ? generateMudZones(gameNumber) : [],
-      stuckPieces: {}
+      stuckPieces: {},
+      isBlindPlay: gameNumber ? (gameEndsWith2SpecificPattern(gameNumber) || isMultipleOf50Match2(gameNumber, currentMatch)) : false,
+      totalMoveCount: 0
     });
-  }, [timeLimit, startingPlayer, gameNumber]);
+  }, [timeLimit, startingPlayer, gameNumber, currentMatch]);
 
   // Update game state (for external updates)
   const updateGameState = useCallback((newState: Partial<GameState>) => {

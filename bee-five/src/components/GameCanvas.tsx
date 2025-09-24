@@ -66,6 +66,23 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     // Clear canvas
     ctx.clearRect(0, 0, currentCanvasSize, currentCanvasSize);
 
+    // If in blind play mode, show a blank canvas with a message
+    if (gameState.isBlindPlay) {
+      // Draw a dark background
+      ctx.fillStyle = '#2C2C2C';
+      ctx.fillRect(0, 0, currentCanvasSize, currentCanvasSize);
+      
+      // Draw blind play message
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = `${Math.min(currentCellSize * 0.8, 24)}px Arial`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('BLIND PLAY MODE', currentCanvasSize / 2, currentCanvasSize / 2 - 20);
+      ctx.fillText('Click anywhere to place', currentCanvasSize / 2, currentCanvasSize / 2 + 20);
+      ctx.fillText('your piece', currentCanvasSize / 2, currentCanvasSize / 2 + 50);
+      return;
+    }
+
     // Draw grid background
     ctx.fillStyle = effectiveGridColor;
     ctx.fillRect(0, 0, currentCanvasSize, currentCanvasSize);
@@ -180,10 +197,15 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     const row = Math.floor((y - BORDER_WIDTH) / (currentCellSize + BORDER_WIDTH));
 
     if (row >= 0 && row < GRID_SIZE && col >= 0 && col < GRID_SIZE) {
-      // Check if the cell is empty and not a mud zone
-      const isMudZone = gameState.mudZones && gameState.mudZones.some(zone => zone.row === row && zone.col === col);
-      if (gameState.board[row][col] === 0 && !isMudZone) {
+      // In blind play mode, allow clicking anywhere (the game logic will handle valid moves)
+      if (gameState.isBlindPlay) {
         onCellClick(row, col);
+      } else {
+        // Check if the cell is empty and not a mud zone
+        const isMudZone = gameState.mudZones && gameState.mudZones.some(zone => zone.row === row && zone.col === col);
+        if (gameState.board[row][col] === 0 && !isMudZone) {
+          onCellClick(row, col);
+        }
       }
     }
   };
@@ -213,9 +235,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     const row = Math.floor((y - BORDER_WIDTH) / (currentCellSize + BORDER_WIDTH));
 
     if (row >= 0 && row < GRID_SIZE && col >= 0 && col < GRID_SIZE) {
-      // Check if the cell is empty and not a mud zone
-      const isMudZone = gameState.mudZones && gameState.mudZones.some(zone => zone.row === row && zone.col === col);
-      
       // Show touch feedback
       setTouchedCell({ row, col });
       
@@ -224,8 +243,15 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         setTouchedCell(null);
       }, 150);
       
-      if (gameState.board[row][col] === 0 && !isMudZone) {
+      // In blind play mode, allow clicking anywhere (the game logic will handle valid moves)
+      if (gameState.isBlindPlay) {
         onCellClick(row, col);
+      } else {
+        // Check if the cell is empty and not a mud zone
+        const isMudZone = gameState.mudZones && gameState.mudZones.some(zone => zone.row === row && zone.col === col);
+        if (gameState.board[row][col] === 0 && !isMudZone) {
+          onCellClick(row, col);
+        }
       }
     }
   };

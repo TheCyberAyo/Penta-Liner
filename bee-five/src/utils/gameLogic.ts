@@ -113,6 +113,92 @@ export const isMultipleOf40 = (gameNumber: number): boolean => {
   return gameNumber % 40 === 0;
 };
 
+// Check if a game number follows the specific pattern (42, 92, 142, 192, etc.)
+export const gameEndsWith2SpecificPattern = (gameNumber: number): boolean => {
+  // The pattern is: 42, 92, 142, 192, 242, 292, 342, 392, 442, 492, 542, 592, 642, 692, 742, 792, 842, 892, 942, 992, 1042, 1092, 1142, 1192, 1242, 1292, 1342, 1392, 1442, 1492, 1542, 1592, 1642, 1692, 1742, 1792, 1842, 1892, 1942, 1992
+  // This is every 50 games starting from 42: 42 + (n * 50) where n = 0, 1, 2, 3, ...
+  
+  if (gameNumber < 42) {
+    return false;
+  }
+  
+  // Check if it's in the sequence: 42, 92, 142, 192, 242, 292, etc.
+  return (gameNumber - 42) % 50 === 0;
+};
+
+// Check if a game number is a multiple of 50 and in match 2/5 (for blind play mode)
+export const isMultipleOf50Match2 = (gameNumber: number, currentMatch: number): boolean => {
+  return gameNumber % 50 === 0 && currentMatch === 2;
+};
+
+// Check if a game number is a multiple of 13 (for piece capacity limitation)
+export const isMultipleOf13 = (gameNumber: number): boolean => {
+  return gameNumber % 13 === 0;
+};
+
+// Check if a game number is a multiple of 10 from 799-1999 (excluding multiples of 50) for board rearrangement
+export const shouldRearrangeBoard = (gameNumber: number): boolean => {
+  if (gameNumber < 799 || gameNumber > 1999) {
+    return false;
+  }
+  
+  // Must be a multiple of 10
+  if (gameNumber % 10 !== 0) {
+    return false;
+  }
+  
+  // Exclude multiples of 50
+  if (gameNumber % 50 === 0) {
+    return false;
+  }
+  
+  return true;
+};
+
+// Check if a game number ends with 1 and is level 200+ (for human player blocking)
+// BUT exclude games that are part of any 5-match series
+export const gameEndsWith1After200 = (gameNumber: number): boolean => {
+  if (gameNumber < 200 || gameNumber % 10 !== 1) {
+    return false;
+  }
+  
+  // Check if this game is part of ANY 5-match series
+  // 5-match series start at: 200, 250, 300, 350, 400, 450, 500, etc.
+  const seriesStart = Math.floor((gameNumber - 200) / 50) * 50 + 200;
+  const positionInSeries = gameNumber - seriesStart;
+  
+  // If it's in position 0-4 of any 5-match series, don't apply blocking
+  if (positionInSeries >= 0 && positionInSeries <= 4) {
+    return false;
+  }
+  
+  return true;
+};
+
+// Check if a game number is the first game of a 5-match series (200, 250, 300, etc)
+export const isFirstGameOfFiveMatchSeries = (gameNumber: number): boolean => {
+  return gameNumber >= 200 && (gameNumber - 200) % 50 === 0;
+};
+
+// Check if a game number ends with 1 and is in the specified ranges (11-191, 1001-1591)
+export const gameEndsWith1InSpecifiedRanges = (gameNumber: number): boolean => {
+  if (gameNumber % 10 !== 1) {
+    return false;
+  }
+  
+  // Range 1: 11-191
+  if (gameNumber >= 11 && gameNumber <= 191) {
+    return true;
+  }
+  
+  // Range 2: 1001-1591
+  if (gameNumber >= 1001 && gameNumber <= 1591) {
+    return true;
+  }
+  
+  return false;
+};
+
 // Get progressive blocking rules for games ending with 3
 export const getProgressiveBlockRules = (gameNumber: number): { blocksToAdd: number; movesInterval: number } => {
   if (gameNumber >= 50 && gameNumber <= 200) {
@@ -150,6 +236,123 @@ export const addProgressiveBlocks = (board: (0 | 1 | 2 | 3)[][], blocksToAdd: nu
     const { row, col } = emptyPositions[randomIndex];
     newBoard[row][col] = BLOCKED_CELL; // Add the blocked cell
     emptyPositions.splice(randomIndex, 1); // Remove from array
+  }
+  
+  return newBoard;
+};
+
+// Add a single block to the board (for games ending with 1 and first games of 5-match series)
+export const addSingleBlock = (board: (0 | 1 | 2 | 3)[][]): (0 | 1 | 2 | 3)[][] => {
+  return addProgressiveBlocks(board, 1);
+};
+
+// Find strategic blocking position based on human player's moves
+export const findStrategicBlockPosition = (board: (0 | 1 | 2 | 3)[][]): { row: number; col: number } | null => {
+  const emptyPositions: { row: number; col: number }[] = [];
+  const strategicPositions: { row: number; col: number; priority: number }[] = [];
+  
+  // Find all empty cells
+  for (let row = 0; row < 10; row++) {
+    for (let col = 0; col < 10; col++) {
+      if (board[row][col] === 0) {
+        emptyPositions.push({ row, col });
+      }
+    }
+  }
+  
+  if (emptyPositions.length === 0) {
+    return null;
+  }
+  
+  // Analyze each empty position for strategic value
+  for (const pos of emptyPositions) {
+    let priority = 0;
+    
+    // Check if blocking this position would prevent human from completing a line
+    priority += checkBlockingValue(board, pos.row, pos.col, 1);
+    
+    // Check if this position is near human pieces (closer to human pieces = higher priority)
+    priority += checkProximityValue(board, pos.row, pos.col, 1);
+    
+    // Check if this position would block potential AI threats
+    priority += checkBlockingValue(board, pos.row, pos.col, 2);
+    
+    strategicPositions.push({ ...pos, priority });
+  }
+  
+  // Sort by priority (highest first) and return the best position
+  strategicPositions.sort((a, b) => b.priority - a.priority);
+  
+  return strategicPositions.length > 0 ? {
+    row: strategicPositions[0].row,
+    col: strategicPositions[0].col
+  } : null;
+};
+
+// Check how valuable a position is for blocking a specific player
+const checkBlockingValue = (board: (0 | 1 | 2 | 3)[][], row: number, col: number, player: 1 | 2): number => {
+  let value = 0;
+  const directions = [
+    [0, 1],   // horizontal
+    [1, 0],   // vertical
+    [1, 1],   // diagonal \
+    [1, -1]   // diagonal /
+  ];
+
+  for (const [dx, dy] of directions) {
+    let count = 0;
+    
+    // Count consecutive pieces in this direction
+    for (let i = -4; i <= 4; i++) {
+      const newRow = row + i * dx;
+      const newCol = col + i * dy;
+      
+      if (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 10) {
+        if (board[newRow][newCol] === player) {
+          count++;
+        } else if (board[newRow][newCol] !== 0) {
+          break; // Hit a different player or block, stop counting
+        }
+      }
+    }
+    
+    // Higher value for positions that would block longer sequences
+    if (count >= 2) {
+      value += count * 10; // Exponential value for longer sequences
+    }
+  }
+  
+  return value;
+};
+
+// Check proximity value - positions closer to human pieces are more valuable to block
+const checkProximityValue = (board: (0 | 1 | 2 | 3)[][], row: number, col: number, player: 1 | 2): number => {
+  let value = 0;
+  
+  // Check in a 3x3 area around the position
+  for (let dr = -2; dr <= 2; dr++) {
+    for (let dc = -2; dc <= 2; dc++) {
+      const newRow = row + dr;
+      const newCol = col + dc;
+      
+      if (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 10 && 
+          board[newRow][newCol] === player) {
+        const distance = Math.abs(dr) + Math.abs(dc);
+        value += Math.max(0, 5 - distance); // Closer pieces give higher value
+      }
+    }
+  }
+  
+  return value;
+};
+
+// Add strategic block based on human player's move patterns
+export const addStrategicBlock = (board: (0 | 1 | 2 | 3)[][]): (0 | 1 | 2 | 3)[][] => {
+  const newBoard = board.map(row => [...row]);
+  const blockPosition = findStrategicBlockPosition(newBoard);
+  
+  if (blockPosition) {
+    newBoard[blockPosition.row][blockPosition.col] = BLOCKED_CELL;
   }
   
   return newBoard;
@@ -322,6 +525,99 @@ export const initializePieceAges = (): number[][] => {
   return Array(10).fill(null).map(() => Array(10).fill(0));
 };
 
+// Count total pieces on the board (excluding blocked cells)
+export const countPiecesOnBoard = (board: (0 | 1 | 2 | 3)[][]): number => {
+  let count = 0;
+  for (let row = 0; row < 10; row++) {
+    for (let col = 0; col < 10; col++) {
+      if (board[row][col] === 1 || board[row][col] === 2) {
+        count++;
+      }
+    }
+  }
+  return count;
+};
+
+// Remove oldest pieces when board capacity is exceeded (for multiples of 13 levels)
+export const enforcePieceCapacity = (board: (0 | 1 | 2 | 3)[][], pieceAges: number[][], maxCapacity: number = 35): { board: (0 | 1 | 2 | 3)[][]; pieceAges: number[][] } => {
+  const currentPieceCount = countPiecesOnBoard(board);
+  
+  if (currentPieceCount <= maxCapacity) {
+    return { board, pieceAges };
+  }
+  
+  const piecesToRemove = currentPieceCount - maxCapacity;
+  
+  // Collect all pieces with their positions and ages for FIFO removal
+  const piecesToRemoveList: { row: number; col: number; age: number; player: number }[] = [];
+  
+  for (let row = 0; row < 10; row++) {
+    for (let col = 0; col < 10; col++) {
+      if (board[row][col] === 1 || board[row][col] === 2) {
+        piecesToRemoveList.push({
+          row,
+          col,
+          age: pieceAges[row][col],
+          player: board[row][col] as 1 | 2
+        });
+      }
+    }
+  }
+  
+  // Sort by age (oldest first) and remove the oldest pieces
+  piecesToRemoveList.sort((a, b) => b.age - a.age);
+  
+  const newBoard = board.map(row => [...row]);
+  const newPieceAges = pieceAges.map(row => [...row]);
+  
+  // Remove the oldest pieces
+  for (let i = 0; i < piecesToRemove && i < piecesToRemoveList.length; i++) {
+    const { row, col } = piecesToRemoveList[i];
+    newBoard[row][col] = 0; // Remove the piece
+    newPieceAges[row][col] = 0; // Reset age
+  }
+  
+  return { board: newBoard, pieceAges: newPieceAges };
+};
+
+// Rearrange board while preserving all pieces and win conditions
+export const rearrangeBoard = (board: (0 | 1 | 2 | 3)[][], pieceAges: number[][]): { board: (0 | 1 | 2 | 3)[][]; pieceAges: number[][] } => {
+  const newBoard = Array(10).fill(null).map(() => Array(10).fill(0));
+  const newPieceAges = Array(10).fill(null).map(() => Array(10).fill(0));
+  
+  // Collect all pieces with their positions and ages
+  const pieces: { row: number; col: number; value: 1 | 2 | 3; age: number }[] = [];
+  
+  for (let row = 0; row < 10; row++) {
+    for (let col = 0; col < 10; col++) {
+      if (board[row][col] !== 0) {
+        pieces.push({
+          row,
+          col,
+          value: board[row][col] as 1 | 2 | 3,
+          age: pieceAges[row][col]
+        });
+      }
+    }
+  }
+  
+  // Shuffle the pieces array to randomize their positions
+  for (let i = pieces.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pieces[i], pieces[j]] = [pieces[j], pieces[i]];
+  }
+  
+  // Place pieces in new positions
+  pieces.forEach((piece, index) => {
+    const newRow = Math.floor(index / 10);
+    const newCol = index % 10;
+    newBoard[newRow][newCol] = piece.value;
+    newPieceAges[newRow][newCol] = piece.age;
+  });
+  
+  return { board: newBoard, pieceAges: newPieceAges };
+};
+
 // Generate mud zone positions for multiples of 10 games
 export const generateMudZones = (gameNumber: number): { row: number; col: number }[] => {
   if (!isMultipleOf10(gameNumber)) {
@@ -421,8 +717,14 @@ export const generateBlockedCells = (gameNumber: number): { row: number; col: nu
 };
 
 // Create board with blocked cells for specific game
-export const createBoardWithBlocks = (gameNumber: number): (0 | 1 | 2 | 3)[][] => {
+export const createBoardWithBlocks = (gameNumber: number, isBlindPlay: boolean = false): (0 | 1 | 2 | 3)[][] => {
   const board = Array(10).fill(null).map(() => Array(10).fill(0));
+  
+  // In blind play mode, don't add any blocks
+  if (isBlindPlay) {
+    return board;
+  }
+  
   const blockedCells = generateBlockedCells(gameNumber);
   
   blockedCells.forEach(({ row, col }) => {

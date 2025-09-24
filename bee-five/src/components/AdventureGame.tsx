@@ -3,7 +3,7 @@ import { useGameLogic } from '../hooks/useGameLogic';
 import GameCanvas from './GameCanvas';
 import AdventureMap from './AdventureMap';
 import { soundManager } from '../utils/sounds';
-import { getTimeLimitForLevel } from '../utils/gameLogic';
+import { getTimeLimitForLevel, isInMudZone } from '../utils/gameLogic';
 import { useTheme } from '../hooks/useTheme';
 import BeeLifeStageEffects from './BeeLifeStageEffects';
 
@@ -91,7 +91,8 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
   
   const { gameState, handleCellClick, resetGame } = useGameLogic({
     timeLimit: getTimeLimitForLevel(currentGame),
-    gameNumber: currentGame
+    gameNumber: currentGame,
+    currentMatch: currentMatch
   });
 
   // Use theme system
@@ -431,6 +432,10 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
     for (let row = 0; row < 10; row++) {
       for (let col = 0; col < 10; col++) {
         if (gameState.board[row][col] === 0) {
+          // In blind play mode, also exclude mud zones (same as human player)
+          if (gameState.isBlindPlay && isInMudZone(row, col, gameState.mudZones)) {
+            continue;
+          }
           availableCells.push({ row, col });
         }
       }
@@ -438,8 +443,8 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
 
     if (availableCells.length === 0) return;
 
-    // Adaptive difficulty based on current game progress
-    const selectedCell = getAdventureAIMove(availableCells);
+    // In blind play mode, use random moves instead of strategic AI
+    const selectedCell = gameState.isBlindPlay ? getRandomAIMove(availableCells) : getAdventureAIMove(availableCells);
     handleCellClick(selectedCell.row, selectedCell.col);
   };
 
@@ -447,6 +452,12 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
   const getAdventureAIMove = (availableCells: {row: number, col: number}[]) => {
     // Use the full hard AI implementation for Adventure mode
     return getHardAIMove(availableCells);
+  };
+
+  const getRandomAIMove = (availableCells: {row: number, col: number}[]) => {
+    // In blind play mode, AI plays completely randomly
+    const randomIndex = Math.floor(Math.random() * availableCells.length);
+    return availableCells[randomIndex];
   };
 
   const getHardAIMove = (availableCells: {row: number, col: number}[]) => {
@@ -928,7 +939,8 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
       return winText;
     }
     
-    return gameState.currentPlayer === 1 ? 'Your turn!' : 'AI is thinking...';
+    const baseMessage = gameState.currentPlayer === 1 ? 'Your turn!' : 'AI is thinking...';
+    return gameState.isBlindPlay ? `👁️‍🗨️ BLIND PLAY - ${gameState.currentPlayer === 1 ? 'Your turn!' : 'AI playing randomly...'}` : baseMessage;
   };
 
    const handleNextGame = () => {
@@ -1176,7 +1188,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
             minWidth: '120px',
             justifyContent: 'center'
           }}>
-            🎯 {currentGame}/2000
+            {gameState.isBlindPlay ? '👁️‍🗨️' : '🎯'} {currentGame}/2000
             {requiresMatchSystem(currentGame) && (
               <span style={{ fontSize: '0.8em', marginLeft: '0.25rem' }}>
                 ({currentMatch}/{getTotalGames(currentGame)})
