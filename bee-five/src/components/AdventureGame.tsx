@@ -3,7 +3,8 @@ import { useGameLogic } from '../hooks/useGameLogic';
 import GameCanvas from './GameCanvas';
 import AdventureMap from './AdventureMap';
 import { soundManager } from '../utils/sounds';
-import { getTimeLimitForLevel, isInMudZone } from '../utils/gameLogic';
+// @ts-ignore - checkWinCondition is used in medium AI implementation
+import { getTimeLimitForLevel, isInMudZone, checkWinCondition } from '../utils/gameLogic';
 import { useTheme } from '../hooks/useTheme';
 import BeeLifeStageEffects from './BeeLifeStageEffects';
 
@@ -425,7 +426,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [gameState.currentPlayer, gameState.isGameActive, gameState.winner]);
+  }, [gameState.currentPlayer, gameState.isGameActive, gameState.winner, gameState.board, gameState.isBlindPlay, gameState.mudZones]);
 
   const makeAdventureAIMove = () => {
     const availableCells = [];
@@ -451,7 +452,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
 
   const getAdventureAIMove = (availableCells: {row: number, col: number}[]) => {
     // Use the full hard AI implementation for Adventure mode
-    return getHardAIMove(availableCells);
+    return getMediumAIMove(availableCells);
   };
 
   const getRandomAIMove = (availableCells: {row: number, col: number}[]) => {
@@ -460,6 +461,191 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
     return availableCells[randomIndex];
   };
 
+  // Medium AI implementation (same as classic mode)
+  const getMediumAIMove = (availableCells: {row: number, col: number}[]) => {
+    // Medium AI: Fixed logic with proper threat detection
+    
+    // Priority 1: Check if AI can win in one move
+    for (let cell of availableCells) {
+      const testBoard = gameState.board.map(row => [...row]);
+      testBoard[cell.row][cell.col] = 2;
+      if (checkWinCondition(testBoard, cell.row, cell.col, 2)) {
+        return cell;
+      }
+    }
+
+    // Priority 2: Block human from winning (defend against 4-in-a-row)
+    for (let cell of availableCells) {
+      const testBoard = gameState.board.map(row => [...row]);
+      testBoard[cell.row][cell.col] = 1;
+      if (checkWinCondition(testBoard, cell.row, cell.col, 1)) {
+        return cell;
+      }
+    }
+
+    // Priority 3: Block human 3-in-a-row threats (direct simulation)
+    for (let cell of availableCells) {
+      const testBoard = gameState.board.map(row => [...row]);
+      testBoard[cell.row][cell.col] = 1;
+      if (checkThreeInARow(testBoard, cell.row, cell.col, 1)) {
+        return cell;
+      }
+    }
+
+    // Priority 4: Look for AI opportunities (3-in-a-row) - only if they can reach 5
+    for (let cell of availableCells) {
+      const testBoard = gameState.board.map(row => [...row]);
+      testBoard[cell.row][cell.col] = 2;
+      if (checkThreeInARow(testBoard, cell.row, cell.col, 2) && canReachFive(testBoard, cell.row, cell.col, 2)) {
+        return cell;
+      }
+    }
+
+    // Priority 5: Block human 2-in-a-row threats
+    for (let cell of availableCells) {
+      const testBoard = gameState.board.map(row => [...row]);
+      testBoard[cell.row][cell.col] = 1;
+      if (checkTwoInARow(testBoard, cell.row, cell.col, 1)) {
+        return cell;
+      }
+    }
+
+    // Priority 6: Look for AI 2-in-a-row opportunities - only if they can reach 5
+    for (let cell of availableCells) {
+      const testBoard = gameState.board.map(row => [...row]);
+      testBoard[cell.row][cell.col] = 2;
+      if (checkTwoInARow(testBoard, cell.row, cell.col, 2) && canReachFive(testBoard, cell.row, cell.col, 2)) {
+        return cell;
+      }
+    }
+
+    // Priority 7: Random move if no strategic options
+    return availableCells[Math.floor(Math.random() * availableCells.length)];
+  };
+
+  // Helper functions for medium AI
+  const checkThreeInARow = (board: (0 | 1 | 2 | 3)[][], row: number, col: number, player: 1 | 2) => {
+    const directions = [
+      [0, 1],   // horizontal
+      [1, 0],   // vertical
+      [1, 1],   // diagonal /
+      [1, -1]   // diagonal \
+    ];
+
+    for (const [dRow, dCol] of directions) {
+      let count = 1;
+
+      // Check in positive direction
+      for (let i = 1; i < 4; i++) {
+        const newRow = row + i * dRow;
+        const newCol = col + i * dCol;
+        if (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 10 && board[newRow][newCol] === player) {
+          count++;
+        } else {
+          break;
+        }
+      }
+
+      // Check in negative direction
+      for (let i = 1; i < 4; i++) {
+        const newRow = row - i * dRow;
+        const newCol = col - i * dCol;
+        if (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 10 && board[newRow][newCol] === player) {
+          count++;
+        } else {
+          break;
+        }
+      }
+
+      if (count >= 3) {
+        return true;
+      }
+    }
+
+    return false;
+  };
+
+  const checkTwoInARow = (board: (0 | 1 | 2 | 3)[][], row: number, col: number, player: 1 | 2) => {
+    const directions = [
+      [0, 1],   // horizontal
+      [1, 0],   // vertical
+      [1, 1],   // diagonal /
+      [1, -1]   // diagonal \
+    ];
+
+    for (const [dRow, dCol] of directions) {
+      let count = 1;
+
+      // Check in positive direction
+      for (let i = 1; i < 3; i++) {
+        const newRow = row + i * dRow;
+        const newCol = col + i * dCol;
+        if (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 10 && board[newRow][newCol] === player) {
+          count++;
+        } else {
+          break;
+        }
+      }
+
+      // Check in negative direction
+      for (let i = 1; i < 3; i++) {
+        const newRow = row - i * dRow;
+        const newCol = col - i * dCol;
+        if (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 10 && board[newRow][newCol] === player) {
+          count++;
+        } else {
+          break;
+        }
+      }
+
+      if (count >= 2) {
+        return true;
+      }
+    }
+
+    return false;
+  };
+
+  const canReachFive = (board: (0 | 1 | 2 | 3)[][], row: number, col: number, player: 1 | 2): boolean => {
+    const directions = [
+      [0, 1],   // horizontal
+      [1, 0],   // vertical  
+      [1, 1],   // diagonal \
+      [1, -1]   // diagonal /
+    ];
+
+    for (let [dr, dc] of directions) {
+      let count = 1; // Count the piece we just placed
+      let emptySpaces = 0;
+      
+      // Check both directions from the placed piece
+      for (let direction = -1; direction <= 1; direction += 2) {
+        for (let i = 1; i <= 4; i++) {
+          const newRow = row + (dr * i * direction);
+          const newCol = col + (dc * i * direction);
+          
+          if (newRow < 0 || newRow >= 10 || newCol < 0 || newCol >= 10) break;
+          
+          if (board[newRow][newCol] === player) {
+            count++;
+          } else if (board[newRow][newCol] === 0) {
+            emptySpaces++;
+          } else {
+            break; // Opponent piece blocks the line
+          }
+        }
+      }
+      
+      // If we can potentially reach 5 pieces (count + empty spaces >= 5)
+      if (count + emptySpaces >= 5) {
+        return true;
+      }
+    }
+    
+    return false;
+  };
+
+  // @ts-ignore - Intentionally unused, kept for reference
   const getHardAIMove = (availableCells: {row: number, col: number}[]) => {
     // Hard AI: Advanced strategic AI with 8 priority levels
     
