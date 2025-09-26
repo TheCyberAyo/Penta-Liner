@@ -3,7 +3,7 @@ import { useGameLogic } from '../hooks/useGameLogic';
 import GameCanvas from './GameCanvas';
 import AdventureMap from './AdventureMap';
 import { soundManager } from '../utils/sounds';
-import { getTimeLimitForLevel, isInMudZone, checkWinCondition } from '../utils/gameLogic';
+import { getTimeLimitForLevel, isInMudZone, checkWinCondition, getAdventureStartingPlayer } from '../utils/gameLogic';
 import { useTheme } from '../hooks/useTheme';
 import BeeLifeStageEffects from './BeeLifeStageEffects';
 
@@ -90,7 +90,8 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
   const { gameState, handleCellClick, resetGame } = useGameLogic({
     timeLimit: getTimeLimitForLevel(currentGame),
     gameNumber: currentGame,
-    currentMatch: currentMatch
+    currentMatch: currentMatch,
+    startingPlayer: getAdventureStartingPlayer(currentGame)
   });
 
   const { currentTheme } = useTheme({ gameNumber: currentGame });
@@ -368,7 +369,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
     if (gameState.currentPlayer === 2 && gameState.isGameActive && gameState.winner === 0) {
       const timer = setTimeout(() => {
         makeAdventureAIMove();
-      }, 500);
+      }, 1500);
       return () => clearTimeout(timer);
     }
   }, [gameState.currentPlayer, gameState.isGameActive, gameState.winner, gameState.board, gameState.isBlindPlay, gameState.mudZones]);
@@ -394,6 +395,10 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
 
 
   const getAdventureAIMove = (availableCells: {row: number, col: number}[]) => {
+    // Use hard AI for levels 601 and above
+    if (currentGame >= 601) {
+      return getHardAIMove(availableCells);
+    }
     return getMediumAIMove(availableCells);
   };
 
@@ -569,6 +574,412 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
     return false;
   };
 
+  // Hard AI implementation for levels 601+
+  const getHardAIMove = (availableCells: {row: number, col: number}[]) => {
+    // Hard AI: Advanced strategic AI with 8 priority levels
+    
+    // Priority 1: Win now – If AI can get 5 in a row this move, do it
+    for (let cell of availableCells) {
+      const testBoard = gameState.board.map(row => [...row]);
+      testBoard[cell.row][cell.col] = 2;
+      if (checkWinCondition(testBoard, cell.row, cell.col, 2)) {
+        console.log('Hard AI: Winning move at', cell.row, cell.col);
+        return cell;
+      }
+    }
+
+    // Priority 2: Block immediate loss – If the opponent can win next move, block it
+    for (let cell of availableCells) {
+      const testBoard = gameState.board.map(row => [...row]);
+      testBoard[cell.row][cell.col] = 1;
+      if (checkWinCondition(testBoard, cell.row, cell.col, 1)) {
+        console.log('Hard AI: Blocking immediate loss at', cell.row, cell.col);
+        return cell;
+      }
+    }
+
+    // Priority 3: Block 3-in-a-row with gaps on either side
+    const gapBlockingMoves = findGapBlockingMoves(availableCells);
+    if (gapBlockingMoves.length > 0) {
+      console.log('Hard AI: Blocking 3-in-a-row with gaps at', gapBlockingMoves[0].row, gapBlockingMoves[0].col);
+      return gapBlockingMoves[0];
+    }
+
+    // Priority 4: Create or block double threats – Moves that make (or stop) two winning chances at once
+    const doubleThreatMoves = findDoubleThreatMoves(availableCells, 2); // AI double threats
+    if (doubleThreatMoves.length > 0) {
+      console.log('Hard AI: Creating double threat at', doubleThreatMoves[0].row, doubleThreatMoves[0].col);
+      return doubleThreatMoves[0];
+    }
+
+    const blockDoubleThreatMoves = findDoubleThreatMoves(availableCells, 1); // Block human double threats
+    if (blockDoubleThreatMoves.length > 0) {
+      console.log('Hard AI: Blocking double threat at', blockDoubleThreatMoves[0].row, blockDoubleThreatMoves[0].col);
+      return blockDoubleThreatMoves[0];
+    }
+
+    // Priority 5: Build strongest attack – Extend AI's 4- or 3-in-a-row, especially open lines
+    const attackMoves = findStrongestAttackMoves(availableCells);
+    if (attackMoves.length > 0) {
+      console.log('Hard AI: Building attack at', attackMoves[0].row, attackMoves[0].col);
+      return attackMoves[0];
+    }
+
+    // Priority 6: Stop dangerous threats – Block opponent's open 4s, then open 3s
+    const threatMoves = findDangerousThreatMoves(availableCells);
+    if (threatMoves.length > 0) {
+      console.log('Hard AI: Blocking dangerous threat at', threatMoves[0].row, threatMoves[0].col);
+      return threatMoves[0];
+    }
+
+    // Priority 7: Improve position – Play near AI's stones or the board center to increase future options
+    const positionalMoves = findBestPositionalMoves(availableCells);
+    if (positionalMoves.length > 0) {
+      console.log('Hard AI: Improving position at', positionalMoves[0].row, positionalMoves[0].col);
+      return positionalMoves[0];
+    }
+
+    // Priority 8: Fallback/random – If no good tactical or positional move, play any legal square
+    console.log('Hard AI: Fallback random move');
+    return availableCells[Math.floor(Math.random() * availableCells.length)];
+  };
+
+  // Helper function to find gap blocking moves (block 3-in-a-row with gaps on either side)
+  const findGapBlockingMoves = (availableCells: {row: number, col: number}[]): {row: number, col: number}[] => {
+    const gapBlockingMoves: {row: number, col: number}[] = [];
+    
+    for (let cell of availableCells) {
+      const testBoard = gameState.board.map(row => [...row]);
+      testBoard[cell.row][cell.col] = 1; // Simulate human move
+      
+      const directions = [[0, 1], [1, 0], [1, 1], [1, -1]];
+      
+      for (let [dRow, dCol] of directions) {
+        if (checkGapPattern(testBoard, cell.row, cell.col, dRow, dCol, 1)) {
+          gapBlockingMoves.push(cell);
+          break; // Found a gap pattern in this direction, no need to check others
+        }
+      }
+    }
+    
+    return gapBlockingMoves;
+  };
+
+  // Helper function to check for gap patterns (like X _ X X or X X _ X)
+  const checkGapPattern = (board: (0 | 1 | 2 | 3)[][], row: number, col: number, dRow: number, dCol: number, player: 1 | 2): boolean => {
+    // Check patterns: _ X X X _, X _ X X, X X _ X, X _ _ X X, X X _ _ X, etc.
+    const patterns = [
+      // Pattern: _ X X X _ (gaps on both sides - very dangerous!)
+      () => {
+        const pos1 = {row: row + dRow, col: col + dCol};
+        const pos2 = {row: row + 2 * dRow, col: col + 2 * dCol};
+        const pos3 = {row: row + 3 * dRow, col: col + 3 * dCol};
+        const neg1 = {row: row - dRow, col: col - dCol};
+        const pos4 = {row: row + 4 * dRow, col: col + 4 * dCol};
+        
+        return (isValidPosition(pos1) && board[pos1.row][pos1.col] === player &&
+                isValidPosition(pos2) && board[pos2.row][pos2.col] === player &&
+                isValidPosition(pos3) && board[pos3.row][pos3.col] === player &&
+                isValidPosition(neg1) && board[neg1.row][neg1.col] === 0 &&
+                isValidPosition(pos4) && board[pos4.row][pos4.col] === 0);
+      },
+      
+      // Pattern: X _ X X (gap at position -1)
+      () => {
+        const pos1 = {row: row + dRow, col: col + dCol};
+        const pos2 = {row: row + 2 * dRow, col: col + 2 * dCol};
+        const pos3 = {row: row + 3 * dRow, col: col + 3 * dCol};
+        const neg1 = {row: row - dRow, col: col - dCol};
+        
+        return (isValidPosition(pos1) && board[pos1.row][pos1.col] === player &&
+                isValidPosition(pos2) && board[pos2.row][pos2.col] === player &&
+                isValidPosition(pos3) && board[pos3.row][pos3.col] === player &&
+                isValidPosition(neg1) && board[neg1.row][neg1.col] === 0);
+      },
+      
+      // Pattern: X X _ X (gap at position +1)
+      () => {
+        const neg1 = {row: row - dRow, col: col - dCol};
+        const neg2 = {row: row - 2 * dRow, col: col - 2 * dCol};
+        const pos1 = {row: row + dRow, col: col + dCol};
+        
+        return (isValidPosition(neg1) && board[neg1.row][neg1.col] === player &&
+                isValidPosition(neg2) && board[neg2.row][neg2.col] === player &&
+                isValidPosition(pos1) && board[pos1.row][pos1.col] === player &&
+                isValidPosition({row: row + 2 * dRow, col: col + 2 * dCol}) && board[row + 2 * dRow][col + 2 * dCol] === 0);
+      },
+      
+      // Pattern: X _ _ X X (gap at positions -1, -2)
+      () => {
+        const pos1 = {row: row + dRow, col: col + dCol};
+        const pos2 = {row: row + 2 * dRow, col: col + 2 * dCol};
+        const pos3 = {row: row + 3 * dRow, col: col + 3 * dCol};
+        const neg1 = {row: row - dRow, col: col - dCol};
+        const neg2 = {row: row - 2 * dRow, col: col - 2 * dCol};
+        
+        return (isValidPosition(pos1) && board[pos1.row][pos1.col] === player &&
+                isValidPosition(pos2) && board[pos2.row][pos2.col] === player &&
+                isValidPosition(pos3) && board[pos3.row][pos3.col] === player &&
+                isValidPosition(neg1) && board[neg1.row][neg1.col] === 0 &&
+                isValidPosition(neg2) && board[neg2.row][neg2.col] === 0);
+      },
+      
+      // Pattern: X X _ _ X (gap at positions +1, +2)
+      () => {
+        const neg1 = {row: row - dRow, col: col - dCol};
+        const neg2 = {row: row - 2 * dRow, col: col - 2 * dCol};
+        const pos1 = {row: row + dRow, col: col + dCol};
+        const pos2 = {row: row + 2 * dRow, col: col + 2 * dCol};
+        
+        return (isValidPosition(neg1) && board[neg1.row][neg1.col] === player &&
+                isValidPosition(neg2) && board[neg2.row][neg2.col] === player &&
+                isValidPosition(pos1) && board[pos1.row][pos1.col] === player &&
+                isValidPosition(pos2) && board[pos2.row][pos2.col] === 0 &&
+                isValidPosition({row: row + 3 * dRow, col: col + 3 * dCol}) && board[row + 3 * dRow][col + 3 * dCol] === 0);
+      }
+    ];
+    
+    // Check all patterns
+    for (let patternCheck of patterns) {
+      if (patternCheck()) {
+        return true;
+      }
+    }
+    
+    return false;
+  };
+
+  // Helper function to check if a position is valid
+  const isValidPosition = (pos: {row: number, col: number}): boolean => {
+    return pos.row >= 0 && pos.row < 10 && pos.col >= 0 && pos.col < 10;
+  };
+
+  // Helper function to find double threat moves (moves that create or block two winning chances)
+  const findDoubleThreatMoves = (availableCells: {row: number, col: number}[], player: 1 | 2): {row: number, col: number}[] => {
+    const doubleThreatMoves: {row: number, col: number}[] = [];
+    
+    for (let cell of availableCells) {
+      const testBoard = gameState.board.map(row => [...row]);
+      testBoard[cell.row][cell.col] = player;
+      
+      let threatCount = 0;
+      const directions = [[0, 1], [1, 0], [1, 1], [1, -1]];
+      
+      for (let [dRow, dCol] of directions) {
+        if (checkOpenLine(testBoard, cell.row, cell.col, dRow, dCol, player, 4)) {
+          threatCount++;
+        }
+      }
+      
+      if (threatCount >= 2) {
+        doubleThreatMoves.push(cell);
+      }
+    }
+    
+    return doubleThreatMoves;
+  };
+
+  // Helper function to find the strongest attack moves (extend 4s and 3s, especially open lines)
+  const findStrongestAttackMoves = (availableCells: {row: number, col: number}[]): {row: number, col: number}[] => {
+    const attackMoves: {row: number, col: number, score: number}[] = [];
+    
+    for (let cell of availableCells) {
+      const testBoard = gameState.board.map(row => [...row]);
+      testBoard[cell.row][cell.col] = 2;
+      
+      let score = 0;
+      const directions = [[0, 1], [1, 0], [1, 1], [1, -1]];
+      
+      for (let [dRow, dCol] of directions) {
+        // Check for open 4-in-a-row (highest priority)
+        if (checkOpenLine(testBoard, cell.row, cell.col, dRow, dCol, 2, 4)) {
+          score += 100;
+        }
+        // Check for open 3-in-a-row
+        else if (checkOpenLine(testBoard, cell.row, cell.col, dRow, dCol, 2, 3)) {
+          score += 50;
+        }
+        // Check for semi-open 3-in-a-row
+        else if (checkSemiOpenLine(testBoard, cell.row, cell.col, dRow, dCol, 2, 3)) {
+          score += 25;
+        }
+        // Check for open 2-in-a-row
+        else if (checkOpenLine(testBoard, cell.row, cell.col, dRow, dCol, 2, 2)) {
+          score += 10;
+        }
+      }
+      
+      if (score > 0) {
+        attackMoves.push({...cell, score});
+      }
+    }
+    
+    // Sort by score (highest first) and return moves
+    attackMoves.sort((a, b) => b.score - a.score);
+    return attackMoves.map(move => ({row: move.row, col: move.col}));
+  };
+
+  // Helper function to find dangerous threat moves (block opponent's open 4s, then open 3s)
+  const findDangerousThreatMoves = (availableCells: {row: number, col: number}[]): {row: number, col: number}[] => {
+    const threatMoves: {row: number, col: number, priority: number}[] = [];
+    
+    for (let cell of availableCells) {
+      const testBoard = gameState.board.map(row => [...row]);
+      testBoard[cell.row][cell.col] = 1;
+      
+      let maxPriority = 0;
+      const directions = [[0, 1], [1, 0], [1, 1], [1, -1]];
+      
+      for (let [dRow, dCol] of directions) {
+        // Check for open 4-in-a-row (highest priority)
+        if (checkOpenLine(testBoard, cell.row, cell.col, dRow, dCol, 1, 4)) {
+          maxPriority = Math.max(maxPriority, 100);
+        }
+        // Check for open 3-in-a-row
+        else if (checkOpenLine(testBoard, cell.row, cell.col, dRow, dCol, 1, 3)) {
+          maxPriority = Math.max(maxPriority, 50);
+        }
+        // Check for semi-open 3-in-a-row
+        else if (checkSemiOpenLine(testBoard, cell.row, cell.col, dRow, dCol, 1, 3)) {
+          maxPriority = Math.max(maxPriority, 25);
+        }
+      }
+      
+      if (maxPriority > 0) {
+        threatMoves.push({...cell, priority: maxPriority});
+      }
+    }
+    
+    // Sort by priority (highest first) and return moves
+    threatMoves.sort((a, b) => b.priority - a.priority);
+    return threatMoves.map(move => ({row: move.row, col: move.col}));
+  };
+
+  // Helper function to find best positional moves (near AI stones or board center)
+  const findBestPositionalMoves = (availableCells: {row: number, col: number}[]): {row: number, col: number}[] => {
+    const positionalMoves: {row: number, col: number, score: number}[] = [];
+    
+    for (let cell of availableCells) {
+      let score = 0;
+      
+      // Distance from center (prefer moves closer to center)
+      const centerDistance = Math.abs(cell.row - 4.5) + Math.abs(cell.col - 4.5);
+      score += Math.max(0, 10 - centerDistance);
+      
+      // Proximity to AI stones (prefer moves near existing AI stones)
+      for (let row = 0; row < 10; row++) {
+        for (let col = 0; col < 10; col++) {
+          if (gameState.board[row][col] === 2) {
+            const distance = Math.abs(cell.row - row) + Math.abs(cell.col - col);
+            if (distance <= 2) {
+              score += 5 - distance;
+            }
+          }
+        }
+      }
+      
+      // Proximity to human stones (prefer moves near human stones for blocking)
+      for (let row = 0; row < 10; row++) {
+        for (let col = 0; col < 10; col++) {
+          if (gameState.board[row][col] === 1) {
+            const distance = Math.abs(cell.row - row) + Math.abs(cell.col - col);
+            if (distance <= 2) {
+              score += 3 - distance;
+            }
+          }
+        }
+      }
+      
+      if (score > 0) {
+        positionalMoves.push({...cell, score});
+      }
+    }
+    
+    // Sort by score (highest first) and return moves
+    positionalMoves.sort((a, b) => b.score - a.score);
+    return positionalMoves.map(move => ({row: move.row, col: move.col}));
+  };
+
+  // Helper function to check if a line is open (can extend to 5 in both directions)
+  const checkOpenLine = (board: (0 | 1 | 2 | 3)[][], row: number, col: number, dRow: number, dCol: number, player: 1 | 2, targetCount: number): boolean => {
+    let count = 1; // Count the current piece
+    
+    // Count in positive direction
+    for (let i = 1; i < 5; i++) {
+      const newRow = row + i * dRow;
+      const newCol = col + i * dCol;
+      if (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 10 && board[newRow][newCol] === player) {
+        count++;
+      } else {
+        break;
+      }
+    }
+    
+    // Count in negative direction
+    for (let i = 1; i < 5; i++) {
+      const newRow = row - i * dRow;
+      const newCol = col - i * dCol;
+      if (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 10 && board[newRow][newCol] === player) {
+        count++;
+      } else {
+        break;
+      }
+    }
+    
+    if (count < targetCount) return false;
+    
+    // Check if the line can extend to 5 (has open spaces on both ends)
+    const posEndRow = row + count * dRow;
+    const posEndCol = col + count * dCol;
+    const negEndRow = row - count * dRow;
+    const negEndCol = col - count * dCol;
+    
+    const posEndValid = posEndRow >= 0 && posEndRow < 10 && posEndCol >= 0 && posEndCol < 10 && board[posEndRow][posEndCol] === 0;
+    const negEndValid = negEndRow >= 0 && negEndRow < 10 && negEndCol >= 0 && negEndCol < 10 && board[negEndRow][negEndCol] === 0;
+    
+    return posEndValid && negEndValid;
+  };
+
+  // Helper function to check if a line is semi-open (can extend to 5 in at least one direction)
+  const checkSemiOpenLine = (board: (0 | 1 | 2 | 3)[][], row: number, col: number, dRow: number, dCol: number, player: 1 | 2, targetCount: number): boolean => {
+    let count = 1; // Count the current piece
+    
+    // Count in positive direction
+    for (let i = 1; i < 5; i++) {
+      const newRow = row + i * dRow;
+      const newCol = col + i * dCol;
+      if (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 10 && board[newRow][newCol] === player) {
+        count++;
+      } else {
+        break;
+      }
+    }
+    
+    // Count in negative direction
+    for (let i = 1; i < 5; i++) {
+      const newRow = row - i * dRow;
+      const newCol = col - i * dCol;
+      if (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 10 && board[newRow][newCol] === player) {
+        count++;
+      } else {
+        break;
+      }
+    }
+    
+    if (count < targetCount) return false;
+    
+    // Check if the line can extend to 5 in at least one direction
+    const posEndRow = row + count * dRow;
+    const posEndCol = col + count * dCol;
+    const negEndRow = row - count * dRow;
+    const negEndCol = col - count * dCol;
+    
+    const posEndValid = posEndRow >= 0 && posEndRow < 10 && posEndCol >= 0 && posEndCol < 10 && board[posEndRow][posEndCol] === 0;
+    const negEndValid = negEndRow >= 0 && negEndRow < 10 && negEndCol >= 0 && negEndCol < 10 && board[negEndRow][negEndCol] === 0;
+    
+    return posEndValid || negEndValid;
+  };
+
 
   const getStatusMessage = () => {
     if (gameState.winner > 0) {
@@ -583,8 +994,13 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
       return winText;
     }
     
-    const baseMessage = gameState.currentPlayer === 1 ? 'Your turn!' : 'AI is thinking...';
-    return gameState.isBlindPlay ? `👁️‍🗨️ BLIND PLAY - ${gameState.currentPlayer === 1 ? 'Your turn!' : 'AI playing randomly...'}` : baseMessage;
+    if (gameState.currentPlayer === 2) {
+      const aiType = currentGame >= 601 ? 'HARD AI' : 'MEDIUM AI';
+      const baseMessage = gameState.isBlindPlay ? '🤖 AI playing randomly...' : `🤖 ${aiType} is thinking...`;
+      return gameState.isBlindPlay ? `👁️‍🗨️ BLIND PLAY - ${baseMessage}` : baseMessage;
+    }
+    
+    return 'Your turn!';
   };
 
    const handleNextGame = () => {
@@ -656,6 +1072,20 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
 
   return (
     <BeeLifeStageEffects theme={currentTheme}>
+      <style>
+        {`
+          @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+          }
+          @keyframes aiMoveHighlight {
+            0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 215, 0, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); }
+          }
+        `}
+      </style>
       <div style={{ 
         background: currentTheme.backgroundGradient,
         width: '100vw', 
@@ -842,14 +1272,16 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
       </div>
 
       <div style={{
-        background: 'rgba(255, 255, 255, 0.95)',
+        background: gameState.currentPlayer === 2 ? 'rgba(255, 215, 0, 0.95)' : 'rgba(255, 255, 255, 0.95)',
         padding: isMobile ? '0.75rem 1rem' : '1rem 1.5rem',
         textAlign: 'center',
         fontSize: isMobile ? 'clamp(1rem, 4vw, 1.2rem)' : 'clamp(1.1rem, 2.5vw, 1.3rem)',
         fontWeight: 'bold',
-        color: '#333',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-        zIndex: 9
+        color: gameState.currentPlayer === 2 ? '#8B4513' : '#333',
+        boxShadow: gameState.currentPlayer === 2 ? '0 4px 20px rgba(255, 215, 0, 0.4)' : '0 2px 10px rgba(0,0,0,0.1)',
+        zIndex: 9,
+        border: gameState.currentPlayer === 2 ? '2px solid #FFD700' : 'none',
+        animation: gameState.currentPlayer === 2 ? 'pulse 1.5s ease-in-out infinite' : 'none'
       }}>
         {getStatusMessage()}
       </div>
@@ -866,7 +1298,8 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
           position: 'relative',
           display: 'flex',
           justifyContent: 'center',
-          alignItems: 'center'
+          alignItems: 'center',
+          animation: gameState.currentPlayer === 2 ? 'aiMoveHighlight 1.5s ease-out' : 'none'
         }}>
             <GameCanvas
               gameState={gameState}

@@ -141,6 +141,18 @@ export const gameEndsWith2SpecificPattern = (gameNumber: number): boolean => {
   return (gameNumber - 42) % 50 === 0;
 };
 
+// Determine the starting player for adventure games based on game number patterns
+export const getAdventureStartingPlayer = (gameNumber: number): 1 | 2 => {
+  // AI goes first (player 2) for certain patterns:
+  // - Games ending in 1 (11, 21, 31, 41, 51, 61, 71, 81, 91, 101, 111, 121, 131, 141, 151, 161, 171, 181, 191, 201, 211, etc.)
+  if (gameNumber % 10 === 1) {
+    return 2; // AI starts first
+  }
+  
+  // Human goes first (player 1) for all other games
+  return 1;
+};
+
 // Check if a game number is a multiple of 50 and in match 2/5 (for blind play mode)
 export const isMultipleOf50Match2 = (gameNumber: number, currentMatch: number): boolean => {
   return gameNumber % 50 === 0 && currentMatch === 2;
