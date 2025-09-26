@@ -1639,26 +1639,86 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
               </button>
               
               {(!requiresMatchSystem(currentGame) || isMatchComplete) && !isWaitingForNextGame && (
-                <button 
-                  onClick={() => {
-                    setShowWinPopup(false);
-                    onBackToMenu();
-                  }}
-                  style={{
-                    padding: '12px 24px',
-                    fontSize: '1.1em',
-                    fontWeight: 'bold',
-                    backgroundColor: '#2196F3',
-                    color: 'white',
-                    border: '2px solid black',
-                    borderRadius: '10px',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease',
-                    minWidth: '120px'
-                  }}
-                >
-                  Back to Menu
-                </button>
+                <>
+                  {(gameState.winner === 1 || (gameState.timeLeft === 0 && gameState.currentPlayer === 2)) && (
+                    <button 
+                      onClick={() => {
+                        setShowWinPopup(false);
+                        const nextGame = currentGame + 1;
+                        setCurrentGame(nextGame);
+                        setCurrentMatch(1);
+                        setPlayerWins(0);
+                        setAiWins(0);
+                        setIsMatchComplete(false);
+                        setCountdownTimer(0);
+                        setIsWaitingForNextGame(false);
+                        setGameProcessed(false);
+                        resetGame();
+                        if (soundEnabled) soundManager.playClickSound();
+                      }}
+                      style={{
+                        padding: '12px 24px',
+                        fontSize: '1.1em',
+                        fontWeight: 'bold',
+                        backgroundColor: '#4CAF50',
+                        color: 'white',
+                        border: '2px solid black',
+                        borderRadius: '10px',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease',
+                        minWidth: '120px'
+                      }}
+                    >
+                      ➡️ Continue
+                    </button>
+                  )}
+                  
+                  {(gameState.winner === 2 || (gameState.timeLeft === 0 && gameState.currentPlayer === 1)) && (
+                    <button 
+                      onClick={() => {
+                        setShowWinPopup(false);
+                        resetGame();
+                        setGameProcessed(false);
+                        if (soundEnabled) soundManager.playClickSound();
+                      }}
+                      style={{
+                        padding: '12px 24px',
+                        fontSize: '1.1em',
+                        fontWeight: 'bold',
+                        backgroundColor: '#FF9800',
+                        color: 'white',
+                        border: '2px solid black',
+                        borderRadius: '10px',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease',
+                        minWidth: '120px'
+                      }}
+                    >
+                      🔄 Replay
+                    </button>
+                  )}
+                  
+                  <button 
+                    onClick={() => {
+                      setShowWinPopup(false);
+                      onBackToMenu();
+                    }}
+                    style={{
+                      padding: '12px 24px',
+                      fontSize: '1.1em',
+                      fontWeight: 'bold',
+                      backgroundColor: '#2196F3',
+                      color: 'white',
+                      border: '2px solid black',
+                      borderRadius: '10px',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      minWidth: '120px'
+                    }}
+                  >
+                    Back to Menu
+                  </button>
+                </>
               )}
             </div>
             

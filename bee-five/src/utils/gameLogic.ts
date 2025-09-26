@@ -149,6 +149,26 @@ export const getAdventureStartingPlayer = (gameNumber: number): 1 | 2 => {
     return 2; // AI starts first
   }
   
+  // AI goes first for games with special mechanics (ending in 3-9) to balance difficulty:
+  // - Games ending in 3: Progressive blocks (from game 51+)
+  // - Games ending in 4: 16 blocked cells (from game 400+)
+  // - Games ending in 5: 5 blocked cells (from game 100+)
+  // - Games ending in 7: 6 blocked cells (from game 27+)
+  // - Games ending in 8: 8 blocked cells (from game 38+)
+  // - Games ending in 9: 10 blocked cells (from game 50+)
+  const lastDigit = gameNumber % 10;
+  if (lastDigit >= 3 && lastDigit <= 9) {
+    // Check if the special mechanics apply based on game number thresholds
+    if ((lastDigit === 3 && gameNumber > 50) ||  // Progressive blocks
+        (lastDigit === 4 && gameNumber >= 400) || // 16 blocked cells
+        (lastDigit === 5 && gameNumber >= 100) || // 5 blocked cells
+        (lastDigit === 7 && gameNumber >= 27) ||  // 6 blocked cells
+        (lastDigit === 8 && gameNumber >= 600) || // 8 blocked cells
+        (lastDigit === 9 && gameNumber >= 50)) {  // 10 blocked cells
+      return 2; // AI starts first
+    }
+  }
+  
   // Human goes first (player 1) for all other games
   return 1;
 };
