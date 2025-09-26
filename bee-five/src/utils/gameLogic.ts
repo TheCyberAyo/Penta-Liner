@@ -83,14 +83,24 @@ export const gameEndsWith3 = (gameNumber: number): boolean => {
   return gameNumber % 10 === 3 && gameNumber > 50;
 };
 
-// Check if a game number ends with 4 (for disappearing blocks)
-export const gameEndsWith4 = (gameNumber: number): boolean => {
-  return gameNumber % 10 === 4;
+// Check if a game number ends with 5 (for 5 blocked cells) - only from level 100 onwards
+export const gameEndsWith5 = (gameNumber: number): boolean => {
+  return gameNumber >= 100 && gameNumber % 10 === 5;
 };
 
-// Check if a game number ends with 7 or 8 and is after game 1000 (for shifting blocks)
-export const gameEndsWith7Or8After1000 = (gameNumber: number): boolean => {
-  return gameNumber > 1000 && (gameNumber % 10 === 7 || gameNumber % 10 === 8);
+// Check if a game number ends with 4 (for disappearing blocks) - only from level 400 onwards
+export const gameEndsWith4 = (gameNumber: number): boolean => {
+  return gameNumber >= 400 && gameNumber % 10 === 4;
+};
+
+// Check if a game number ends with 7 and is after game 250 (for shifting blocks)
+export const gameEndsWith7After250 = (gameNumber: number): boolean => {
+  return gameNumber > 250 && gameNumber % 10 === 7;
+};
+
+// Check if a game number ends with 8 and is after game 600 (for shifting blocks)
+export const gameEndsWith8After600 = (gameNumber: number): boolean => {
+  return gameNumber > 600 && gameNumber % 10 === 8;
 };
 
 // Check if a game number is a multiple of 7 between 500-1000 (for disappearing pieces after 4 turns)
@@ -103,14 +113,19 @@ export const isMultipleOf4From1000 = (gameNumber: number): boolean => {
   return gameNumber >= 1000 && gameNumber % 4 === 0;
 };
 
-// Check if a game number is a multiple of 10 (for mud zones)
-export const isMultipleOf10 = (gameNumber: number): boolean => {
-  return gameNumber % 10 === 0;
-};
+// Check if a game number is a multiple of 10 (for mud zones) - REMOVED: No longer used
+// export const isMultipleOf10 = (gameNumber: number): boolean => {
+//   return gameNumber % 10 === 0;
+// };
 
 // Check if a game number is a multiple of 40 (for enhanced mud zones with 5 zones)
 export const isMultipleOf40 = (gameNumber: number): boolean => {
   return gameNumber % 40 === 0;
+};
+
+// Check if a game number is a multiple of 200 (for mud zones)
+export const isMultipleOf200 = (gameNumber: number): boolean => {
+  return gameNumber % 200 === 0;
 };
 
 // Check if a game number follows the specific pattern (42, 92, 142, 192, etc.)
@@ -131,29 +146,79 @@ export const isMultipleOf50Match2 = (gameNumber: number, currentMatch: number): 
   return gameNumber % 50 === 0 && currentMatch === 2;
 };
 
-// Check if a game number is a multiple of 13 (for piece capacity limitation)
-export const isMultipleOf13 = (gameNumber: number): boolean => {
-  return gameNumber % 13 === 0;
+// Check if a game number is a multiple of 50 and in match 3/5 (for board rearrangement every 21 moves)
+export const isMultipleOf50Match3 = (gameNumber: number, currentMatch: number): boolean => {
+  return gameNumber % 50 === 0 && currentMatch === 3;
 };
 
-// Check if a game number is a multiple of 10 from 799-1999 (excluding multiples of 50) for board rearrangement
-export const shouldRearrangeBoard = (gameNumber: number): boolean => {
-  if (gameNumber < 799 || gameNumber > 1999) {
-    return false;
-  }
-  
-  // Must be a multiple of 10
-  if (gameNumber % 10 !== 0) {
-    return false;
-  }
-  
-  // Exclude multiples of 50
-  if (gameNumber % 50 === 0) {
-    return false;
-  }
-  
-  return true;
+// Check if a game number is a multiple of 50 and in match 4/5 (for piece swapping every 15 moves)
+export const isMultipleOf50Match4 = (gameNumber: number, currentMatch: number): boolean => {
+  return gameNumber % 50 === 0 && currentMatch === 4;
 };
+
+// Check if a game number is a multiple of 17 (for piece capacity limitation)
+export const isMultipleOf17 = (gameNumber: number): boolean => {
+  return gameNumber % 17 === 0;
+};
+
+// Check if a game number is a multiple of 10 (excluding multiples of 50) from game 60 in match 1/3 (for 5 blocked cells)
+export const isMultipleOf10Match1From60 = (gameNumber: number, currentMatch: number): boolean => {
+  return gameNumber >= 60 && 
+         gameNumber % 10 === 0 && 
+         gameNumber % 50 !== 0 && 
+         currentMatch === 1;
+};
+
+// Check if a game number is a multiple of 10 (excluding multiples of 50) from game 110 in match 1/3 (for blind play after 21 moves)
+export const isMultipleOf10Match1From110 = (gameNumber: number, currentMatch: number): boolean => {
+  return gameNumber >= 110 && 
+         gameNumber % 10 === 0 && 
+         gameNumber % 50 !== 0 && 
+         currentMatch === 1;
+};
+
+// Check if a game number is a multiple of 10 (excluding multiples of 50) from game 810 in match 1/3 (for blind play after 17 moves)
+export const isMultipleOf10Match1From810 = (gameNumber: number, currentMatch: number): boolean => {
+  return gameNumber >= 810 && 
+         gameNumber % 10 === 0 && 
+         gameNumber % 50 !== 0 && 
+         currentMatch === 1;
+};
+
+// Check if a game number is a multiple of 10 (excluding multiples of 50) from game 30 in match 2/3 (for piece swapping every 17 moves)
+export const isMultipleOf10Match2From30 = (gameNumber: number, currentMatch: number): boolean => {
+  return gameNumber >= 30 && 
+         gameNumber % 10 === 0 && 
+         gameNumber % 50 !== 0 && 
+         currentMatch === 2;
+};
+
+// Check if a game number is a multiple of 10 (excluding multiples of 50) from game 1200 in match 2/3 (for piece swapping every 15 moves)
+export const isMultipleOf10Match2From1200 = (gameNumber: number, currentMatch: number): boolean => {
+  return gameNumber >= 1200 && 
+         gameNumber % 10 === 0 && 
+         gameNumber % 50 !== 0 && 
+         currentMatch === 2;
+};
+
+// Check if a game number is a multiple of 10 from 799-1999 (excluding multiples of 50) for board rearrangement - REMOVED: No longer used
+// export const shouldRearrangeBoard = (gameNumber: number): boolean => {
+//   if (gameNumber < 799 || gameNumber > 1999) {
+//     return false;
+//   }
+//   
+//   // Must be a multiple of 10
+//   if (gameNumber % 10 !== 0) {
+//     return false;
+//   }
+//   
+//   // Exclude multiples of 50
+//   if (gameNumber % 50 === 0) {
+//     return false;
+//   }
+//   
+//   return true;
+// };
 
 // Check if a game number ends with 1 and is level 200+ (for human player blocking)
 // BUT exclude games that are part of any 5-match series
@@ -180,14 +245,14 @@ export const isFirstGameOfFiveMatchSeries = (gameNumber: number): boolean => {
   return gameNumber >= 200 && (gameNumber - 200) % 50 === 0;
 };
 
-// Check if a game number ends with 1 and is in the specified ranges (11-191, 1001-1591)
+// Check if a game number ends with 1 and is in the specified ranges (500-700, 1001-1591)
 export const gameEndsWith1InSpecifiedRanges = (gameNumber: number): boolean => {
   if (gameNumber % 10 !== 1) {
     return false;
   }
   
-  // Range 1: 11-191
-  if (gameNumber >= 11 && gameNumber <= 191) {
+  // Range 1: 500-700
+  if (gameNumber >= 500 && gameNumber <= 700) {
     return true;
   }
   
@@ -358,7 +423,58 @@ export const addStrategicBlock = (board: (0 | 1 | 2 | 3)[][]): (0 | 1 | 2 | 3)[]
   return newBoard;
 };
 
-// Shift all blocks one position each turn (for games ending with 7 or 8 after game 1000)
+// Move one random block to a strategic position to block the human player (for games ending with 9 from game 400)
+export const moveRandomBlockToStrategicPosition = (board: (0 | 1 | 2 | 3)[][]): (0 | 1 | 2 | 3)[][] => {
+  const newBoard = board.map(row => [...row]);
+  const blockedPositions: { row: number; col: number }[] = [];
+  
+  // Find all blocked cells
+  for (let row = 0; row < 10; row++) {
+    for (let col = 0; col < 10; col++) {
+      if (newBoard[row][col] === BLOCKED_CELL) {
+        blockedPositions.push({ row, col });
+      }
+    }
+  }
+  
+  if (blockedPositions.length === 0) {
+    return newBoard; // No blocks to move
+  }
+  
+  // Select a random block to move
+  const randomBlockIndex = Math.floor(Math.random() * blockedPositions.length);
+  const { row: oldRow, col: oldCol } = blockedPositions[randomBlockIndex];
+  
+  // Remove the selected block
+  newBoard[oldRow][oldCol] = 0;
+  
+  // Find strategic position to place the block (near human pieces)
+  const strategicPosition = findStrategicBlockPosition(newBoard);
+  
+  if (strategicPosition && newBoard[strategicPosition.row][strategicPosition.col] === 0) {
+    // Place the block at the strategic position
+    newBoard[strategicPosition.row][strategicPosition.col] = BLOCKED_CELL;
+  } else {
+    // If no strategic position found or position is occupied, place randomly
+    const emptyPositions: { row: number; col: number }[] = [];
+    for (let row = 0; row < 10; row++) {
+      for (let col = 0; col < 10; col++) {
+        if (newBoard[row][col] === 0) {
+          emptyPositions.push({ row, col });
+        }
+      }
+    }
+    
+    if (emptyPositions.length > 0) {
+      const randomPosition = emptyPositions[Math.floor(Math.random() * emptyPositions.length)];
+      newBoard[randomPosition.row][randomPosition.col] = BLOCKED_CELL;
+    }
+  }
+  
+  return newBoard;
+};
+
+// Shift all blocks one position each turn (for games ending with 7 or 8 after game 250)
 export const shiftAllBlocks = (board: (0 | 1 | 2 | 3)[][]): (0 | 1 | 2 | 3)[][] => {
   const newBoard = board.map(row => [...row]);
   const blockedPositions: { row: number; col: number }[] = [];
@@ -618,13 +734,136 @@ export const rearrangeBoard = (board: (0 | 1 | 2 | 3)[][], pieceAges: number[][]
   return { board: newBoard, pieceAges: newPieceAges };
 };
 
-// Generate mud zone positions for multiples of 10 games
-export const generateMudZones = (gameNumber: number): { row: number; col: number }[] => {
-  if (!isMultipleOf10(gameNumber)) {
-    return []; // No mud zones for non-multiples of 10
+// Swap AI pieces with human pieces for Game 50, Match 4/5
+export const swapOpponentPiecePairs = (board: (0 | 1 | 2 | 3)[][], pieceAges: number[][]): { board: (0 | 1 | 2 | 3)[][]; pieceAges: number[][] } => {
+  const newBoard = board.map(row => [...row]);
+  const newPieceAges = pieceAges.map(row => [...row]);
+  
+  // Collect all pieces (player 1 and player 2) with their positions
+  const player1Pieces: { row: number; col: number }[] = [];
+  const player2Pieces: { row: number; col: number }[] = [];
+  
+  for (let row = 0; row < 10; row++) {
+    for (let col = 0; col < 10; col++) {
+      if (newBoard[row][col] === 1) {
+        player1Pieces.push({ row, col });
+      } else if (newBoard[row][col] === 2) {
+        player2Pieces.push({ row, col });
+      }
+    }
   }
   
-  const numMudZones = isMultipleOf40(gameNumber) ? 5 : 2; // 5 for multiples of 40, 2 for other multiples of 10
+  // Need at least 2 pieces from each player to swap
+  if (player1Pieces.length < 2 || player2Pieces.length < 2) {
+    return { board: newBoard, pieceAges: newPieceAges };
+  }
+  
+  // Perform 2 swaps - each swap exchanges one AI piece with one human piece
+  for (let swap = 0; swap < 2; swap++) {
+    // Pick 1 random piece from player 1 (AI)
+    const player1Index = Math.floor(Math.random() * player1Pieces.length);
+    // Pick 1 random piece from player 2 (Human)
+    const player2Index = Math.floor(Math.random() * player2Pieces.length);
+    
+    const player1Piece = player1Pieces[player1Index];
+    const player2Piece = player2Pieces[player2Index];
+    
+    // Store the original values and ages
+    const player1Value = newBoard[player1Piece.row][player1Piece.col];
+    const player2Value = newBoard[player2Piece.row][player2Piece.col];
+    const player1Age = newPieceAges[player1Piece.row][player1Piece.col];
+    const player2Age = newPieceAges[player2Piece.row][player2Piece.col];
+    
+    // Swap the pieces: AI piece goes to human position, human piece goes to AI position
+    newBoard[player1Piece.row][player1Piece.col] = player2Value; // Human piece in AI position
+    newBoard[player2Piece.row][player2Piece.col] = player1Value; // AI piece in human position
+    newPieceAges[player1Piece.row][player1Piece.col] = player2Age; // Human age in AI position
+    newPieceAges[player2Piece.row][player2Piece.col] = player1Age; // AI age in human position
+    
+    // Remove the swapped pieces from the arrays to avoid double-swapping
+    player1Pieces.splice(player1Index, 1);
+    player2Pieces.splice(player2Index, 1);
+    
+    // Break if we don't have enough pieces for another swap
+    if (player1Pieces.length === 0 || player2Pieces.length === 0) {
+      break;
+    }
+  }
+  
+  return { board: newBoard, pieceAges: newPieceAges };
+};
+
+// Swap 3 random pairs of AI and human pieces for Game 1200+ Match 2/3
+export const swapThreeOpponentPiecePairs = (board: (0 | 1 | 2 | 3)[][], pieceAges: number[][]): { board: (0 | 1 | 2 | 3)[][]; pieceAges: number[][] } => {
+  const newBoard = board.map(row => [...row]);
+  const newPieceAges = pieceAges.map(row => [...row]);
+  
+  // Collect all pieces (player 1 and player 2) with their positions
+  const player1Pieces: { row: number; col: number }[] = [];
+  const player2Pieces: { row: number; col: number }[] = [];
+  
+  for (let row = 0; row < 10; row++) {
+    for (let col = 0; col < 10; col++) {
+      if (newBoard[row][col] === 1) {
+        player1Pieces.push({ row, col });
+      } else if (newBoard[row][col] === 2) {
+        player2Pieces.push({ row, col });
+      }
+    }
+  }
+  
+  // Need at least 3 pieces from each player to swap
+  if (player1Pieces.length < 3 || player2Pieces.length < 3) {
+    return { board: newBoard, pieceAges: newPieceAges };
+  }
+  
+  // Perform 3 swaps - each swap exchanges one AI piece with one human piece
+  for (let swap = 0; swap < 3; swap++) {
+    // Pick 1 random piece from player 1 (AI)
+    const player1Index = Math.floor(Math.random() * player1Pieces.length);
+    // Pick 1 random piece from player 2 (Human)
+    const player2Index = Math.floor(Math.random() * player2Pieces.length);
+    
+    const player1Piece = player1Pieces[player1Index];
+    const player2Piece = player2Pieces[player2Index];
+    
+    // Store the original values and ages
+    const player1Value = newBoard[player1Piece.row][player1Piece.col];
+    const player2Value = newBoard[player2Piece.row][player2Piece.col];
+    const player1Age = newPieceAges[player1Piece.row][player1Piece.col];
+    const player2Age = newPieceAges[player2Piece.row][player2Piece.col];
+    
+    // Swap the pieces: AI piece goes to human position, human piece goes to AI position
+    newBoard[player1Piece.row][player1Piece.col] = player2Value; // Human piece in AI position
+    newBoard[player2Piece.row][player2Piece.col] = player1Value; // AI piece in human position
+    newPieceAges[player1Piece.row][player1Piece.col] = player2Age; // Human age in AI position
+    newPieceAges[player2Piece.row][player2Piece.col] = player1Age; // AI age in human position
+    
+    // Remove the swapped pieces from the arrays to avoid double-swapping
+    player1Pieces.splice(player1Index, 1);
+    player2Pieces.splice(player2Index, 1);
+    
+    // Break if we don't have enough pieces for another swap
+    if (player1Pieces.length === 0 || player2Pieces.length === 0) {
+      break;
+    }
+  }
+  
+  return { board: newBoard, pieceAges: newPieceAges };
+};
+
+// Generate mud zone positions for multiples of 200 games only
+// This automatically excludes all other multiples of 10 (match system games) from having mud zones
+export const generateMudZones = (gameNumber: number): { row: number; col: number }[] => {
+  // Only multiples of 200 can have mud zones
+  if (!isMultipleOf200(gameNumber)) {
+    return []; // No mud zones except for multiples of 200
+  }
+  
+  // Multiples of 200 (200, 400, 600, 800, 1000, etc.) get mud zones
+  // All other multiples of 10 and 40 do NOT get mud zones
+  
+  const numMudZones = 5; // 5 for multiples of 200
   
   // Use game number as seed for consistent positioning per level
   const positions: { row: number; col: number }[] = [];
@@ -671,16 +910,17 @@ export const processMudZoneEffects = (stuckPieces: { [key: string]: number }): {
 };
 
 // Generate blocked cell positions for different levels
-export const generateBlockedCells = (gameNumber: number): { row: number; col: number }[] => {
+export const generateBlockedCells = (gameNumber: number, currentMatch: number = 1): { row: number; col: number }[] => {
   const isMultipleOf5 = gameNumber % 5 === 0;
   const endsWith3 = gameNumber % 10 === 3;
-  const endsWith4 = gameNumber % 10 === 4;
-  const endsWith5 = gameNumber % 10 === 5;
-  const endsWith7 = gameNumber % 10 === 7;
-  const endsWith8 = gameNumber % 10 === 8;
-  const endsWith9 = gameNumber % 10 === 9;
+  const endsWith4 = gameEndsWith4(gameNumber); // Use the updated function
+  const endsWith5 = gameEndsWith5(gameNumber); // Use the updated function
+  const endsWith7 = gameNumber % 10 === 7 && gameNumber >= 27; // Games ending with 7 show blocks starting from game 27
+  const endsWith8 = gameNumber % 10 === 8 && gameNumber >= 38; // Games ending with 8 show blocks starting from game 38
+  const endsWith9 = gameNumber % 10 === 9 && gameNumber >= 50; // Games ending with 9 show blocks starting from game 50
+  const multipleOf10Match1From60 = isMultipleOf10Match1From60(gameNumber, currentMatch); // Multiples of 10 from game 60 in match 1/3
   
-  if (!isMultipleOf5 && !endsWith3 && !endsWith4 && !endsWith5 && !endsWith7 && !endsWith8 && !endsWith9) {
+  if (!isMultipleOf5 && !endsWith3 && !endsWith4 && !endsWith5 && !endsWith7 && !endsWith8 && !endsWith9 && !multipleOf10Match1From60) {
     return []; // No blocked cells for regular levels
   }
   
@@ -689,6 +929,8 @@ export const generateBlockedCells = (gameNumber: number): { row: number; col: nu
                    endsWith5 ? 5 : 
                    endsWith7 ? 6 : 
                    endsWith8 ? 8 : 
+                   endsWith9 ? 10 : // Games ending with 9 have 10 blocks
+                   multipleOf10Match1From60 ? 5 : // Multiples of 10 from game 60 in match 1/3 have 5 blocks
                    (isMultipleOf5 ? 4 : 7); // 0 for ending with 3 (progressive), 16 for ending with 4, 5 for ending with 5, 6 for ending with 7, 8 for ending with 8, 4 for other multiples of 5, 7 for ending with 9
   
   // Use game number as seed for consistent positioning per level
@@ -717,7 +959,7 @@ export const generateBlockedCells = (gameNumber: number): { row: number; col: nu
 };
 
 // Create board with blocked cells for specific game
-export const createBoardWithBlocks = (gameNumber: number, isBlindPlay: boolean = false): (0 | 1 | 2 | 3)[][] => {
+export const createBoardWithBlocks = (gameNumber: number, isBlindPlay: boolean = false, currentMatch: number = 1): (0 | 1 | 2 | 3)[][] => {
   const board = Array(10).fill(null).map(() => Array(10).fill(0));
   
   // In blind play mode, don't add any blocks
@@ -725,7 +967,7 @@ export const createBoardWithBlocks = (gameNumber: number, isBlindPlay: boolean =
     return board;
   }
   
-  const blockedCells = generateBlockedCells(gameNumber);
+  const blockedCells = generateBlockedCells(gameNumber, currentMatch);
   
   blockedCells.forEach(({ row, col }) => {
     board[row][col] = BLOCKED_CELL;
