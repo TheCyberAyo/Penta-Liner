@@ -367,9 +367,11 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
 
   React.useEffect(() => {
     if (gameState.currentPlayer === 2 && gameState.isGameActive && gameState.winner === 0) {
+      // AI must play in 1000ms for games 1801-2000, otherwise use 1500ms
+      const aiDelay = (currentGame >= 1801 && currentGame <= 2000) ? 1000 : 1500;
       const timer = setTimeout(() => {
         makeAdventureAIMove();
-      }, 1500);
+      }, aiDelay);
       return () => clearTimeout(timer);
     }
   }, [gameState.currentPlayer, gameState.isGameActive, gameState.winner, gameState.board, gameState.isBlindPlay, gameState.mudZones]);

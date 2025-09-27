@@ -6,6 +6,7 @@ export interface GameState {
   isGameActive: boolean;
   winner: 0 | 1 | 2;
   timeLeft: number;
+  winningPieces?: { row: number; col: number }[]; // Optional for backward compatibility
 }
 
 export interface GameCanvasProps {
@@ -49,13 +50,15 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
         // Cell content based on game state
         const cellValue = gameState.board[row][col];
+        const isWinningPiece = gameState.winningPieces && gameState.winningPieces.some(piece => piece.row === row && piece.col === col);
+        
         if (cellValue === 1) {
-          ctx.fillStyle = '#000000'; // black
+          ctx.fillStyle = isWinningPiece ? '#FFD700' : '#000000'; // Gold for winning pieces, black otherwise
           ctx.beginPath();
           ctx.arc(x + CELL_SIZE / 2, y + CELL_SIZE / 2, CELL_SIZE / 3, 0, Math.PI * 2);
           ctx.fill();
         } else if (cellValue === 2) {
-          ctx.fillStyle = '#FFC30B'; // yellow
+          ctx.fillStyle = isWinningPiece ? '#FFD700' : '#FFC30B'; // Gold for winning pieces, yellow otherwise
           ctx.beginPath();
           ctx.arc(x + CELL_SIZE / 2, y + CELL_SIZE / 2, CELL_SIZE / 3, 0, Math.PI * 2);
           ctx.fill();

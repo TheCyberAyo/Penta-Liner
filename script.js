@@ -322,12 +322,63 @@ document.addEventListener('DOMContentLoaded', () => {
         const row = Math.floor(index / 10); // A 10x10 grid
         const col = index % 10;
 
-        return (
-            checkDirection(row, col, 1, 0, color, cells) || // Horizontal
-            checkDirection(row, col, 0, 1, color, cells) || // Vertical
-            checkDirection(row, col, 1, 1, color, cells) || // Diagonal /
-            checkDirection(row, col, 1, -1, color, cells) // Diagonal \
-        );
+        const winningPieces = getWinningPieces(row, col, color, cells);
+        if (winningPieces.length >= 5) {
+            // Highlight winning pieces in gold
+            winningPieces.forEach(piece => {
+                const pieceIndex = piece.row * 10 + piece.col;
+                const pieceCell = cells[pieceIndex];
+                if (pieceCell) {
+                    pieceCell.style.backgroundColor = '#FFD700'; // Gold color
+                }
+            });
+            return true;
+        }
+        return false;
+    }
+
+    function getWinningPieces(row, col, color, cells) {
+        const directions = [
+            [1, 0],   // horizontal
+            [0, 1],   // vertical
+            [1, 1],   // diagonal /
+            [1, -1]   // diagonal \
+        ];
+
+        for (const [dx, dy] of directions) {
+            const winningPieces = [];
+            
+            // Start with the current piece
+            winningPieces.push({ row, col });
+
+            // Check in positive direction
+            for (let i = 1; i < 5; i++) {
+                const newRow = row + i * dx;
+                const newCol = col + i * dy;
+                if (isInBounds(newRow, newCol) && getCell(newRow, newCol, cells).style.backgroundColor === color) {
+                    winningPieces.push({ row: newRow, col: newCol });
+                } else {
+                    break;
+                }
+            }
+
+            // Check in negative direction
+            for (let i = 1; i < 5; i++) {
+                const newRow = row - i * dx;
+                const newCol = col - i * dy;
+                if (isInBounds(newRow, newCol) && getCell(newRow, newCol, cells).style.backgroundColor === color) {
+                    winningPieces.unshift({ row: newRow, col: newCol });
+                } else {
+                    break;
+                }
+            }
+
+            if (winningPieces.length >= 5) {
+                return winningPieces;
+            }
+        }
+
+        return [];
     }
 
     function checkDirection(row, col, rowIncrement, colIncrement, color, cells) {
@@ -369,7 +420,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function resetGame(cells, statusText, countdownText) {
         clearInterval(countdownInterval); // Stop any existing timer
         cells.forEach(cell => {
-            cell.style.backgroundColor = 'skyblue'; // Clear the background color
+            cell.style.backgroundColor = 'skyblue'; // Clear the background color (including gold)
         });
         currentPlayer = 'black'; // Reset the starting color
         isGameActive = true; // Enable the game

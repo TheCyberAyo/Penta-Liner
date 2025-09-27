@@ -4,7 +4,7 @@ import { simpleMultiplayerClient, type SimpleMove, type SimpleGameState } from '
 import { demoSupabaseMultiplayerClient, type DemoGameMove, type DemoGameState } from '../utils/demoSupabaseMultiplayer';
 import { soundManager } from '../utils/sounds';
 import { GRID_SIZE, MULTIPLAYER_CELL_SIZE, BORDER_WIDTH, MULTIPLAYER_CANVAS_SIZE } from '../constants/gameConstants';
-import { checkWinCondition } from '../utils/gameLogic';
+import { checkWinCondition, getWinningPieces } from '../utils/gameLogic';
 
 interface MultiplayerGameProps {
   roomInfo: RoomInfo;
@@ -20,6 +20,7 @@ export function MultiplayerGame({ roomInfo, playerNumber, onBackToLobby, useCros
   );
   const [currentPlayer, setCurrentPlayer] = useState<1 | 2>(1);
   const [winner, setWinner] = useState<0 | 1 | 2>(0);
+  const [winningPieces, setWinningPieces] = useState<{ row: number; col: number }[]>([]);
   const [gameActive, setGameActive] = useState(true);
   const [animatingPieces, setAnimatingPieces] = useState<Map<string, { 
     player: 1 | 2; 
@@ -146,9 +147,11 @@ export function MultiplayerGame({ roomInfo, playerNumber, onBackToLobby, useCros
     const newBoard = board.map(row => [...row]);
     newBoard[move.row][move.col] = move.player;
     
-    if (checkWinCondition(newBoard, move.row, move.col, move.player)) {
+    const winningPieces = getWinningPieces(newBoard, move.row, move.col, move.player);
+    if (winningPieces.length >= 5) {
       setTimeout(() => {
         setWinner(move.player);
+        setWinningPieces(winningPieces);
         setGameActive(false);
         
         setTimeout(() => {
@@ -236,10 +239,12 @@ export function MultiplayerGame({ roomInfo, playerNumber, onBackToLobby, useCros
           const centerY = y + CELL_SIZE / 2;
           const radius = (CELL_SIZE / 3) * scale;
 
+          const isWinningPiece = winningPieces.some(piece => piece.row === row && piece.col === col);
+          
           if (cellValue === 1) {
-            ctx.fillStyle = '#000000'; // black
+            ctx.fillStyle = isWinningPiece ? '#FFD700' : '#000000'; // Gold for winning pieces, black otherwise
           } else {
-            ctx.fillStyle = '#FFC30B'; // yellow
+            ctx.fillStyle = isWinningPiece ? '#FFD700' : '#FFC30B'; // Gold for winning pieces, yellow otherwise
           }
 
           ctx.beginPath();
@@ -431,6 +436,7 @@ export function MultiplayerGame({ roomInfo, playerNumber, onBackToLobby, useCros
     setBoard(Array(10).fill(null).map(() => Array(10).fill(0)));
     setCurrentPlayer(1);
     setWinner(0);
+    setWinningPieces([]);
     setGameActive(true);
     setAnimatingPieces(new Map());
     setShowWinPopup(false);
