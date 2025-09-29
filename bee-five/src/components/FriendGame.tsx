@@ -197,24 +197,8 @@ const FriendGame: React.FC<FriendGameProps> = ({ onBackToMenu }) => {
   };
 
   const getStatusMessage = () => {
-    if (!gameSeries) return '';
-    
-    if (gameState.winner > 0) {
-      const winnerName = gameState.winner === 1 ? gameSeries.player1Name : gameSeries.player2Name;
-      return `${winnerName} wins Game ${gameSeries.currentGame}!`;
-    }
-    if (!gameState.isGameActive && gameState.winner === 0) {
-      return `Game ${gameSeries.currentGame} - Draw!`;
-    }
-    if (gameState.timeLeft === 0) {
-      const winner = gameState.currentPlayer === 1 ? 2 : 1;
-      const winnerName = winner === 1 ? gameSeries.player2Name : gameSeries.player1Name;
-      return `${winnerName} wins Game ${gameSeries.currentGame} due to time limit!`;
-    }
-    
-    const currentPlayerName = gameState.currentPlayer === 1 ? gameSeries.player1Name : gameSeries.player2Name;
-    const startingPlayerName = gameSeries.player1GoesFirst ? gameSeries.player1Name : gameSeries.player2Name;
-    return `${currentPlayerName}'s turn - Game ${gameSeries.currentGame} (${startingPlayerName} started)`;
+    // All status messages removed
+    return '';
   };
 
   const getSeriesWinner = () => {
@@ -544,19 +528,6 @@ const FriendGame: React.FC<FriendGameProps> = ({ onBackToMenu }) => {
         </div>
       </div>
 
-      {/* Game status bar */}
-      <div style={{
-        background: 'rgba(255, 255, 255, 0.95)',
-        padding: isMobile ? '0.75rem 1rem' : '1rem 1.5rem',
-        textAlign: 'center',
-        fontSize: isMobile ? 'clamp(1rem, 4vw, 1.2rem)' : 'clamp(1.1rem, 2.5vw, 1.3rem)',
-        fontWeight: 'bold',
-        color: '#333',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-        zIndex: 9
-      }}>
-        {getStatusMessage()}
-      </div>
 
       {/* Game Progress */}
       {gameSeries && (

@@ -39,6 +39,13 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Clear hover effect when it becomes AI's turn
+  useEffect(() => {
+    if (gameState.currentPlayer === 2) {
+      setHoveredCell(null);
+    }
+  }, [gameState.currentPlayer]);
   
   // Detect device type and calculate optimal sizing
   const isMobile = windowSize.width <= 768;
@@ -146,8 +153,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           ctx.arc(x + currentCellSize / 2, y + currentCellSize / 2, currentCellSize / 2.5, 0, Math.PI * 2);
           ctx.fill();
         }
-        // Hover effect (only show if not touched) - only on empty cells (not mud zones)
-        else if (hoveredCell && hoveredCell.row === row && hoveredCell.col === col && cellValue === 0 && !isMudZone) {
+        // Hover effect (only show if not touched and it's player's turn) - only on empty cells (not mud zones)
+        else if (hoveredCell && hoveredCell.row === row && hoveredCell.col === col && cellValue === 0 && !isMudZone && gameState.currentPlayer === 1) {
           const playerColor = gameState.currentPlayer === 1 ? effectivePlayer1Color : effectivePlayer2Color;
           ctx.fillStyle = playerColor.replace('rgb', 'rgba').replace(')', ', 0.3)');
           ctx.beginPath();
@@ -268,8 +275,14 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     event.preventDefault();
   };
 
-  // Handle mouse move for hover effect
+  // Handle mouse move for hover effect (only when it's player's turn)
   const handleMouseMove = (event: React.MouseEvent<HTMLCanvasElement>) => {
+    // Only show hover effect when it's the player's turn (currentPlayer === 1)
+    if (gameState.currentPlayer !== 1) {
+      setHoveredCell(null);
+      return;
+    }
+
     const canvas = canvasRef.current;
     if (!canvas) return;
 

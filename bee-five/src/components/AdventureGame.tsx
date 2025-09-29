@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useGameLogic } from '../hooks/useGameLogic';
 import GameCanvas from './GameCanvas';
-import AdventureMap from './AdventureMap';
+import BeeAdventureMap from './BeeAdventureMap';
 import { soundManager } from '../utils/sounds';
 import { getTimeLimitForLevel, isInMudZone, checkWinCondition, getAdventureStartingPlayer } from '../utils/gameLogic';
 import { useTheme } from '../hooks/useTheme';
@@ -226,12 +226,10 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
              setGamesWon(prev => prev + 1);
              
              const matchType = getMatchType(currentGame);
-             setMatchVictoryMessage(`🎉 Match Victory! 🎉\n\nYou won the ${matchType} match!\n\nAuto-proceeding to next game...`);
-             setShowMatchVictoryPopup(true);
+            // Match victory message removed
            } else {
              const matchType = getMatchType(currentGame);
-             setMatchVictoryMessage(`💔 Match Defeat 💔\n\nYou lost the ${matchType} match.\n\nAuto-proceeding to next game...`);
-             setShowMatchVictoryPopup(true);
+            // Match defeat message removed
            }
            
            setGamesCompleted(prev => {
@@ -259,9 +257,9 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
            setCountdownTimer(3);
          }
        } else {
-         const winText = gameState.winner === 1 ? 'Victory!' : 'Defeat!';
-         setWinMessage(`${winText} 🐝`);
-         setShowWinPopup(true);
+        const winText = gameState.winner === 1 ? 'Victory!' : 'Defeat!';
+        setWinMessage(`${winText} 🐝`);
+        setShowWinPopup(true);
         
          if (gameState.winner === 1) {
            setGamesWon(prev => prev + 1);
@@ -315,12 +313,10 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
              setGamesWon(prev => prev + 1);
              
              const matchType = getMatchType(currentGame);
-             setMatchVictoryMessage(`🎉 Match Victory! 🎉\n\nYou won the ${matchType} match!\n\nAuto-proceeding to next game...`);
-             setShowMatchVictoryPopup(true);
+            // Match victory message removed
            } else {
              const matchType = getMatchType(currentGame);
-             setMatchVictoryMessage(`💔 Match Defeat 💔\n\nYou lost the ${matchType} match.\n\nAuto-proceeding to next game...`);
-             setShowMatchVictoryPopup(true);
+            // Match defeat message removed
            }
            
            setGamesCompleted(prev => {
@@ -348,9 +344,9 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
            setCountdownTimer(3);
          }
        } else {
-         const winText = gameState.currentPlayer === 1 ? 'Time\'s up - Defeat!' : 'Time\'s up - Victory!';
-         setWinMessage(`${winText} 🐝`);
-         setShowWinPopup(true);
+        const winText = gameState.currentPlayer === 1 ? 'Time\'s up - Defeat!' : 'Time\'s up - Victory!';
+        setWinMessage(`${winText} 🐝`);
+        setShowWinPopup(true);
         
          if (gameState.currentPlayer === 2) {
            setGamesWon(prev => prev + 1);
@@ -984,25 +980,8 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
 
 
   const getStatusMessage = () => {
-    if (gameState.winner > 0) {
-      const winText = gameState.winner === 1 ? 'Victory!' : 'Defeat!';
-      return winText;
-    }
-    if (!gameState.isGameActive && gameState.winner === 0) {
-      return 'Draw!';
-    }
-    if (gameState.timeLeft === 0) {
-      const winText = gameState.currentPlayer === 1 ? 'Time\'s up - Defeat!' : 'Time\'s up - Victory!';
-      return winText;
-    }
-    
-    if (gameState.currentPlayer === 2) {
-      const aiType = currentGame >= 601 ? 'HARD AI' : 'MEDIUM AI';
-      const baseMessage = gameState.isBlindPlay ? '🤖 AI playing randomly...' : `🤖 ${aiType} is thinking...`;
-      return gameState.isBlindPlay ? `👁️‍🗨️ BLIND PLAY - ${baseMessage}` : baseMessage;
-    }
-    
-    return 'Your turn!';
+    // All status messages removed
+    return '';
   };
 
    const handleNextGame = () => {
@@ -1063,7 +1042,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
 
   if (showMap) {
     return (
-      <AdventureMap
+      <BeeAdventureMap
         currentGame={currentGame}
         gamesCompleted={gamesCompleted}
         onGameSelect={handleGameSelect}
@@ -1273,20 +1252,6 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
         </div>
       </div>
 
-      <div style={{
-        background: gameState.currentPlayer === 2 ? 'rgba(255, 215, 0, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-        padding: isMobile ? '0.75rem 1rem' : '1rem 1.5rem',
-        textAlign: 'center',
-        fontSize: isMobile ? 'clamp(1rem, 4vw, 1.2rem)' : 'clamp(1.1rem, 2.5vw, 1.3rem)',
-        fontWeight: 'bold',
-        color: gameState.currentPlayer === 2 ? '#8B4513' : '#333',
-        boxShadow: gameState.currentPlayer === 2 ? '0 4px 20px rgba(255, 215, 0, 0.4)' : '0 2px 10px rgba(0,0,0,0.1)',
-        zIndex: 9,
-        border: gameState.currentPlayer === 2 ? '2px solid #FFD700' : 'none',
-        animation: gameState.currentPlayer === 2 ? 'pulse 1.5s ease-in-out infinite' : 'none'
-      }}>
-        {getStatusMessage()}
-      </div>
 
       <div style={{
         flex: 1,
@@ -1746,69 +1711,6 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
         </div>
       )}
 
-      {showMatchVictoryPopup && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          zIndex: 1000,
-          animation: 'fadeIn 0.3s ease-out'
-        }}>
-          <div style={{
-            backgroundColor: currentTheme.cardBackground,
-            padding: '40px',
-            borderRadius: '20px',
-            border: `4px solid ${currentTheme.borderColor}`,
-            textAlign: 'center',
-            minWidth: '400px',
-            maxWidth: '90vw',
-            position: 'relative',
-            animation: 'popIn 0.5s ease-out',
-            boxShadow: '0 20px 40px rgba(0,0,0,0.3)'
-          }}>
-            <div style={{
-              fontSize: '4em',
-              marginBottom: '20px',
-              animation: 'bounce 1s ease-out infinite'
-            }}>
-              🎉🐝🎉
-            </div>
-            
-            <div style={{
-              fontSize: '1.5em',
-              color: 'black',
-              marginBottom: '20px',
-              textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
-              whiteSpace: 'pre-line',
-              lineHeight: '1.4'
-            }}>
-              {matchVictoryMessage}
-            </div>
-            
-            <p style={{
-              fontSize: '1.2em',
-              color: '#333',
-              marginBottom: '20px'
-            }}>
-              Game {currentGame} completed! | Total Wins: {gamesWon}
-            </p>
-            
-            <div style={{
-              fontSize: '1em',
-              color: '#666',
-              fontStyle: 'italic'
-            }}>
-              Auto-proceeding to Game {currentGame + 1} in 3 seconds...
-            </div>
-          </div>
-        </div>
-      )}
       </div>
     </BeeLifeStageEffects>
   );

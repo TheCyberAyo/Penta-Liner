@@ -15,18 +15,8 @@ const GamePage: React.FC<GamePageProps> = ({ onBackToWelcome }) => {
   });
 
   const getStatusMessage = () => {
-    if (gameState.winner > 0) {
-      return `${getWinnerName(gameState.winner as 1 | 2)} wins!`;
-    }
-    if (!gameState.isGameActive && gameState.winner === 0) {
-      return 'Game Over - Draw!';
-    }
-    if (gameState.timeLeft === 0) {
-      const winner = gameState.currentPlayer === 1 ? 2 : 1;
-      return `${getPlayerName(winner)} wins due to time limit!`;
-    }
-    
-    return `${getPlayerName(gameState.currentPlayer)}, Play!`;
+    // All status messages removed
+    return '';
   };
 
   return (
@@ -48,11 +38,6 @@ const GamePage: React.FC<GamePageProps> = ({ onBackToWelcome }) => {
         />
       </div>
 
-      <div className="game-status">
-        <div className="status-text">
-          {getStatusMessage()}
-        </div>
-      </div>
 
       <div className="game-controls">
         <button className="control-button restart-button" onClick={() => resetGame()}>

@@ -349,8 +349,8 @@ export function MultiplayerGame({ roomInfo, playerNumber, onBackToLobby, useCros
         newGameActive = false;
         setWinner(newWinner);
         setGameActive(false);
-        setShowWinPopup(true);
         setWinMessage(newWinner === playerNumber ? 'You won! 🐝' : 'Opponent won! 🐝');
+        setShowWinPopup(true);
         soundManager.playVictorySound();
       } else {
         // Switch turns
@@ -457,24 +457,8 @@ export function MultiplayerGame({ roomInfo, playerNumber, onBackToLobby, useCros
   };
 
   const getStatusMessage = () => {
-    if (winner > 0) {
-      const winnerName = winner === playerNumber ? 'You' : opponentName;
-      return `${winnerName} wins!`;
-    }
-    
-    if (connectionStatus === 'disconnected') {
-      return '❌ Disconnected from server';
-    }
-    
-    if (connectionStatus === 'reconnecting') {
-      return '🔄 Reconnecting...';
-    }
-    
-    if (currentPlayer === playerNumber) {
-      return `Your turn (${playerNumber === 1 ? 'Black' : 'Yellow'})`;
-    } else {
-      return `${opponentName}'s turn (${currentPlayer === 1 ? 'Black' : 'Yellow'})`;
-    }
+    // All status messages removed
+    return '';
   };
 
   const isHost = roomInfo.players.find(p => p.playerNumber === playerNumber)?.isHost || false;
@@ -533,15 +517,6 @@ export function MultiplayerGame({ roomInfo, playerNumber, onBackToLobby, useCros
         }}
       />
       
-      <div style={{ 
-        fontSize: '1.2em', 
-        fontWeight: 'bold', 
-        color: 'black',
-        marginBottom: '20px',
-        textAlign: 'center'
-      }}>
-        {getStatusMessage()}
-      </div>
 
       
       <div style={{ display: 'flex', gap: '15px' }}>

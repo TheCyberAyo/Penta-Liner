@@ -51,18 +51,8 @@ function SimpleGame({ onBackToMenu }: { onBackToMenu: () => void }) {
   }, [gameState.winner, gameState.isGameActive, gameState.timeLeft, gameState.currentPlayer]);
 
   const getStatusMessage = () => {
-    if (gameState.winner > 0) {
-      return `${getWinnerName(gameState.winner as 1 | 2)} wins!`;
-    }
-    if (!gameState.isGameActive && gameState.winner === 0) {
-      return 'Game Over - Draw!';
-    }
-    if (gameState.timeLeft === 0) {
-      const winner = gameState.currentPlayer === 1 ? 2 : 1;
-      return `${getPlayerName(winner)} wins due to time limit!`;
-    }
-    
-    return `${getPlayerName(gameState.currentPlayer)}, Play!`;
+    // All status messages removed
+    return '';
   };
 
   // Calculate responsive sizes
@@ -176,20 +166,6 @@ function SimpleGame({ onBackToMenu }: { onBackToMenu: () => void }) {
             {isMobile ? '🔄' : '🔄 New'}
           </button>
         </div>
-      </div>
-
-      {/* Game status bar */}
-      <div style={{
-        background: 'rgba(255, 255, 255, 0.95)',
-        padding: isMobile ? '0.75rem 1rem' : '1rem 1.5rem',
-        textAlign: 'center',
-        fontSize: isMobile ? 'clamp(1rem, 4vw, 1.2rem)' : 'clamp(1.1rem, 2.5vw, 1.3rem)',
-        fontWeight: 'bold',
-        color: '#333',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-        zIndex: 9
-      }}>
-        {getStatusMessage()}
       </div>
 
       {/* Main game area - fills remaining space */}
@@ -403,7 +379,6 @@ function AIGame({ onBackToMenu, initialDifficulty = 'medium' }: { onBackToMenu: 
   // Show popup when game ends
   React.useEffect(() => {
     if (gameState.winner > 0) {
-      // const winnerName = gameState.winner === 1 ? 'You' : 'You';
       const winText = gameState.winner === 1 ? 'You win!' : 'You lost!';
       setWinMessage(`${winText} 🐝`);
       setShowWinPopup(true);
@@ -417,7 +392,6 @@ function AIGame({ onBackToMenu, initialDifficulty = 'medium' }: { onBackToMenu: 
       setWinMessage('Game Over - Draw! 🐝');
       setShowWinPopup(true);
     } else if (gameState.timeLeft === 0) {
-      // const winner = gameState.currentPlayer === 1 ? 'You lost' : 'You';
       const winText = gameState.currentPlayer === 1 ? 'You lost due to time limit!' : 'You win due to time limit!';
       setWinMessage(`${winText} 🐝`);
       setShowWinPopup(true);
@@ -1666,19 +1640,8 @@ function AIGame({ onBackToMenu, initialDifficulty = 'medium' }: { onBackToMenu: 
   // };
 
   const getStatusMessage = () => {
-    if (gameState.winner > 0) {
-      const winText = gameState.winner === 1 ? 'You win!' : 'You lost!';
-      return winText;
-    }
-    if (!gameState.isGameActive && gameState.winner === 0) {
-      return 'Game Over - Draw!';
-    }
-    if (gameState.timeLeft === 0) {
-      const winText = gameState.currentPlayer === 1 ? 'You lost due to time limit!' : 'You win due to time limit!';
-      return winText;
-    }
-    
-    return gameState.currentPlayer === 1 ? 'Your turn!' : 'AI is thinking...';
+    // All status messages removed
+    return '';
   };
 
   // Calculate responsive sizes
@@ -1884,20 +1847,6 @@ function AIGame({ onBackToMenu, initialDifficulty = 'medium' }: { onBackToMenu: 
             ⏱️ {gameState.timeLeft}s
           </div>
         </div>
-      </div>
-
-      {/* Game status bar */}
-      <div style={{
-        background: 'rgba(255, 255, 255, 0.95)',
-        padding: isMobile ? '0.75rem 1rem' : '1rem 1.5rem',
-        textAlign: 'center',
-        fontSize: isMobile ? 'clamp(1rem, 4vw, 1.2rem)' : 'clamp(1.1rem, 2.5vw, 1.3rem)',
-        fontWeight: 'bold',
-        color: '#333',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-        zIndex: 9
-      }}>
-        {getStatusMessage()}
       </div>
 
       {/* Main game area - fills remaining space */}
