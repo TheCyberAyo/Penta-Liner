@@ -456,10 +456,6 @@ export function MultiplayerGame({ roomInfo, playerNumber, onBackToLobby, useCros
     soundManager.playClickSound();
   };
 
-  const getStatusMessage = () => {
-    // All status messages removed
-    return '';
-  };
 
   const isHost = roomInfo.players.find(p => p.playerNumber === playerNumber)?.isHost || false;
 

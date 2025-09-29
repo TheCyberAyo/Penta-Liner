@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import './App.css';
 import { soundManager } from './utils/sounds';
 import { type RoomInfo } from './utils/p2pMultiplayer';
-import { getPlayerName, getWinnerName } from './utils/gameLogic';
 import { MultiplayerLobby } from './components/MultiplayerLobby';
 import { MultiplayerGame } from './components/MultiplayerGame';
 import FriendGame from './components/FriendGame';
@@ -50,10 +49,6 @@ function SimpleGame({ onBackToMenu }: { onBackToMenu: () => void }) {
     }
   }, [gameState.winner, gameState.isGameActive, gameState.timeLeft, gameState.currentPlayer]);
 
-  const getStatusMessage = () => {
-    // All status messages removed
-    return '';
-  };
 
   // Calculate responsive sizes
   const isMobile = window.innerWidth <= 768;
@@ -1639,10 +1634,6 @@ function AIGame({ onBackToMenu, initialDifficulty = 'medium' }: { onBackToMenu: 
   //   return false;
   // };
 
-  const getStatusMessage = () => {
-    // All status messages removed
-    return '';
-  };
 
   // Calculate responsive sizes
   const isMobile = window.innerWidth <= 768;

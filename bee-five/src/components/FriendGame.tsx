@@ -196,10 +196,6 @@ const FriendGame: React.FC<FriendGameProps> = ({ onBackToMenu }) => {
     if (soundEnabled) soundManager.playClickSound();
   };
 
-  const getStatusMessage = () => {
-    // All status messages removed
-    return '';
-  };
 
   const getSeriesWinner = () => {
     if (!gameSeries) return null;

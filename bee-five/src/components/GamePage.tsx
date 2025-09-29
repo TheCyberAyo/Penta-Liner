@@ -1,7 +1,6 @@
 import React from 'react';
 import { useGameLogic } from '../hooks/useGameLogic';
 import GameCanvas from './GameCanvas';
-import { getPlayerName, getWinnerName } from '../utils/gameLogic';
 
 interface GamePageProps {
   onBackToWelcome: () => void;
@@ -14,10 +13,6 @@ const GamePage: React.FC<GamePageProps> = ({ onBackToWelcome }) => {
     timeLimit
   });
 
-  const getStatusMessage = () => {
-    // All status messages removed
-    return '';
-  };
 
   return (
     <div className="game-page">

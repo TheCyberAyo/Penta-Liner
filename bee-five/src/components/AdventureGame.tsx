@@ -84,8 +84,6 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
   const [countdownTimer, setCountdownTimer] = useState(0);
   const [isWaitingForNextGame, setIsWaitingForNextGame] = useState(false);
   const [gameProcessed, setGameProcessed] = useState(false);
-  const [showMatchVictoryPopup, setShowMatchVictoryPopup] = useState(false);
-  const [matchVictoryMessage, setMatchVictoryMessage] = useState('');
   
   const { gameState, handleCellClick, resetGame } = useGameLogic({
     timeLimit: getTimeLimitForLevel(currentGame),
@@ -225,10 +223,8 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
            if (newPlayerWins >= requiredWins) {
              setGamesWon(prev => prev + 1);
              
-             const matchType = getMatchType(currentGame);
             // Match victory message removed
            } else {
-             const matchType = getMatchType(currentGame);
             // Match defeat message removed
            }
            
@@ -249,7 +245,6 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
              setCountdownTimer(0);
              setIsWaitingForNextGame(false);
              setGameProcessed(false);
-             setShowMatchVictoryPopup(false);
              resetGame();
            }, 3000);
          } else {
@@ -312,10 +307,8 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
            if (newPlayerWins >= requiredWins) {
              setGamesWon(prev => prev + 1);
              
-             const matchType = getMatchType(currentGame);
             // Match victory message removed
            } else {
-             const matchType = getMatchType(currentGame);
             // Match defeat message removed
            }
            
@@ -336,7 +329,6 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
              setCountdownTimer(0);
              setIsWaitingForNextGame(false);
              setGameProcessed(false);
-             setShowMatchVictoryPopup(false);
              resetGame();
            }, 3000);
          } else {
@@ -979,10 +971,6 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
   };
 
 
-  const getStatusMessage = () => {
-    // All status messages removed
-    return '';
-  };
 
    const handleNextGame = () => {
      setShowWinPopup(false);
@@ -1030,7 +1018,6 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
     setCountdownTimer(0);
     setIsWaitingForNextGame(false);
     setGameProcessed(false);
-    setShowMatchVictoryPopup(false);
   };
 
   const handleStageTransitionClose = () => {

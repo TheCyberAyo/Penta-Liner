@@ -21,7 +21,7 @@ const BeeAdventureMap: React.FC<BeeAdventureMapProps> = ({
   const [volume, setVolume] = useState(0.3);
   
   // Use theme system
-  const { currentTheme, getStageIndex } = useTheme({ gameNumber: currentGame });
+  const { currentTheme } = useTheme({ gameNumber: currentGame });
 
   // Initialize sound manager settings
   React.useEffect(() => {
@@ -29,27 +29,7 @@ const BeeAdventureMap: React.FC<BeeAdventureMapProps> = ({
     soundManager.setMuted(!soundEnabled);
   }, [volume, soundEnabled]);
 
-  const getGameStatus = (gameNumber: number): 'completed' | 'current' | 'available' => {
-    if (gamesCompleted.includes(gameNumber)) return 'completed';
-    if (gameNumber === currentGame) return 'current';
-    return 'available';
-  };
 
-  const getGameColor = (gameNumber: number) => {
-    const status = getGameStatus(gameNumber);
-    const stageIndex = Math.floor((gameNumber - 1) / 200);
-    
-    switch (status) {
-      case 'completed':
-        return '#4CAF50'; // Green for completed
-      case 'current':
-        return '#FFC30B'; // Yellow for current (bee theme)
-      case 'available':
-        return ADVENTURE_THEMES[stageIndex]?.primaryColor || '#FFC30B';
-      default:
-        return '#FFC30B';
-    }
-  };
 
   // Get stage emoji based on bee life stage
   const getStageEmoji = (stageIndex: number) => {
@@ -74,101 +54,7 @@ const BeeAdventureMap: React.FC<BeeAdventureMapProps> = ({
   };
 
   // Render individual stage nodes
-  const renderStageNode = (stageIndex: number) => {
-    const stage = ADVENTURE_THEMES[stageIndex];
-    const stageEmoji = getStageEmoji(stageIndex);
-    const isCompleted = gamesCompleted.some(game => Math.floor((game - 1) / 200) === stageIndex);
-    const isCurrent = Math.floor((currentGame - 1) / 200) === stageIndex;
-    
-    return (
-      <div
-        key={stageIndex}
-        onClick={() => handleGameClick((stageIndex * 200) + 1)}
-        style={{
-          width: '80px',
-          height: '80px',
-          borderRadius: '50%',
-          backgroundColor: isCompleted ? '#4CAF50' : isCurrent ? '#FFC30B' : stage?.primaryColor || '#FFC30B',
-          border: isCurrent ? '4px solid #000' : '3px solid #fff',
-          cursor: 'pointer',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '24px',
-          fontWeight: 'bold',
-          color: isCompleted || isCurrent ? '#000' : '#fff',
-          textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
-          transition: 'all 0.3s ease',
-          transform: isCurrent ? 'scale(1.1)' : 'scale(1)',
-          zIndex: isCurrent ? 10 : 1,
-          boxShadow: isCurrent ? '0 0 15px rgba(255, 195, 11, 0.8)' : '0 4px 8px rgba(0,0,0,0.2)',
-          position: 'relative'
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = 'scale(1.1)';
-          e.currentTarget.style.zIndex = '10';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = isCurrent ? 'scale(1.1)' : 'scale(1)';
-          e.currentTarget.style.zIndex = isCurrent ? '10' : '1';
-        }}
-        title={`${stage?.name || 'Unknown Stage'}\n${stage?.beeLifeStage || ''}`}
-      >
-        <div style={{ fontSize: '28px', marginBottom: '4px' }}>{stageEmoji}</div>
-        <div style={{ fontSize: '12px', textAlign: 'center', lineHeight: '1.2' }}>
-          {stageIndex + 1}
-        </div>
-      </div>
-    );
-  };
 
-  // Render individual game nodes for the detailed view
-  const renderGameNode = (gameNumber: number) => {
-    const status = getGameStatus(gameNumber);
-    const stageIndex = Math.floor((gameNumber - 1) / 200);
-    const stage = ADVENTURE_THEMES[stageIndex];
-    const isCompleted = gamesCompleted.includes(gameNumber);
-    const isCurrent = gameNumber === currentGame;
-    
-    return (
-      <div
-        key={gameNumber}
-        onClick={() => handleGameClick(gameNumber)}
-        style={{
-          width: '12px',
-          height: '12px',
-          borderRadius: '50%',
-          backgroundColor: isCompleted ? '#4CAF50' : isCurrent ? '#FFC30B' : stage?.primaryColor || '#FFC30B',
-          border: isCurrent ? '2px solid #000' : '1px solid #fff',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '6px',
-          fontWeight: 'bold',
-          color: isCompleted || isCurrent ? '#000' : '#fff',
-          textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
-          transition: 'all 0.3s ease',
-          transform: isCurrent ? 'scale(1.3)' : 'scale(1)',
-          zIndex: isCurrent ? 10 : 1,
-          boxShadow: isCurrent ? '0 0 8px rgba(255, 195, 11, 0.8)' : '0 2px 4px rgba(0,0,0,0.2)',
-          position: 'relative'
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = 'scale(1.3)';
-          e.currentTarget.style.zIndex = '10';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = isCurrent ? 'scale(1.3)' : 'scale(1)';
-          e.currentTarget.style.zIndex = isCurrent ? '10' : '1';
-        }}
-        title={`Game ${gameNumber} - ${stage?.name || 'Unknown Stage'}\n${stage?.beeLifeStage || ''}`}
-      >
-        {isCurrent && <span style={{ fontSize: '8px' }}>★</span>}
-      </div>
-    );
-  };
 
   // Get geographical location for each game (organic flowing S-curve)
   const getGamePosition = (gameNumber: number) => {
@@ -176,7 +62,6 @@ const BeeAdventureMap: React.FC<BeeAdventureMapProps> = ({
     const isMobile = window.innerWidth <= 768;
     
     // Organic flowing S-curve parameters
-    const totalGames = 2000;
     const totalHeight = isMobile ? 280000 : 320000; // Much larger height to accommodate all 2000 games
     const spacing = isMobile ? 140 : 160; // Added 2 fingers of distance (60px more)
     
@@ -271,14 +156,13 @@ const BeeAdventureMap: React.FC<BeeAdventureMapProps> = ({
       9: ['👑', '🍯', '🍯', '🍯', '🌟']  // Queen stage - royal honey
     };
     
-    const stageEnvironments = environments[stageIndex] || ['🌿'];
+    const stageEnvironments = environments[stageIndex as keyof typeof environments] || ['🌿'];
     return stageEnvironments[positionInStage % stageEnvironments.length];
   };
 
   // Render individual game location
   const renderGameLocation = (gameNumber: number) => {
     const position = getGamePosition(gameNumber);
-    const status = getGameStatus(gameNumber);
     const stageIndex = Math.floor((gameNumber - 1) / 200);
     const stage = ADVENTURE_THEMES[stageIndex];
     const isCompleted = gamesCompleted.includes(gameNumber);
@@ -340,9 +224,11 @@ const BeeAdventureMap: React.FC<BeeAdventureMapProps> = ({
             borderRadius: '50%',
             backgroundColor: isCompleted ? '#4CAF50' : isCurrent ? '#FFC30B' : stage?.primaryColor || '#FFC30B',
             border: isCompleted || isCurrent ? '3px solid #fff' : '2px solid #fff',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+            boxShadow: isCurrent ? '0 0 12px rgba(255, 195, 11, 0.8)' : '0 2px 6px rgba(0,0,0,0.3)',
             position: 'relative',
-            zIndex: 2
+            zIndex: 2,
+            animation: isCurrent ? 'currentPulse 2s ease-in-out infinite' : 'none',
+            transform: 'translateZ(0)' // Force hardware acceleration
           }}>
             {isCurrent && (
               <div style={{
@@ -453,11 +339,23 @@ const BeeAdventureMap: React.FC<BeeAdventureMapProps> = ({
             alignItems: 'center',
             justifyContent: 'center',
             gap: '1rem',
-            textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
+            textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+            animation: 'titleGlow 3s ease-in-out infinite',
+            transform: 'translateZ(0)' // Force hardware acceleration
           }}>
-            <span style={{ fontSize: '3rem' }}>🐝</span>
+            <span style={{ 
+              fontSize: '3rem',
+              animation: 'mapIconSpin 4s linear infinite',
+              display: 'inline-block',
+              filter: 'drop-shadow(0 0 8px rgba(255, 195, 11, 0.6))'
+            }}>🐝</span>
             Bee Adventure Journey
-            <span style={{ fontSize: '3rem' }}>🍯</span>
+            <span style={{ 
+              fontSize: '3rem',
+              animation: 'mapIconSpin 4s linear infinite reverse',
+              display: 'inline-block',
+              filter: 'drop-shadow(0 0 8px rgba(255, 195, 11, 0.6))'
+            }}>🍯</span>
           </h2>
           <p style={{
             margin: 0,
@@ -510,7 +408,9 @@ const BeeAdventureMap: React.FC<BeeAdventureMapProps> = ({
               width: '100%',
               height: `${totalHeight}px`,
               zIndex: 1,
-              pointerEvents: 'none'
+              pointerEvents: 'none',
+              animation: 'mapFloat 8s ease-in-out infinite',
+              transform: 'translateZ(0)' // Force hardware acceleration
             }}
             viewBox={`0 0 800 ${totalHeight}`}
             preserveAspectRatio="none"
@@ -598,6 +498,10 @@ const BeeAdventureMap: React.FC<BeeAdventureMapProps> = ({
                   strokeWidth={isMobile ? "6" : "4"}
                   fill="none"
                   opacity="0.7"
+                  style={{
+                    filter: `drop-shadow(0 0 4px ${currentTheme.primaryColor}40)`,
+                    animation: 'titleGlow 3s ease-in-out infinite'
+                  }}
                 />
               );
             })()}
@@ -681,6 +585,11 @@ const BeeAdventureMap: React.FC<BeeAdventureMapProps> = ({
                   strokeWidth="2"
                   fill="none"
                   opacity="0.3"
+                  style={{
+                    filter: `drop-shadow(0 0 2px ${currentTheme.secondaryColor}60)`,
+                    animation: 'stageCardFloat 6s ease-in-out infinite',
+                    animationDelay: `${i * 0.1}s`
+                  }}
                 />
               );
             })}
@@ -724,7 +633,10 @@ const BeeAdventureMap: React.FC<BeeAdventureMapProps> = ({
                   cursor: 'pointer',
                   transition: 'all 0.3s ease',
                   boxShadow: '0 8px 16px rgba(0,0,0,0.4)',
-                  zIndex: 5
+                  zIndex: 5,
+                  animation: 'milestonePulse 3s ease-in-out infinite',
+                  animationDelay: `${index * 0.5}s`,
+                  transform: 'translateZ(0)' // Force hardware acceleration
                 }}
                 onClick={() => handleGameClick(milestoneGame)}
                 onMouseEnter={(e) => {
@@ -770,54 +682,55 @@ const BeeAdventureMap: React.FC<BeeAdventureMapProps> = ({
   };
 
   return (
-    <BeeLifeStageEffects theme={currentTheme}>
-      <div style={{ 
-        background: currentTheme.backgroundGradient,
-        minHeight: '100vh',
+    <div style={{ 
+      background: currentTheme.backgroundGradient,
+      minHeight: '100vh',
+      padding: '1rem',
+      fontFamily: 'system-ui, -apple-system, sans-serif'
+    }}>
+      {/* Header */}
+      <div style={{
+        background: 'rgba(0, 0, 0, 0.8)',
+        color: currentTheme.primaryColor,
         padding: '1rem',
-        fontFamily: 'system-ui, -apple-system, sans-serif'
+        borderRadius: '10px',
+        marginBottom: '1rem',
+        textAlign: 'center'
       }}>
-        {/* Header */}
-        <div style={{
-          background: 'rgba(0, 0, 0, 0.8)',
-          color: currentTheme.primaryColor,
-          padding: '1rem',
-          borderRadius: '10px',
-          marginBottom: '1rem',
-          textAlign: 'center'
+        <h1 style={{ 
+          margin: 0, 
+          fontSize: '2.2rem',
+          textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '0.5rem'
         }}>
-          <h1 style={{ 
-            margin: 0, 
-            fontSize: '2.2rem',
-            textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '0.5rem'
-          }}>
-            🗺️ Adventure Map
-          </h1>
-          <p style={{ margin: '0.5rem 0 0 0', fontSize: '1rem' }}>
-            Current Game: {currentGame} | Completed: {gamesCompleted.length}/2000
-          </p>
-        </div>
+          🗺️ Adventure Map
+        </h1>
+        <p style={{ margin: '0.5rem 0 0 0', fontSize: '1rem' }}>
+          Current Game: {currentGame} | Completed: {gamesCompleted.length}/2000
+        </p>
+      </div>
 
-        {/* Bee Adventure Map */}
+      {/* Bee Adventure Map */}
+      <BeeLifeStageEffects theme={currentTheme}>
         <div style={{ marginBottom: '1rem' }}>
           {renderBeeAdventureMap()}
         </div>
+      </BeeLifeStageEffects>
 
-        {/* Game Selection Panel */}
-        {selectedGame && (
-          <div style={{
-            background: 'rgba(255, 255, 255, 0.95)',
-            padding: '1.5rem',
-            borderRadius: '10px',
-            marginBottom: '1rem',
-            border: '3px solid #FFC30B',
-            textAlign: 'center',
-            boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
-          }}>
+      {/* Game Selection Panel */}
+      {selectedGame && (
+        <div style={{
+          background: 'rgba(255, 255, 255, 0.95)',
+          padding: '1.5rem',
+          borderRadius: '10px',
+          marginBottom: '1rem',
+          border: '3px solid #FFC30B',
+          textAlign: 'center',
+          boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
+        }}>
             <h3 style={{ 
               margin: '0 0 1rem 0', 
               color: '#333', 
@@ -876,121 +789,120 @@ const BeeAdventureMap: React.FC<BeeAdventureMapProps> = ({
           </div>
         )}
 
-        {/* Controls */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          background: 'rgba(255, 255, 255, 0.9)',
-          padding: '1rem',
-          borderRadius: '10px',
-          flexWrap: 'wrap',
-          gap: '1rem'
-        }}>
-          {/* Sound Controls */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <button
-              onClick={() => {
-                const newSoundEnabled = !soundEnabled;
-                setSoundEnabled(newSoundEnabled);
-                soundManager.setMuted(!newSoundEnabled);
-                if (newSoundEnabled) soundManager.playClickSound();
-              }}
-              style={{
-                padding: '0.5rem',
-                fontSize: '1.2em',
-                backgroundColor: soundEnabled ? '#4CAF50' : '#f44336',
-                color: 'white',
-                border: '2px solid black',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontWeight: 'bold'
-              }}
-            >
-              {soundEnabled ? '🔊' : '🔇'}
-            </button>
-            
-            {soundEnabled && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>Volume:</span>
-                <input
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.1"
-                  value={volume}
-                  onChange={(e) => {
-                    const newVolume = parseFloat(e.target.value);
-                    setVolume(newVolume);
-                    soundManager.setVolume(newVolume);
-                  }}
-                  style={{ 
-                    width: '100px',
-                    accentColor: '#FFC30B'
-                  }}
-                />
-                <span style={{ fontSize: '0.8rem', color: '#666' }}>
-                  {Math.round(volume * 100)}%
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* Back Button */}
+      {/* Controls */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        background: 'rgba(255, 255, 255, 0.9)',
+        padding: '1rem',
+        borderRadius: '10px',
+        flexWrap: 'wrap',
+        gap: '1rem'
+      }}>
+        {/* Sound Controls */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <button
             onClick={() => {
-              onBackToMenu();
-              if (soundEnabled) soundManager.playClickSound();
+              const newSoundEnabled = !soundEnabled;
+              setSoundEnabled(newSoundEnabled);
+              soundManager.setMuted(!newSoundEnabled);
+              if (newSoundEnabled) soundManager.playClickSound();
             }}
             style={{
-              padding: '0.75rem 1.5rem',
-              fontSize: '1rem',
-              fontWeight: 'bold',
-              backgroundColor: currentTheme.buttonColor,
-              color: 'black',
+              padding: '0.5rem',
+              fontSize: '1.2em',
+              backgroundColor: soundEnabled ? '#4CAF50' : '#f44336',
+              color: 'white',
               border: '2px solid black',
               borderRadius: '8px',
               cursor: 'pointer',
-              transition: 'all 0.3s ease',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem'
+              fontWeight: 'bold'
             }}
           >
-            🏠 Back to Menu
+            {soundEnabled ? '🔊' : '🔇'}
           </button>
+          
+          {soundEnabled && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>Volume:</span>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.1"
+                value={volume}
+                onChange={(e) => {
+                  const newVolume = parseFloat(e.target.value);
+                  setVolume(newVolume);
+                  soundManager.setVolume(newVolume);
+                }}
+                style={{ 
+                  width: '100px',
+                  accentColor: '#FFC30B'
+                }}
+              />
+              <span style={{ fontSize: '0.8rem', color: '#666' }}>
+                {Math.round(volume * 100)}%
+              </span>
+            </div>
+          )}
         </div>
 
-        {/* Legend */}
-        <div style={{
-          background: 'rgba(255, 255, 255, 0.9)',
-          padding: '1rem',
-          borderRadius: '10px',
-          marginTop: '1rem'
+        {/* Back Button */}
+        <button
+          onClick={() => {
+            onBackToMenu();
+            if (soundEnabled) soundManager.playClickSound();
+          }}
+          style={{
+            padding: '0.75rem 1.5rem',
+            fontSize: '1rem',
+            fontWeight: 'bold',
+            backgroundColor: currentTheme.buttonColor,
+            color: 'black',
+            border: '2px solid black',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            transition: 'all 0.3s ease',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
+          }}
+        >
+          🏠 Back to Menu
+        </button>
+      </div>
+
+      {/* Legend */}
+      <div style={{
+        background: 'rgba(255, 255, 255, 0.9)',
+        padding: '1rem',
+        borderRadius: '10px',
+        marginTop: '1rem'
+      }}>
+        <h4 style={{ margin: '0 0 0.5rem 0', color: '#333' }}>🗺️ Map Legend:</h4>
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+          gap: '0.5rem',
+          fontSize: '0.9rem'
         }}>
-          <h4 style={{ margin: '0 0 0.5rem 0', color: '#333' }}>🗺️ Map Legend:</h4>
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
-            gap: '0.5rem',
-            fontSize: '0.9rem'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: '#4CAF50', border: '2px solid #000' }}></div>
-              <span>Completed Stages</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: '#FFC30B', border: '2px solid #000', boxShadow: '0 0 8px rgba(255, 195, 11, 0.8)' }}></div>
-              <span>Current Stage</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: '#FFC30B', border: '2px solid #fff' }}></div>
-              <span>Available Stages</span>
-            </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: '#4CAF50', border: '2px solid #000' }}></div>
+            <span>Completed Stages</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: '#FFC30B', border: '2px solid #000', boxShadow: '0 0 8px rgba(255, 195, 11, 0.8)' }}></div>
+            <span>Current Stage</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: '#FFC30B', border: '2px solid #fff' }}></div>
+            <span>Available Stages</span>
           </div>
         </div>
       </div>
-    </BeeLifeStageEffects>
+    </div>
   );
 };
 
