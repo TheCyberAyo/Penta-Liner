@@ -25,7 +25,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const effectivePlayer2Color = gameNumber ? currentTheme.player2Color : '#FFC30B';
   const effectiveBorderColor = gameNumber ? currentTheme.borderColor : '#FFC30B';
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animationFrameRef = useRef<number | undefined>(undefined);
   const [hoveredCell, setHoveredCell] = useState<{ row: number; col: number } | null>(null);
   const [touchedCell, setTouchedCell] = useState<{ row: number; col: number } | null>(null);
   const [windowSize, setWindowSize] = useState({ width: window.innerWidth, height: window.innerHeight });
@@ -309,7 +308,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     setHoveredCell(null);
   };
 
-  // Animation loop
+  // Draw only when game state changes (no continuous animation loop)
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -317,19 +316,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const animate = () => {
-      drawGame(ctx);
-      animationFrameRef.current = requestAnimationFrame(animate);
-    };
-
-    animate();
-
-    return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-    };
-  }, [drawGame]);
+    // Draw once when state changes
+    drawGame(ctx);
+  }, [drawGame, gameState, hoveredCell, touchedCell]);
 
   return (
     <canvas

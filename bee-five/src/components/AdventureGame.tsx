@@ -6,6 +6,7 @@ import { soundManager } from '../utils/sounds';
 import { getTimeLimitForLevel, isInMudZone, checkWinCondition, getAdventureStartingPlayer } from '../utils/gameLogic';
 import { useTheme } from '../hooks/useTheme';
 import BeeLifeStageEffects from './BeeLifeStageEffects';
+import { getBeeFactForGame } from '../data/beeFacts';
 
 interface AdventureGameProps {
   onBackToMenu: () => void;
@@ -68,6 +69,8 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
   const [currentGame, setCurrentGame] = useState(1);
   const [gamesWon, setGamesWon] = useState(0);
   const [gamesCompleted, setGamesCompleted] = useState<number[]>([]);
+  const [showBeeFact, setShowBeeFact] = useState(false);
+  const [currentBeeFact, setCurrentBeeFact] = useState<string | null>(null);
   const [showMap, setShowMap] = useState(false);
   const [showStageTransition, setShowStageTransition] = useState(false);
   const [currentStage, setCurrentStage] = useState(0);
@@ -76,6 +79,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
   const [showWinPopup, setShowWinPopup] = useState(false);
   const [winMessage, setWinMessage] = useState('');
   const [showMobileSettings, setShowMobileSettings] = useState(false);
+  const [showResultsPopup, setShowResultsPopup] = useState(false);
   
   const [currentMatch, setCurrentMatch] = useState(1);
   const [playerWins, setPlayerWins] = useState(0);
@@ -102,13 +106,11 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
   };
 
   const requiresMatchSystem = (gameNumber: number): boolean => {
-    return isMultipleOf10(gameNumber) || isMultipleOf50(gameNumber);
+    return isMultipleOf10(gameNumber) && !isMultipleOf50(gameNumber);
   };
 
   const getMatchType = (gameNumber: number): 'best-of-3' | 'best-of-5' | 'single' => {
-    if (isMultipleOf50(gameNumber)) {
-      return 'best-of-5';
-    } else if (isMultipleOf10(gameNumber)) {
+    if (requiresMatchSystem(gameNumber)) {
       return 'best-of-3';
     }
     return 'single';
@@ -118,7 +120,6 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
     const matchType = getMatchType(gameNumber);
     switch (matchType) {
       case 'best-of-3': return 2;
-      case 'best-of-5': return 3;
       default: return 1;
     }
   };
@@ -127,7 +128,6 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
     const matchType = getMatchType(gameNumber);
     switch (matchType) {
       case 'best-of-3': return 3;
-      case 'best-of-5': return 5;
       default: return 1;
     }
   };
@@ -144,15 +144,6 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
         case 1: return '#FFFFFF';
         case 2: return '#FFA500';
         case 3: return '#87CEEB';
-        default: return '#87CEEB';
-      }
-    } else if (matchType === 'best-of-5') {
-      switch (matchNumber) {
-        case 1: return '#FFFFFF';
-        case 2: return '#FFA500';
-        case 3: return '#FF0000';
-        case 4: return '#00FF00';
-        case 5: return '#87CEEB';
         default: return '#87CEEB';
       }
     }
@@ -235,24 +226,14 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
              return prev;
            });
            
-           setTimeout(() => {
-             const nextGame = currentGame + 1;
-             setCurrentGame(nextGame);
-             setCurrentMatch(1);
-             setPlayerWins(0);
-             setAiWins(0);
-             setIsMatchComplete(false);
-             setCountdownTimer(0);
-             setIsWaitingForNextGame(false);
-             setGameProcessed(false);
-             resetGame();
-           }, 3000);
+           // Show results popup for best-of-3 matches
+           setShowResultsPopup(true);
          } else {
            setIsWaitingForNextGame(true);
            setCountdownTimer(3);
          }
        } else {
-        const winText = gameState.winner === 1 ? 'Victory!' : 'Defeat!';
+        const winText = gameState.winner === 1 ? 'You Won!' : 'You Lost';
         setWinMessage(`${winText} 🐝`);
         setShowWinPopup(true);
         
@@ -284,7 +265,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
     } else if (gameState.timeLeft === 0 && !gameProcessed) {
       setGameProcessed(true);
       
-      const winText = gameState.currentPlayer === 1 ? 'Time\'s up - Defeat!' : 'Time\'s up - Victory!';
+      const winText = gameState.currentPlayer === 1 ? 'Time\'s Up - You Lost' : 'Time\'s Up - You Won!';
       setWinMessage(`${winText} 🐝`);
       setShowWinPopup(true);
       
@@ -319,24 +300,14 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
              return prev;
            });
            
-           setTimeout(() => {
-             const nextGame = currentGame + 1;
-             setCurrentGame(nextGame);
-             setCurrentMatch(1);
-             setPlayerWins(0);
-             setAiWins(0);
-             setIsMatchComplete(false);
-             setCountdownTimer(0);
-             setIsWaitingForNextGame(false);
-             setGameProcessed(false);
-             resetGame();
-           }, 3000);
+           // Show results popup for best-of-3 matches
+           setShowResultsPopup(true);
          } else {
            setIsWaitingForNextGame(true);
            setCountdownTimer(3);
          }
        } else {
-        const winText = gameState.currentPlayer === 1 ? 'Time\'s up - Defeat!' : 'Time\'s up - Victory!';
+        const winText = gameState.currentPlayer === 1 ? 'Time\'s Up - You Lost' : 'Time\'s Up - You Won!';
         setWinMessage(`${winText} 🐝`);
         setShowWinPopup(true);
         
@@ -987,29 +958,70 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
          setCountdownTimer(3);
        }
      } else if (requiresMatchSystem(currentGame) && isMatchComplete) {
-       const nextGame = currentGame + 1;
-       if (requiresMatchSystem(nextGame)) {
-         setCurrentGame(nextGame);
-         setCurrentMatch(1);
-         setPlayerWins(0);
-         setAiWins(0);
-         setIsMatchComplete(false);
-         setCountdownTimer(0);
-         setIsWaitingForNextGame(false);
-         setGameProcessed(false);
-         resetGame();
-       } else {
-         setShowMap(true);
-       }
+      const nextGame = currentGame + 1;
+      if (requiresMatchSystem(nextGame)) {
+        setCurrentGame(nextGame);
+        
+        // Check if we should show a bee fact for the next game
+        const beeFact = getBeeFactForGame(nextGame);
+        if (beeFact) {
+          setCurrentBeeFact(beeFact);
+          setShowBeeFact(true);
+        } else {
+          resetGame();
+        }
+        
+        setCurrentMatch(1);
+        setPlayerWins(0);
+        setAiWins(0);
+        setIsMatchComplete(false);
+        setCountdownTimer(0);
+        setIsWaitingForNextGame(false);
+        setGameProcessed(false);
+      } else {
+        setShowMap(true);
+      }
      } else {
        setShowMap(true);
      }
    };
 
+  const handleResultsPopupNext = () => {
+    const nextGame = currentGame + 1;
+    setCurrentGame(nextGame);
+    
+    // Check if we should show a bee fact for the next game
+    const beeFact = getBeeFactForGame(nextGame);
+    if (beeFact) {
+      setCurrentBeeFact(beeFact);
+      setShowBeeFact(true);
+    } else {
+      resetGame();
+    }
+    
+    setCurrentMatch(1);
+    setPlayerWins(0);
+    setAiWins(0);
+    setIsMatchComplete(false);
+    setCountdownTimer(0);
+    setIsWaitingForNextGame(false);
+    setGameProcessed(false);
+    setShowResultsPopup(false);
+    if (soundEnabled) soundManager.playClickSound();
+  };
+
   const handleGameSelect = (gameNumber: number) => {
     setCurrentGame(gameNumber);
     setShowMap(false);
-    resetGame();
+    
+    // Check if we should show a bee fact
+    const beeFact = getBeeFactForGame(gameNumber);
+    if (beeFact) {
+      setCurrentBeeFact(beeFact);
+      setShowBeeFact(true);
+    } else {
+      resetGame();
+    }
     
     setCurrentMatch(1);
     setPlayerWins(0);
@@ -1026,6 +1038,85 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
   };
 
   const isMobile = window.innerWidth <= 768;
+
+  // Show bee fact modal
+  if (showBeeFact && currentBeeFact) {
+    return (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0, 0, 0, 0.9)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 10000,
+        padding: '2rem'
+      }}>
+        <div style={{
+          background: `linear-gradient(135deg, ${currentTheme.backgroundColor}, ${currentTheme.secondaryColor}20)`,
+          borderRadius: '20px',
+          padding: '3rem',
+          maxWidth: '600px',
+          width: '90%',
+          border: `4px solid ${currentTheme.primaryColor}`,
+          boxShadow: `0 0 50px ${currentTheme.primaryColor}80`,
+          animation: 'popIn 0.5s ease-out',
+          textAlign: 'center'
+        }}>
+          <h2 style={{
+            fontSize: '2rem',
+            color: currentTheme.primaryColor,
+            marginBottom: '1.5rem',
+            textShadow: `2px 2px 4px ${currentTheme.shadowColor}`
+          }}>
+            🐝 Bee Fact Time! 🐝
+          </h2>
+          <p style={{
+            fontSize: '1.3rem',
+            lineHeight: '1.8',
+            color: currentTheme.textColor,
+            marginBottom: '2rem',
+            fontWeight: '500'
+          }}>
+            {currentBeeFact}
+          </p>
+          <button
+            onClick={() => {
+              setShowBeeFact(false);
+              setCurrentBeeFact(null);
+              resetGame();
+              if (soundEnabled) soundManager.playClickSound();
+            }}
+            style={{
+              padding: '1rem 2rem',
+              fontSize: '1.2rem',
+              fontWeight: 'bold',
+              backgroundColor: currentTheme.buttonColor,
+              color: '#fff',
+              border: `3px solid ${currentTheme.borderColor}`,
+              borderRadius: '12px',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              boxShadow: `0 4px 15px ${currentTheme.shadowColor}`
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = currentTheme.buttonHoverColor;
+              e.currentTarget.style.transform = 'scale(1.05)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = currentTheme.buttonColor;
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+          >
+            ✨ Start Game {currentGame} ✨
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (showMap) {
     return (
@@ -1112,7 +1203,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
             textShadow: '2px 2px 0px black',
             fontWeight: 'bold'
           }}>
-            🗺️ Adventure
+            🗺️
           </h1>
         </div>
 
@@ -1600,6 +1691,16 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
                         setShowWinPopup(false);
                         const nextGame = currentGame + 1;
                         setCurrentGame(nextGame);
+                        
+                        // Check if we should show a bee fact for the next game
+                        const beeFact = getBeeFactForGame(nextGame);
+                        if (beeFact) {
+                          setCurrentBeeFact(beeFact);
+                          setShowBeeFact(true);
+                        } else {
+                          resetGame();
+                        }
+                        
                         setCurrentMatch(1);
                         setPlayerWins(0);
                         setAiWins(0);
@@ -1607,7 +1708,6 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
                         setCountdownTimer(0);
                         setIsWaitingForNextGame(false);
                         setGameProcessed(false);
-                        resetGame();
                         if (soundEnabled) soundManager.playClickSound();
                       }}
                       style={{
@@ -1694,6 +1794,153 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
                 ×
               </button>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Results Popup for Best-of-3 Matches */}
+      {showResultsPopup && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000,
+          animation: 'fadeIn 0.3s ease-out'
+        }}>
+          <div style={{
+            backgroundColor: currentTheme.cardBackground,
+            padding: '40px',
+            borderRadius: '20px',
+            border: `4px solid ${currentTheme.borderColor}`,
+            textAlign: 'center',
+            minWidth: '400px',
+            maxWidth: '90vw',
+            position: 'relative',
+            animation: 'popIn 0.5s ease-out',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.3)'
+          }}>
+            <div style={{
+              fontSize: '4em',
+              marginBottom: '20px',
+              animation: 'bounce 1s ease-out infinite'
+            }}>
+              🏆
+            </div>
+            
+            <h1 style={{
+              fontSize: '2.5em',
+              color: 'black',
+              marginBottom: '20px',
+              textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
+            }}>
+              Match Results
+            </h1>
+            
+            <div style={{
+              fontSize: '1.5em',
+              color: '#333',
+              marginBottom: '20px',
+              fontWeight: 'bold'
+            }}>
+              Level {currentGame} - Best of 3
+            </div>
+            
+            <div style={{
+              fontSize: '2em',
+              color: playerWins > aiWins ? '#4CAF50' : '#f44336',
+              marginBottom: '20px',
+              fontWeight: 'bold'
+            }}>
+              {playerWins > aiWins ? 'Match Won! 🎉' : 'Match Lost'}
+            </div>
+            
+            <div style={{
+              fontSize: '1.2em',
+              color: '#333',
+              marginBottom: '30px',
+              display: 'flex',
+              justifyContent: 'center',
+              gap: '2rem'
+            }}>
+              <div>
+                <div style={{ fontWeight: 'bold', color: '#4CAF50' }}>You</div>
+                <div style={{ fontSize: '1.5em' }}>{playerWins}</div>
+              </div>
+              <div style={{ fontSize: '1.5em', alignSelf: 'center' }}>vs</div>
+              <div>
+                <div style={{ fontWeight: 'bold', color: '#f44336' }}>AI</div>
+                <div style={{ fontSize: '1.5em' }}>{aiWins}</div>
+              </div>
+            </div>
+            
+            <div style={{
+              display: 'flex',
+              gap: '15px',
+              justifyContent: 'center',
+              flexWrap: 'wrap'
+            }}>
+              <button 
+                onClick={handleResultsPopupNext}
+                style={{
+                  padding: '12px 24px',
+                  fontSize: '1.1em',
+                  fontWeight: 'bold',
+                  backgroundColor: '#4CAF50',
+                  color: 'white',
+                  border: '2px solid black',
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  minWidth: '120px'
+                }}
+              >
+                ➡️ Continue
+              </button>
+              
+              <button 
+                onClick={() => {
+                  setShowResultsPopup(false);
+                  onBackToMenu();
+                }}
+                style={{
+                  padding: '12px 24px',
+                  fontSize: '1.1em',
+                  fontWeight: 'bold',
+                  backgroundColor: '#2196F3',
+                  color: 'white',
+                  border: '2px solid black',
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  minWidth: '120px'
+                }}
+              >
+                Back to Menu
+              </button>
+            </div>
+            
+            <button
+              onClick={() => setShowResultsPopup(false)}
+              style={{
+                position: 'absolute',
+                top: '10px',
+                right: '15px',
+                background: 'none',
+                border: 'none',
+                fontSize: '1.5em',
+                cursor: 'pointer',
+                color: 'black',
+                fontWeight: 'bold'
+              }}
+            >
+              ×
+            </button>
           </div>
         </div>
       )}

@@ -117,7 +117,6 @@ const BeeAdventureMap: React.FC<BeeAdventureMapProps> = ({
       75% { transform: rotate(3deg) scale(1.02); }
     }
   `;
-  const [selectedGame, setSelectedGame] = useState<number | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [volume, setVolume] = useState(0.3);
   const [currentStageBasedOnScroll, setCurrentStageBasedOnScroll] = useState(0);
@@ -225,20 +224,11 @@ const BeeAdventureMap: React.FC<BeeAdventureMapProps> = ({
   };
 
   const handleGameClick = (gameNumber: number) => {
-    setSelectedGame(gameNumber);
+    // Directly start the game without showing selection panel
+    onGameSelect(gameNumber);
     if (soundEnabled) soundManager.playClickSound();
   };
 
-  const handleStartGame = () => {
-    if (selectedGame) {
-      onGameSelect(selectedGame);
-      if (soundEnabled) soundManager.playClickSound();
-    }
-  };
-
-  const getStageForGame = (gameNumber: number) => {
-    return ADVENTURE_THEMES[Math.floor((gameNumber - 1) / 200)];
-  };
 
   // Render individual stage nodes
 
@@ -1431,7 +1421,7 @@ const BeeAdventureMap: React.FC<BeeAdventureMapProps> = ({
           marginBottom: '1rem'
         }}>
           <p style={{ margin: 0, fontSize: '1.1rem', fontWeight: 'bold' }}>
-            🐝 Current Game: {currentGame} - {getStageForGame(currentGame)?.name || 'Unknown'}
+            🐝 Current Game: {currentGame} - {ADVENTURE_THEMES[Math.floor((currentGame - 1) / 200)]?.name || 'Unknown'}
           </p>
           <p style={{ margin: '0.5rem 0 0 0', fontSize: '1rem' }}>
             Progress: {gamesCompleted.length} / 2000 levels completed
@@ -1482,74 +1472,6 @@ const BeeAdventureMap: React.FC<BeeAdventureMapProps> = ({
         </div>
       </BeeLifeStageEffects>
 
-      {/* Game Selection Panel */}
-      {selectedGame && (
-        <div style={{
-          background: 'rgba(255, 255, 255, 0.95)',
-          padding: '1.5rem',
-          borderRadius: '10px',
-          marginBottom: '1rem',
-          border: '3px solid #FFC30B',
-          textAlign: 'center',
-          boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
-        }}>
-            <h3 style={{ 
-              margin: '0 0 1rem 0', 
-              color: '#333', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              gap: '0.5rem',
-              fontSize: '1.5rem'
-            }}>
-              <span style={{ fontSize: '2rem' }}>{getStageEmoji(Math.floor((selectedGame - 1) / 200))}</span>
-              Selected: Game {selectedGame}
-            </h3>
-            <p style={{ margin: '0 0 0.5rem 0', color: '#666', fontSize: '1.2rem', fontWeight: 'bold' }}>
-              {getStageForGame(selectedGame)?.name}
-            </p>
-            <p style={{ margin: '0 0 0.5rem 0', color: currentTheme.primaryColor, fontSize: '1rem' }}>
-              🐝 {getStageForGame(selectedGame)?.beeLifeStage}
-            </p>
-            <p style={{ margin: '0 0 1rem 0', color: '#888', fontSize: '0.9rem' }}>
-              Stage {Math.floor((selectedGame - 1) / 200) + 1} • Game {((selectedGame - 1) % 200) + 1} of 200
-            </p>
-            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-              <button
-                onClick={handleStartGame}
-                style={{
-                  padding: '0.75rem 1.5rem',
-                  fontSize: '1rem',
-                  fontWeight: 'bold',
-                  backgroundColor: '#4CAF50',
-                  color: 'white',
-                  border: '2px solid black',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease'
-                }}
-              >
-                🎮 Start Game
-              </button>
-              <button
-                onClick={() => setSelectedGame(null)}
-                style={{
-                  padding: '0.75rem 1.5rem',
-                  fontSize: '1rem',
-                  fontWeight: 'bold',
-                  backgroundColor: '#666',
-                  color: 'white',
-                  border: '2px solid black',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease'
-                }}
-              >
-                ❌ Cancel
-              </button>
-            </div>
-          </div>
-        )}
 
       {/* Controls */}
       <div style={{
