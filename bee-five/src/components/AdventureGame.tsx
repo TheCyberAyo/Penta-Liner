@@ -1154,41 +1154,45 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 10000,
-        padding: '2rem'
+        padding: isMobile ? '1rem' : '2rem',
+        overflow: 'auto'
       }}>
         <div style={{
           background: `linear-gradient(135deg, ${currentTheme.backgroundColor}, ${currentTheme.secondaryColor}20)`,
-          borderRadius: '20px',
-          padding: '3rem',
-          maxWidth: '800px',
-          width: '90%',
-          border: `4px solid ${currentTheme.primaryColor}`,
+          borderRadius: isMobile ? '15px' : '20px',
+          padding: isMobile ? '1.5rem' : '3rem',
+          maxWidth: isMobile ? '100%' : '800px',
+          width: isMobile ? '95%' : '90%',
+          border: `${isMobile ? '3px' : '4px'} solid ${currentTheme.primaryColor}`,
           boxShadow: `0 0 50px ${currentTheme.primaryColor}80`,
           animation: 'popIn 0.5s ease-out',
           textAlign: 'center',
-          position: 'relative'
+          position: 'relative',
+          maxHeight: isMobile ? '90vh' : 'auto',
+          overflowY: 'auto'
         }}>
           <h2 style={{
-            fontSize: '2rem',
+            fontSize: isMobile ? 'clamp(1rem, 4vw, 1.3rem)' : '2rem',
             color: currentTheme.primaryColor,
-            marginBottom: '2rem',
-            textShadow: `2px 2px 4px ${currentTheme.shadowColor}`
+            marginBottom: isMobile ? '1rem' : '2rem',
+            textShadow: `2px 2px 4px ${currentTheme.shadowColor}`,
+            lineHeight: '1.3'
           }}>
             {currentStory.title}
           </h2>
           
           <div style={{
-            fontSize: '1.4rem',
-            lineHeight: '2',
+            fontSize: isMobile ? 'clamp(0.9rem, 3.5vw, 1.1rem)' : '1.4rem',
+            lineHeight: isMobile ? '1.6' : '2',
             color: currentTheme.textColor,
-            marginBottom: '2rem',
-            minHeight: '150px',
+            marginBottom: isMobile ? '1rem' : '2rem',
+            minHeight: isMobile ? '120px' : '150px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             fontWeight: '500',
             fontStyle: 'italic',
-            padding: '1rem',
+            padding: isMobile ? '0.5rem' : '1rem',
             animation: 'fadeIn 0.5s ease-in'
           }}>
             {currentStory.slides[currentSlideIndex]}
@@ -1198,15 +1202,15 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
           <div style={{
             display: 'flex',
             justifyContent: 'center',
-            gap: '0.5rem',
-            marginBottom: '2rem'
+            gap: isMobile ? '0.3rem' : '0.5rem',
+            marginBottom: isMobile ? '1rem' : '2rem'
           }}>
             {currentStory.slides.map((_, index) => (
               <div
                 key={index}
                 style={{
-                  width: index === currentSlideIndex ? '30px' : '10px',
-                  height: '10px',
+                  width: index === currentSlideIndex ? (isMobile ? '20px' : '30px') : (isMobile ? '8px' : '10px'),
+                  height: isMobile ? '8px' : '10px',
                   borderRadius: '5px',
                   backgroundColor: index === currentSlideIndex ? currentTheme.primaryColor : currentTheme.gridColor,
                   transition: 'all 0.3s ease',
@@ -1222,7 +1226,8 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            gap: '1rem'
+            gap: isMobile ? '0.5rem' : '1rem',
+            flexWrap: isMobile ? 'nowrap' : 'wrap'
           }}>
             <button
               onClick={() => {
@@ -1233,19 +1238,20 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
               }}
               disabled={currentSlideIndex === 0}
               style={{
-                padding: '1rem 2rem',
-                fontSize: '1.2rem',
+                padding: isMobile ? '0.7rem 1rem' : '1rem 2rem',
+                fontSize: isMobile ? 'clamp(0.9rem, 3vw, 1rem)' : '1.2rem',
                 fontWeight: 'bold',
                 backgroundColor: currentSlideIndex === 0 ? '#ccc' : currentTheme.buttonColor,
                 color: currentSlideIndex === 0 ? '#666' : '#fff',
-                border: `3px solid ${currentTheme.borderColor}`,
-                borderRadius: '12px',
+                border: `${isMobile ? '2px' : '3px'} solid ${currentTheme.borderColor}`,
+                borderRadius: isMobile ? '8px' : '12px',
                 cursor: currentSlideIndex === 0 ? 'not-allowed' : 'pointer',
                 transition: 'all 0.3s ease',
-                opacity: currentSlideIndex === 0 ? 0.5 : 1
+                opacity: currentSlideIndex === 0 ? 0.5 : 1,
+                whiteSpace: 'nowrap'
               }}
             >
-              ← Previous
+              {isMobile ? '←' : '← Previous'}
             </button>
             
             {!isLastSlide ? (
@@ -1255,16 +1261,17 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
                   if (soundEnabled) soundManager.playClickSound();
                 }}
                 style={{
-                  padding: '1rem 2rem',
-                  fontSize: '1.2rem',
+                  padding: isMobile ? '0.7rem 1rem' : '1rem 2rem',
+                  fontSize: isMobile ? 'clamp(0.9rem, 3vw, 1rem)' : '1.2rem',
                   fontWeight: 'bold',
                   backgroundColor: currentTheme.buttonColor,
                   color: '#fff',
-                  border: `3px solid ${currentTheme.borderColor}`,
-                  borderRadius: '12px',
+                  border: `${isMobile ? '2px' : '3px'} solid ${currentTheme.borderColor}`,
+                  borderRadius: isMobile ? '8px' : '12px',
                   cursor: 'pointer',
                   transition: 'all 0.3s ease',
-                  boxShadow: `0 4px 15px ${currentTheme.shadowColor}`
+                  boxShadow: `0 4px 15px ${currentTheme.shadowColor}`,
+                  whiteSpace: 'nowrap'
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.backgroundColor = currentTheme.buttonHoverColor;
@@ -1275,7 +1282,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
                   e.currentTarget.style.transform = 'scale(1)';
                 }}
               >
-                Next →
+                {isMobile ? '→' : 'Next →'}
               </button>
             ) : (
               <button
@@ -1299,16 +1306,17 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
                   if (soundEnabled) soundManager.playClickSound();
                 }}
                 style={{
-                  padding: '1rem 2rem',
-                  fontSize: '1.2rem',
+                  padding: isMobile ? '0.7rem 1rem' : '1rem 2rem',
+                  fontSize: isMobile ? 'clamp(0.9rem, 3vw, 1rem)' : '1.2rem',
                   fontWeight: 'bold',
                   backgroundColor: '#4CAF50',
                   color: '#fff',
-                  border: `3px solid ${currentTheme.borderColor}`,
-                  borderRadius: '12px',
+                  border: `${isMobile ? '2px' : '3px'} solid ${currentTheme.borderColor}`,
+                  borderRadius: isMobile ? '8px' : '12px',
                   cursor: 'pointer',
                   transition: 'all 0.3s ease',
-                  boxShadow: `0 4px 15px ${currentTheme.shadowColor}`
+                  boxShadow: `0 4px 15px ${currentTheme.shadowColor}`,
+                  whiteSpace: 'nowrap'
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.backgroundColor = '#45a049';
@@ -1319,7 +1327,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
                   e.currentTarget.style.transform = 'scale(1)';
                 }}
               >
-                ✨ Begin Journey ✨
+                {isMobile ? '✨ Begin ✨' : '✨ Begin Journey ✨'}
               </button>
             )}
           </div>
