@@ -1,19 +1,30 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { p2pClient, type GameMove, type RoomInfo } from '../utils/p2pMultiplayer';
 import { simpleMultiplayerClient, type SimpleMove, type SimpleGameState } from '../utils/simpleMultiplayer';
-import { demoSupabaseMultiplayerClient, type DemoGameMove, type DemoGameState } from '../utils/demoSupabaseMultiplayer';
 import { soundManager } from '../utils/sounds';
 import { GRID_SIZE, MULTIPLAYER_CELL_SIZE, BORDER_WIDTH, MULTIPLAYER_CANVAS_SIZE } from '../constants/gameConstants';
 import { checkWinCondition, getWinningPieces } from '../utils/gameLogic';
+
+interface RoomInfo {
+  roomId: string;
+  players: PlayerInfo[];
+  isGameStarted: boolean;
+  hostId: string;
+}
+
+interface PlayerInfo {
+  id: string;
+  name: string;
+  playerNumber: 1 | 2;
+  isHost: boolean;
+}
 
 interface MultiplayerGameProps {
   roomInfo: RoomInfo;
   playerNumber: 1 | 2;
   onBackToLobby: () => void;
-  useCrossDevice?: boolean;
 }
 
-export function MultiplayerGame({ roomInfo, playerNumber, onBackToLobby, useCrossDevice = false }: MultiplayerGameProps) {
+export function MultiplayerGame({ roomInfo, playerNumber, onBackToLobby }: MultiplayerGameProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [board, setBoard] = useState<(0 | 1 | 2)[][]>(() => 
     Array(10).fill(null).map(() => Array(10).fill(0))
@@ -46,79 +57,30 @@ export function MultiplayerGame({ roomInfo, playerNumber, onBackToLobby, useCros
     const opponent = roomInfo.players.find(p => p.playerNumber !== playerNumber);
     setOpponentName(opponent?.name || 'Opponent');
 
-    if (useCrossDevice) {
-      // Cross-device mode: use Demo Supabase for real-time multiplayer
-      
-      // Set up Demo Supabase move callback
-      demoSupabaseMultiplayerClient.onMove((move: DemoGameMove) => {
-        applyMove(move);
-      });
+    // Set up simple multiplayer client
+    simpleMultiplayerClient.createRoom(roomInfo.roomId, playerNumber);
+    
+    // Set up move callback
+    simpleMultiplayerClient.onMove((move: SimpleMove) => {
+      applyMove(move);
+    });
 
-      // Set up Demo Supabase game state callback
-      demoSupabaseMultiplayerClient.onGameState((gameState: DemoGameState) => {
-        setBoard(gameState.board);
-        setCurrentPlayer(gameState.currentPlayer);
-        setWinner(gameState.winner);
-        setGameActive(gameState.gameActive);
-      });
-    } else {
-      // Set up simple multiplayer client
-      simpleMultiplayerClient.createRoom(roomInfo.roomId, playerNumber);
-      
-      // Set up move callback
-      simpleMultiplayerClient.onMove((move: SimpleMove) => {
-        applyMove(move);
-      });
-
-      // Set up game state callback
-      simpleMultiplayerClient.onGameState((gameState: SimpleGameState) => {
-        setBoard(gameState.board);
-        setCurrentPlayer(gameState.currentPlayer);
-        setWinner(gameState.winner);
-        setGameActive(gameState.gameActive);
-      });
-    }
-
-    // Set up P2P event handlers as backup
-    p2pClient.onGameMove = (move: GameMove) => {
-      // Only process moves from opponent
-      if (move.player !== playerNumber) {
-        applyMove(move);
-      }
-    };
-
-    p2pClient.onGameReset = () => {
-      resetGameState();
-    };
-
-    p2pClient.onDisconnected = () => {
-      setConnectionStatus('disconnected');
-    };
-
-    p2pClient.onConnected = () => {
-      setConnectionStatus('connected');
-    };
-
-    // No need for onRoomLeft in P2P - handled by disconnect
+    // Set up game state callback
+    simpleMultiplayerClient.onGameState((gameState: SimpleGameState) => {
+      setBoard(gameState.board);
+      setCurrentPlayer(gameState.currentPlayer);
+      setWinner(gameState.winner);
+      setGameActive(gameState.gameActive);
+    });
 
     return () => {
-      // Clean up event handlers
-      p2pClient.onGameMove = null;
-      p2pClient.onGameReset = null;
-      p2pClient.onDisconnected = null;
-      p2pClient.onConnected = null;
-      
       // Clean up multiplayer client
-      if (useCrossDevice) {
-        demoSupabaseMultiplayerClient.leaveRoom();
-      } else {
-        simpleMultiplayerClient.leaveRoom();
-      }
+      simpleMultiplayerClient.leaveRoom();
     };
-  }, [roomInfo, playerNumber, onBackToLobby, useCrossDevice]);
+  }, [roomInfo, playerNumber]);
 
-  // Apply a move to the game board (handles SimpleMove, GameMove, and DemoGameMove)
-  const applyMove = useCallback((move: SimpleMove | GameMove | DemoGameMove) => {
+  // Apply a move to the game board
+  const applyMove = useCallback((move: SimpleMove) => {
     setBoard(prevBoard => {
       const newBoard = prevBoard.map(row => [...row]);
       newBoard[move.row][move.col] = move.player;
@@ -357,41 +319,24 @@ export function MultiplayerGame({ roomInfo, playerNumber, onBackToLobby, useCros
         setCurrentPlayer(currentPlayer === 1 ? 2 : 1);
       }
 
-      if (useCrossDevice) {
-        // Send move to other players via Demo Supabase
-        await demoSupabaseMultiplayerClient.sendMove(row, col);
-        
-        // Send game state via Demo Supabase
-        await demoSupabaseMultiplayerClient.sendGameState(newBoard, currentPlayer === 1 ? 2 : 1, newWinner, newGameActive);
-      } else {
-        // Send move to other players via simple multiplayer
-        simpleMultiplayerClient.sendMove(row, col);
-        
-        // Send game state to other players
-        const gameState: SimpleGameState = {
-          board: newBoard,
-          currentPlayer: currentPlayer === 1 ? 2 : 1,
-          winner: newWinner,
-          gameActive: newGameActive,
-          lastMove: {
-            row,
-            col,
-            player: currentPlayer,
-            timestamp: Date.now(),
-            roomId: roomInfo.roomId
-          }
-        };
-        simpleMultiplayerClient.sendGameState(gameState);
-      }
-
-      // Also send via P2P as backup
-      const move: GameMove = {
-        row,
-        col,
-        player: playerNumber,
-        timestamp: Date.now()
+      // Send move to other players via simple multiplayer
+      simpleMultiplayerClient.sendMove(row, col);
+      
+      // Send game state to other players
+      const gameState: SimpleGameState = {
+        board: newBoard,
+        currentPlayer: currentPlayer === 1 ? 2 : 1,
+        winner: newWinner,
+        gameActive: newGameActive,
+        lastMove: {
+          row,
+          col,
+          player: currentPlayer,
+          timestamp: Date.now(),
+          roomId: roomInfo.roomId
+        }
       };
-      p2pClient.sendGameMove(move);
+      simpleMultiplayerClient.sendGameState(gameState);
       
       // Play sound
       soundManager.playBuzzSound();
@@ -446,14 +391,14 @@ export function MultiplayerGame({ roomInfo, playerNumber, onBackToLobby, useCros
   // Reset game (host only)
   const resetGame = () => {
     resetGameState();
-    p2pClient.sendGameReset();
     soundManager.playClickSound();
   };
 
   // Leave game
   const handleLeaveGame = () => {
-    p2pClient.leaveRoom();
+    simpleMultiplayerClient.leaveRoom();
     soundManager.playClickSound();
+    onBackToLobby();
   };
 
 

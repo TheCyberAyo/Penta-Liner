@@ -7,6 +7,7 @@ import { getTimeLimitForLevel, isInMudZone, checkWinCondition, getAdventureStart
 import { useTheme } from '../hooks/useTheme';
 import BeeLifeStageEffects from './BeeLifeStageEffects';
 import { getBeeFactForGame } from '../data/beeFacts';
+import { getStoryForGame, shouldShowStory, type StageStory } from '../data/stageStories';
 
 interface AdventureGameProps {
   onBackToMenu: () => void;
@@ -71,7 +72,10 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
   const [gamesCompleted, setGamesCompleted] = useState<number[]>([]);
   const [showBeeFact, setShowBeeFact] = useState(false);
   const [currentBeeFact, setCurrentBeeFact] = useState<string | null>(null);
-  const [showMap, setShowMap] = useState(false);
+  const [showMap, setShowMap] = useState(true);
+  const [showStoryCarousel, setShowStoryCarousel] = useState(false);
+  const [currentStory, setCurrentStory] = useState<StageStory | null>(null);
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [showStageTransition, setShowStageTransition] = useState(false);
   const [currentStage, setCurrentStage] = useState(0);
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -88,12 +92,17 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
   const [countdownTimer, setCountdownTimer] = useState(0);
   const [isWaitingForNextGame, setIsWaitingForNextGame] = useState(false);
   const [gameProcessed, setGameProcessed] = useState(false);
+  const [showStartCountdown, setShowStartCountdown] = useState(false);
+  const [startCountdown, setStartCountdown] = useState(2);
+  const [gameStarted, setGameStarted] = useState(false);
+  const winPopupTimerRef = React.useRef<number | null>(null);
   
   const { gameState, handleCellClick, resetGame } = useGameLogic({
     timeLimit: getTimeLimitForLevel(currentGame),
     gameNumber: currentGame,
     currentMatch: currentMatch,
-    startingPlayer: getAdventureStartingPlayer(currentGame)
+    startingPlayer: getAdventureStartingPlayer(currentGame),
+    pauseTimer: showStartCountdown
   });
 
   const { currentTheme } = useTheme({ gameNumber: currentGame });
@@ -163,6 +172,19 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
     setGameProcessed(false);
   }, []);
 
+   // Handle start countdown (2 seconds before game starts)
+   React.useEffect(() => {
+     if (showStartCountdown && startCountdown > 0) {
+       const timer = setTimeout(() => {
+         setStartCountdown(prev => prev - 1);
+       }, 1000);
+       return () => clearTimeout(timer);
+     } else if (showStartCountdown && startCountdown === 0) {
+       setShowStartCountdown(false);
+       setGameStarted(true);
+     }
+   }, [showStartCountdown, startCountdown]);
+
    React.useEffect(() => {
      if (isWaitingForNextGame && countdownTimer > 0) {
        const timer = setTimeout(() => {
@@ -174,6 +196,9 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
        setCurrentMatch(prev => prev + 1);
        setGameProcessed(false);
        resetGame();
+       setStartCountdown(2);
+       setShowStartCountdown(true);
+       setGameStarted(false);
      }
    }, [isWaitingForNextGame, countdownTimer, resetGame, currentGame, currentMatch, playerWins, aiWins]);
 
@@ -186,6 +211,17 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
   }, [currentGame, currentStage]);
 
   React.useEffect(() => {
+    // Don't process win/loss during the start countdown or story carousel
+    if (showStartCountdown || showStoryCarousel) {
+      return;
+    }
+    
+    // Clear any existing win popup timer
+    if (winPopupTimerRef.current) {
+      clearTimeout(winPopupTimerRef.current);
+      winPopupTimerRef.current = null;
+    }
+    
     if (gameState.winner > 0 && !gameProcessed) {
       setGameProcessed(true);
       
@@ -226,8 +262,11 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
              return prev;
            });
            
-           // Show results popup for best-of-3 matches
-           setShowResultsPopup(true);
+           // Show results popup for best-of-3 matches with 1 second delay
+           winPopupTimerRef.current = window.setTimeout(() => {
+             setShowResultsPopup(true);
+             winPopupTimerRef.current = null;
+           }, 1000);
          } else {
            setIsWaitingForNextGame(true);
            setCountdownTimer(3);
@@ -235,7 +274,6 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
        } else {
         const winText = gameState.winner === 1 ? 'You Won!' : 'You Lost';
         setWinMessage(`${winText} 🐝`);
-        setShowWinPopup(true);
         
          if (gameState.winner === 1) {
            setGamesWon(prev => prev + 1);
@@ -246,12 +284,17 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
           }
           return prev;
         });
+        
+        // Show win popup after 1 second delay
+        winPopupTimerRef.current = window.setTimeout(() => {
+          setShowWinPopup(true);
+          winPopupTimerRef.current = null;
+        }, 1000);
       }
     } else if (!gameState.isGameActive && gameState.winner === 0 && !gameProcessed) {
       setGameProcessed(true);
       
       setWinMessage('Draw! 🐝');
-      setShowWinPopup(true);
       
       if (requiresMatchSystem(currentGame)) {
       } else {
@@ -262,12 +305,17 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
           return prev;
         });
       }
+      
+      // Show draw popup after 1 second delay
+      winPopupTimerRef.current = window.setTimeout(() => {
+        setShowWinPopup(true);
+        winPopupTimerRef.current = null;
+      }, 1000);
     } else if (gameState.timeLeft === 0 && !gameProcessed) {
       setGameProcessed(true);
       
       const winText = gameState.currentPlayer === 1 ? 'Time\'s Up - You Lost' : 'Time\'s Up - You Won!';
       setWinMessage(`${winText} 🐝`);
-      setShowWinPopup(true);
       
        if (requiresMatchSystem(currentGame)) {
          const newPlayerWins = gameState.currentPlayer === 2 ? playerWins + 1 : playerWins;
@@ -300,8 +348,11 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
              return prev;
            });
            
-           // Show results popup for best-of-3 matches
-           setShowResultsPopup(true);
+           // Show results popup for best-of-3 matches with 1 second delay
+           winPopupTimerRef.current = window.setTimeout(() => {
+             setShowResultsPopup(true);
+             winPopupTimerRef.current = null;
+           }, 1000);
          } else {
            setIsWaitingForNextGame(true);
            setCountdownTimer(3);
@@ -309,7 +360,6 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
        } else {
         const winText = gameState.currentPlayer === 1 ? 'Time\'s Up - You Lost' : 'Time\'s Up - You Won!';
         setWinMessage(`${winText} 🐝`);
-        setShowWinPopup(true);
         
          if (gameState.currentPlayer === 2) {
            setGamesWon(prev => prev + 1);
@@ -320,12 +370,26 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
           }
           return prev;
         });
+        
+        // Show timeout popup after 1 second delay
+        winPopupTimerRef.current = window.setTimeout(() => {
+          setShowWinPopup(true);
+          winPopupTimerRef.current = null;
+        }, 1000);
       }
     }
-  }, [gameState.winner, gameState.isGameActive, gameState.timeLeft, gameState.currentPlayer, currentGame, currentMatch, playerWins, aiWins, gameProcessed]);
+    
+    // Cleanup function to clear timeout on unmount or re-run
+    return () => {
+      if (winPopupTimerRef.current) {
+        clearTimeout(winPopupTimerRef.current);
+        winPopupTimerRef.current = null;
+      }
+    };
+  }, [gameState.winner, gameState.isGameActive, gameState.timeLeft, gameState.currentPlayer, currentGame, currentMatch, playerWins, aiWins, showStartCountdown, showStoryCarousel, soundEnabled]);
 
   React.useEffect(() => {
-    if (gameState.currentPlayer === 2 && gameState.isGameActive && gameState.winner === 0) {
+    if (gameState.currentPlayer === 2 && gameState.isGameActive && gameState.winner === 0 && gameStarted && !showStartCountdown && !showStoryCarousel) {
       // AI must play in 1000ms for games 1801-2000, otherwise use 1500ms
       const aiDelay = (currentGame >= 1801 && currentGame <= 2000) ? 1000 : 1500;
       const timer = setTimeout(() => {
@@ -333,7 +397,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
       }, aiDelay);
       return () => clearTimeout(timer);
     }
-  }, [gameState.currentPlayer, gameState.isGameActive, gameState.winner, gameState.board, gameState.isBlindPlay, gameState.mudZones]);
+  }, [gameState.currentPlayer, gameState.isGameActive, gameState.winner, gameState.board, gameState.isBlindPlay, gameState.mudZones, gameStarted, showStartCountdown, showStoryCarousel]);
 
   const makeAdventureAIMove = () => {
     const availableCells = [];
@@ -969,6 +1033,9 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
           setShowBeeFact(true);
         } else {
           resetGame();
+          setStartCountdown(2);
+          setShowStartCountdown(true);
+          setGameStarted(false);
         }
         
         setCurrentMatch(1);
@@ -997,6 +1064,9 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
       setShowBeeFact(true);
     } else {
       resetGame();
+      setStartCountdown(2);
+      setShowStartCountdown(true);
+      setGameStarted(false);
     }
     
     setCurrentMatch(1);
@@ -1014,13 +1084,35 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
     setCurrentGame(gameNumber);
     setShowMap(false);
     
+    // Check if we should show a story carousel first
+    if (shouldShowStory(gameNumber)) {
+      const story = getStoryForGame(gameNumber);
+      if (story) {
+        setCurrentStory(story);
+        setCurrentSlideIndex(0);
+        setShowStoryCarousel(true);
+        setCurrentMatch(1);
+        setPlayerWins(0);
+        setAiWins(0);
+        setIsMatchComplete(false);
+        setCountdownTimer(0);
+        setIsWaitingForNextGame(false);
+        setGameProcessed(false);
+        return;
+      }
+    }
+    
     // Check if we should show a bee fact
     const beeFact = getBeeFactForGame(gameNumber);
     if (beeFact) {
       setCurrentBeeFact(beeFact);
       setShowBeeFact(true);
     } else {
+      // No bee fact, go straight to start countdown
       resetGame();
+      setStartCountdown(2);
+      setShowStartCountdown(true);
+      setGameStarted(false);
     }
     
     setCurrentMatch(1);
@@ -1038,6 +1130,203 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
   };
 
   const isMobile = window.innerWidth <= 768;
+  
+  // Get stage emoji based on current game
+  const getStageEmoji = (gameNumber: number): string => {
+    const stageIndex = Math.floor((gameNumber - 1) / 200);
+    const stageEmojis = ['🥚', '🐛', '🍯', '🕸️', '🦋', '🌅', '🏠', '🌻', '🛡️', '👑'];
+    return stageEmojis[stageIndex] || '🗺️';
+  };
+
+  // Show story carousel modal
+  if (showStoryCarousel && currentStory) {
+    const isLastSlide = currentSlideIndex === currentStory.slides.length - 1;
+    
+    return (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0, 0, 0, 0.95)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 10000,
+        padding: '2rem'
+      }}>
+        <div style={{
+          background: `linear-gradient(135deg, ${currentTheme.backgroundColor}, ${currentTheme.secondaryColor}20)`,
+          borderRadius: '20px',
+          padding: '3rem',
+          maxWidth: '800px',
+          width: '90%',
+          border: `4px solid ${currentTheme.primaryColor}`,
+          boxShadow: `0 0 50px ${currentTheme.primaryColor}80`,
+          animation: 'popIn 0.5s ease-out',
+          textAlign: 'center',
+          position: 'relative'
+        }}>
+          <h2 style={{
+            fontSize: '2rem',
+            color: currentTheme.primaryColor,
+            marginBottom: '2rem',
+            textShadow: `2px 2px 4px ${currentTheme.shadowColor}`
+          }}>
+            {currentStory.title}
+          </h2>
+          
+          <div style={{
+            fontSize: '1.4rem',
+            lineHeight: '2',
+            color: currentTheme.textColor,
+            marginBottom: '2rem',
+            minHeight: '150px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontWeight: '500',
+            fontStyle: 'italic',
+            padding: '1rem',
+            animation: 'fadeIn 0.5s ease-in'
+          }}>
+            {currentStory.slides[currentSlideIndex]}
+          </div>
+          
+          {/* Slide indicators */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            gap: '0.5rem',
+            marginBottom: '2rem'
+          }}>
+            {currentStory.slides.map((_, index) => (
+              <div
+                key={index}
+                style={{
+                  width: index === currentSlideIndex ? '30px' : '10px',
+                  height: '10px',
+                  borderRadius: '5px',
+                  backgroundColor: index === currentSlideIndex ? currentTheme.primaryColor : currentTheme.gridColor,
+                  transition: 'all 0.3s ease',
+                  cursor: 'pointer'
+                }}
+                onClick={() => setCurrentSlideIndex(index)}
+              />
+            ))}
+          </div>
+          
+          {/* Navigation buttons */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: '1rem'
+          }}>
+            <button
+              onClick={() => {
+                if (currentSlideIndex > 0) {
+                  setCurrentSlideIndex(prev => prev - 1);
+                  if (soundEnabled) soundManager.playClickSound();
+                }
+              }}
+              disabled={currentSlideIndex === 0}
+              style={{
+                padding: '1rem 2rem',
+                fontSize: '1.2rem',
+                fontWeight: 'bold',
+                backgroundColor: currentSlideIndex === 0 ? '#ccc' : currentTheme.buttonColor,
+                color: currentSlideIndex === 0 ? '#666' : '#fff',
+                border: `3px solid ${currentTheme.borderColor}`,
+                borderRadius: '12px',
+                cursor: currentSlideIndex === 0 ? 'not-allowed' : 'pointer',
+                transition: 'all 0.3s ease',
+                opacity: currentSlideIndex === 0 ? 0.5 : 1
+              }}
+            >
+              ← Previous
+            </button>
+            
+            {!isLastSlide ? (
+              <button
+                onClick={() => {
+                  setCurrentSlideIndex(prev => prev + 1);
+                  if (soundEnabled) soundManager.playClickSound();
+                }}
+                style={{
+                  padding: '1rem 2rem',
+                  fontSize: '1.2rem',
+                  fontWeight: 'bold',
+                  backgroundColor: currentTheme.buttonColor,
+                  color: '#fff',
+                  border: `3px solid ${currentTheme.borderColor}`,
+                  borderRadius: '12px',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  boxShadow: `0 4px 15px ${currentTheme.shadowColor}`
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = currentTheme.buttonHoverColor;
+                  e.currentTarget.style.transform = 'scale(1.05)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = currentTheme.buttonColor;
+                  e.currentTarget.style.transform = 'scale(1)';
+                }}
+              >
+                Next →
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  setShowStoryCarousel(false);
+                  setCurrentStory(null);
+                  setCurrentSlideIndex(0);
+                  
+                  // After story, check for bee fact or start game
+                  const beeFact = getBeeFactForGame(currentGame);
+                  if (beeFact) {
+                    setCurrentBeeFact(beeFact);
+                    setShowBeeFact(true);
+                  } else {
+                    resetGame();
+                    setStartCountdown(2);
+                    setShowStartCountdown(true);
+                    setGameStarted(false);
+                  }
+                  
+                  if (soundEnabled) soundManager.playClickSound();
+                }}
+                style={{
+                  padding: '1rem 2rem',
+                  fontSize: '1.2rem',
+                  fontWeight: 'bold',
+                  backgroundColor: '#4CAF50',
+                  color: '#fff',
+                  border: `3px solid ${currentTheme.borderColor}`,
+                  borderRadius: '12px',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  boxShadow: `0 4px 15px ${currentTheme.shadowColor}`
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#45a049';
+                  e.currentTarget.style.transform = 'scale(1.05)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#4CAF50';
+                  e.currentTarget.style.transform = 'scale(1)';
+                }}
+              >
+                ✨ Begin Journey ✨
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Show bee fact modal
   if (showBeeFact && currentBeeFact) {
@@ -1088,6 +1377,9 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
               setShowBeeFact(false);
               setCurrentBeeFact(null);
               resetGame();
+              setStartCountdown(2);
+              setShowStartCountdown(true);
+              setGameStarted(false);
               if (soundEnabled) soundManager.playClickSound();
             }}
             style={{
@@ -1203,7 +1495,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
             textShadow: '2px 2px 0px black',
             fontWeight: 'bold'
           }}>
-            🗺️
+            {getStageEmoji(currentGame)}
           </h1>
         </div>
 
@@ -1351,11 +1643,50 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
               gridColor={getMatchGridColor(currentGame, currentMatch)}
               gameNumber={currentGame}
               onCellClick={(row, col) => {
-                if (gameState.currentPlayer === 1) {
+                if (gameState.currentPlayer === 1 && !showStartCountdown) {
                   handleCellClick(row, col);
                 }
               }}
             />
+            
+            {/* Start Countdown Overlay */}
+            {showStartCountdown && (
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+                zIndex: 100,
+                borderRadius: '10px',
+                backdropFilter: 'blur(5px)'
+              }}>
+                <div style={{
+                  fontSize: 'clamp(3rem, 10vw, 8rem)',
+                  fontWeight: 'bold',
+                  color: currentTheme.primaryColor,
+                  textShadow: `0 0 30px ${currentTheme.primaryColor}80, 0 0 60px ${currentTheme.primaryColor}40`,
+                  animation: 'pulse 0.5s ease-in-out infinite',
+                  marginBottom: '1rem'
+                }}>
+                  {startCountdown}
+                </div>
+                <div style={{
+                  fontSize: 'clamp(1.5rem, 4vw, 2.5rem)',
+                  color: '#fff',
+                  textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+                  textAlign: 'center',
+                  padding: '0 1rem'
+                }}>
+                  Get Ready! 🐝
+                </div>
+              </div>
+            )}
         </div>
       </div>
 
@@ -1699,6 +2030,9 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
                           setShowBeeFact(true);
                         } else {
                           resetGame();
+                          setStartCountdown(2);
+                          setShowStartCountdown(true);
+                          setGameStarted(false);
                         }
                         
                         setCurrentMatch(1);
@@ -1727,11 +2061,14 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
                     </button>
                   )}
                   
-                  {(gameState.winner === 2 || (gameState.timeLeft === 0 && gameState.currentPlayer === 1)) && (
+                  {(gameState.winner === 2 || (gameState.timeLeft === 0 && gameState.currentPlayer === 1) || (gameState.winner === 0 && !gameState.isGameActive)) && (
                     <button 
                       onClick={() => {
                         setShowWinPopup(false);
                         resetGame();
+                        setStartCountdown(2);
+                        setShowStartCountdown(true);
+                        setGameStarted(false);
                         setGameProcessed(false);
                         if (soundEnabled) soundManager.playClickSound();
                       }}
@@ -1748,7 +2085,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
                         minWidth: '120px'
                       }}
                     >
-                      🔄 Replay
+                      🔄 Play Again
                     </button>
                   )}
                   
@@ -1951,3 +2288,4 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
 };
 
 export default AdventureGame;
+

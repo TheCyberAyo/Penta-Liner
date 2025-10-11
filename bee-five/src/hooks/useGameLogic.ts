@@ -25,10 +25,11 @@ export interface UseGameLogicOptions {
   startingPlayer?: 1 | 2;
   gameNumber?: number;
   currentMatch?: number;
+  pauseTimer?: boolean;
 }
 
 export const useGameLogic = (options: UseGameLogicOptions) => {
-  const { timeLimit, startingPlayer = 1, gameNumber = 1, currentMatch = 1 } = options;
+  const { timeLimit, startingPlayer = 1, gameNumber = 1, currentMatch = 1, pauseTimer = false } = options;
   const timerRef = useRef<number | null>(null);
 
   const [gameState, setGameState] = useState<GameState>({
@@ -331,7 +332,7 @@ export const useGameLogic = (options: UseGameLogicOptions) => {
 
   // Timer effect
   useEffect(() => {
-    if (!gameState.isGameActive || gameState.winner > 0) {
+    if (!gameState.isGameActive || gameState.winner > 0 || pauseTimer) {
       if (timerRef.current) {
         clearInterval(timerRef.current);
         timerRef.current = null;
@@ -364,7 +365,7 @@ export const useGameLogic = (options: UseGameLogicOptions) => {
         timerRef.current = null;
       }
     };
-  }, [gameState.isGameActive, gameState.winner]);
+  }, [gameState.isGameActive, gameState.winner, pauseTimer]);
 
   // Cleanup on unmount
   useEffect(() => {
