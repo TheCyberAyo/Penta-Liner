@@ -117,19 +117,12 @@ const BeeAdventureMap: React.FC<BeeAdventureMapProps> = ({
       75% { transform: rotate(3deg) scale(1.02); }
     }
   `;
-  const [soundEnabled, setSoundEnabled] = useState(true);
-  const [volume, setVolume] = useState(0.3);
+  const [soundEnabled] = useState(true);
   const [currentStageBasedOnScroll, setCurrentStageBasedOnScroll] = useState(0);
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
   
   // Use theme system
   const { currentTheme } = useTheme({ gameNumber: currentGame });
-
-  // Initialize sound manager settings
-  React.useEffect(() => {
-    soundManager.setVolume(volume);
-    soundManager.setMuted(!soundEnabled);
-  }, [volume, soundEnabled]);
 
   // Auto-scroll to current game position when map opens
   React.useEffect(() => {
@@ -1499,63 +1492,13 @@ const BeeAdventureMap: React.FC<BeeAdventureMapProps> = ({
       {/* Controls */}
       <div style={{
         display: 'flex',
-        justifyContent: 'space-between',
+        justifyContent: 'center',
         alignItems: 'center',
         background: 'rgba(255, 255, 255, 0.9)',
         padding: '1rem',
         borderRadius: '10px',
-        flexWrap: 'wrap',
-        gap: '1rem'
+        marginTop: '1rem'
       }}>
-        {/* Sound Controls */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <button
-            onClick={() => {
-              const newSoundEnabled = !soundEnabled;
-              setSoundEnabled(newSoundEnabled);
-              soundManager.setMuted(!newSoundEnabled);
-              if (newSoundEnabled) soundManager.playClickSound();
-            }}
-            style={{
-              padding: '0.5rem',
-              fontSize: '1.2em',
-              backgroundColor: soundEnabled ? '#4CAF50' : '#f44336',
-              color: 'white',
-              border: '2px solid black',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontWeight: 'bold'
-            }}
-          >
-            {soundEnabled ? '🔊' : '🔇'}
-          </button>
-          
-          {soundEnabled && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>Volume:</span>
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.1"
-                value={volume}
-                onChange={(e) => {
-                  const newVolume = parseFloat(e.target.value);
-                  setVolume(newVolume);
-                  soundManager.setVolume(newVolume);
-                }}
-                style={{ 
-                  width: '100px',
-                  accentColor: '#FFC30B'
-                }}
-              />
-              <span style={{ fontSize: '0.8rem', color: '#666' }}>
-                {Math.round(volume * 100)}%
-              </span>
-            </div>
-          )}
-        </div>
-
         {/* Back Button */}
         <button
           onClick={() => {
@@ -1579,35 +1522,6 @@ const BeeAdventureMap: React.FC<BeeAdventureMapProps> = ({
         >
           🏠 Back to Menu
         </button>
-      </div>
-
-      {/* Legend */}
-      <div style={{
-        background: 'rgba(255, 255, 255, 0.9)',
-        padding: '1rem',
-        borderRadius: '10px',
-        marginTop: '1rem'
-      }}>
-        <h4 style={{ margin: '0 0 0.5rem 0', color: '#333' }}>🗺️ Map Legend:</h4>
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
-          gap: '0.5rem',
-          fontSize: '0.9rem'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: '#4CAF50', border: '2px solid #000' }}></div>
-            <span>Completed Stages</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: '#FFC30B', border: '2px solid #000', boxShadow: '0 0 8px rgba(255, 195, 11, 0.8)' }}></div>
-            <span>Current Stage</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: '#FFC30B', border: '2px solid #fff' }}></div>
-            <span>Available Stages</span>
-          </div>
-        </div>
       </div>
     </div>
     </>
