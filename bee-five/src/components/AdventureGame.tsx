@@ -115,10 +115,13 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
   };
 
   const requiresMatchSystem = (gameNumber: number): boolean => {
-    return isMultipleOf10(gameNumber) && !isMultipleOf50(gameNumber);
+    return isMultipleOf10(gameNumber);
   };
 
   const getMatchType = (gameNumber: number): 'best-of-3' | 'best-of-5' | 'single' => {
+    if (isMultipleOf50(gameNumber)) {
+      return 'best-of-5';
+    }
     if (requiresMatchSystem(gameNumber)) {
       return 'best-of-3';
     }
@@ -128,6 +131,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
   const getRequiredWins = (gameNumber: number): number => {
     const matchType = getMatchType(gameNumber);
     switch (matchType) {
+      case 'best-of-5': return 3;
       case 'best-of-3': return 2;
       default: return 1;
     }
@@ -136,6 +140,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
   const getTotalGames = (gameNumber: number): number => {
     const matchType = getMatchType(gameNumber);
     switch (matchType) {
+      case 'best-of-5': return 5;
       case 'best-of-3': return 3;
       default: return 1;
     }
@@ -147,6 +152,17 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
     }
 
     const matchType = getMatchType(gameNumber);
+    
+    if (matchType === 'best-of-5') {
+      switch (matchNumber) {
+        case 1: return '#FFFFFF';
+        case 2: return '#FFA500';
+        case 3: return '#87CEEB';
+        case 4: return '#90EE90';
+        case 5: return '#FFB6C1';
+        default: return '#87CEEB';
+      }
+    }
     
     if (matchType === 'best-of-3') {
       switch (matchNumber) {
@@ -2160,7 +2176,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
               marginBottom: '20px',
               fontWeight: 'bold'
             }}>
-              Best of 3 Match
+              {getMatchType(currentGame) === 'best-of-5' ? 'Best of 5 Match' : 'Best of 3 Match'}
             </div>
             
             <div style={{
