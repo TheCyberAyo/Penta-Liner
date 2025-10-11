@@ -131,6 +131,29 @@ const BeeAdventureMap: React.FC<BeeAdventureMapProps> = ({
     soundManager.setMuted(!soundEnabled);
   }, [volume, soundEnabled]);
 
+  // Auto-scroll to current game position when map opens
+  React.useEffect(() => {
+    if (scrollContainerRef.current) {
+      const isMobile = window.innerWidth <= 768;
+      const spacing = isMobile ? 140 : 160;
+      const gameIndex = currentGame - 1;
+      const totalHeight = isMobile ? 280000 : 320000;
+      
+      // Calculate the Y position of the current game
+      const gameY = totalHeight - (gameIndex * spacing);
+      
+      // Scroll to position the current game in the center of the viewport
+      const containerHeight = scrollContainerRef.current.clientHeight;
+      const scrollToPosition = Math.max(0, gameY - containerHeight / 2);
+      
+      // Smooth scroll to the current game position
+      scrollContainerRef.current.scrollTo({
+        top: scrollToPosition,
+        behavior: 'smooth'
+      });
+    }
+  }, [currentGame]);
+
   // Scroll listener for dynamic color changes
   React.useEffect(() => {
     const handleScroll = () => {
