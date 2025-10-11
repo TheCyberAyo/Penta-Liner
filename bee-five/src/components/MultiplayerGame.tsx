@@ -42,7 +42,7 @@ export function MultiplayerGame({ roomInfo, playerNumber, onBackToLobby }: Multi
   const [hoveredCell, setHoveredCell] = useState<{ row: number; col: number } | null>(null);
   const [showWinPopup, setShowWinPopup] = useState(false);
   const [winMessage, setWinMessage] = useState('');
-  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'reconnecting'>('connected');
+  const [connectionStatus, _setConnectionStatus] = useState<'connected' | 'disconnected' | 'reconnecting'>('connected');
   const [opponentName, setOpponentName] = useState<string>('');
 
   // Use shared constants

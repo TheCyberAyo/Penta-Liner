@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { simpleMultiplayerClient, type SimpleMove, type SimpleGameState } from '../utils/simpleMultiplayer';
+import { simpleMultiplayerClient } from '../utils/simpleMultiplayer';
 import { soundManager } from '../utils/sounds';
 
 interface RoomInfo {
