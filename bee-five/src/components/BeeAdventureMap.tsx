@@ -549,7 +549,7 @@ const BeeAdventureMap: React.FC<BeeAdventureMapProps> = ({
               display: 'inline-block',
               filter: 'drop-shadow(0 0 8px rgba(255, 195, 11, 0.6))'
             }}>🐝</span>
-            Bee Adventure Journey
+            Bee Adventure
             <span style={{ 
               fontSize: '3rem',
               animation: 'mapIconSpin 4s linear infinite reverse',
@@ -564,7 +564,7 @@ const BeeAdventureMap: React.FC<BeeAdventureMapProps> = ({
             fontStyle: 'italic',
             textShadow: '1px 1px 2px rgba(0,0,0,0.2)'
           }}>
-            Scroll to explore all 2000 games in the bee life cycle
+            Guide a life to greatness
           </p>
         </div>
 
