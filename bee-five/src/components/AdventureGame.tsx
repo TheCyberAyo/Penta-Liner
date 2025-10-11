@@ -1411,7 +1411,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
               e.currentTarget.style.transform = 'scale(1)';
             }}
           >
-            ✨ Start Game {currentGame} ✨
+            ✨ Start Game ✨
           </button>
         </div>
       </div>
@@ -1588,28 +1588,6 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
               ⚙️
             </button>
           )}
-          
-          <div style={{
-            padding: isMobile ? '0.5rem' : '0.5rem 0.75rem',
-            fontSize: isMobile ? '0.9em' : '0.9em',
-            backgroundColor: currentTheme.cardBackground,
-            color: 'black',
-            border: '2px solid black',
-            borderRadius: '8px',
-            fontWeight: 'bold',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.25rem',
-            minWidth: '120px',
-            justifyContent: 'center'
-          }}>
-            {gameState.isBlindPlay ? '👁️‍🗨️' : '🎯'} {currentGame}/2000
-            {requiresMatchSystem(currentGame) && (
-              <span style={{ fontSize: '0.8em', marginLeft: '0.25rem' }}>
-                ({currentMatch}/{getTotalGames(currentGame)})
-              </span>
-            )}
-          </div>
           
           <div style={{
             padding: isMobile ? '0.5rem' : '0.5rem 0.75rem',
@@ -1890,15 +1868,6 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
               {currentTheme.description || 'Continue your journey through the bee life cycle!'}
             </p>
             
-            <div style={{
-              fontSize: '1.1em',
-              color: '#333',
-              marginBottom: '30px',
-              fontWeight: 'bold'
-            }}>
-              Games {currentGame - (currentGame % 200) + 1} - {Math.min(currentGame - (currentGame % 200) + 200, 2000)}
-            </div>
-            
             <button 
               onClick={handleStageTransitionClose}
               style={{
@@ -1968,12 +1937,10 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
               color: '#333',
               marginBottom: '30px'
             }}>
-              Game {currentGame} of 2000 | Wins: {gamesWon}
+              Total Wins: {gamesWon}
               {requiresMatchSystem(currentGame) && (
                 <div style={{ fontSize: '1em', marginTop: '10px' }}>
                   Match Progress: {playerWins} - {aiWins}
-                  <br />
-                  Game {currentMatch} of {getTotalGames(currentGame)}
                   {isMatchComplete ? (
                     <div style={{ fontWeight: 'bold', color: playerWins > aiWins ? '#4CAF50' : '#f44336', marginTop: '5px' }}>
                       {playerWins > aiWins ? 'Match Won!' : 'Match Lost!'}
@@ -1984,7 +1951,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
                     </div>
                   ) : (
                     <div style={{ fontWeight: 'bold', color: '#FF9800', marginTop: '5px' }}>
-                      Complete all {getTotalGames(currentGame)} games to proceed!
+                      Complete the match to proceed!
                     </div>
                   )}
                 </div>
@@ -2193,7 +2160,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
               marginBottom: '20px',
               fontWeight: 'bold'
             }}>
-              Level {currentGame} - Best of 3
+              Best of 3 Match
             </div>
             
             <div style={{
