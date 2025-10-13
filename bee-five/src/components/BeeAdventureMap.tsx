@@ -490,29 +490,6 @@ const BeeAdventureMap: React.FC<BeeAdventureMapProps> = ({
         boxShadow: `0 0 25px ${currentTheme.shadowColor}`,
         overflow: 'hidden'
       }}>
-        {/* Hamburger menu button (top-left) */}
-        <div style={{
-          position: 'absolute',
-          top: '15px',
-          left: '15px',
-          width: '40px',
-          height: '40px',
-          backgroundColor: '#90EE90',
-          borderRadius: '50%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'pointer',
-          border: '2px solid #fff',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-          zIndex: 10
-        }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-            <div style={{ width: '12px', height: '2px', backgroundColor: '#fff', borderRadius: '1px' }}></div>
-            <div style={{ width: '12px', height: '2px', backgroundColor: '#fff', borderRadius: '1px' }}></div>
-            <div style={{ width: '12px', height: '2px', backgroundColor: '#fff', borderRadius: '1px' }}></div>
-          </div>
-        </div>
 
         {/* Map Title */}
         <div style={{

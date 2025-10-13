@@ -120,6 +120,9 @@ const AdventureMap: React.FC<AdventureMapProps> = ({
     const isMilestone = positionInStage === 1 || positionInStage === 50 || 
                        positionInStage === 100 || positionInStage === 150 || positionInStage === 200;
     
+    // Only apply glittering animations to current and completed games, not latter available games
+    const shouldAnimate = status === 'current' || status === 'completed';
+    
     return (
       <div
         key={gameNumber}
@@ -143,9 +146,9 @@ const AdventureMap: React.FC<AdventureMapProps> = ({
           transform: status === 'current' ? 'scale(1.2) translateZ(0)' : selectedGame === gameNumber ? 'scale(1.1) translateZ(0)' : 'scale(1) translateZ(0)',
           zIndex: status === 'current' ? 10 : selectedGame === gameNumber ? 5 : 1,
           boxShadow: status === 'current' ? '0 0 12px rgba(255, 195, 11, 0.8)' : 
-                    isMilestone ? `0 0 8px ${stage.primaryColor}60` : 'none',
+                    (isMilestone && shouldAnimate) ? `0 0 8px ${stage.primaryColor}60` : 'none',
           position: 'relative',
-          animation: isMilestone ? 'milestonePulse 3s ease-in-out infinite' : 
+          animation: shouldAnimate && isMilestone ? 'milestonePulse 3s ease-in-out infinite' : 
                     status === 'current' ? 'currentPulse 2s ease-in-out infinite' : 'none',
           animationDelay: `${(gameNumber % 10) * 0.1}s`,
           backfaceVisibility: 'hidden' // Improve animation performance
