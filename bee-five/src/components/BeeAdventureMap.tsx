@@ -488,8 +488,6 @@ const BeeAdventureMap: React.FC<BeeAdventureMapProps> = ({
         padding: '2rem',
         border: `4px solid ${currentTheme.primaryColor}`,
         boxShadow: `0 0 25px ${currentTheme.shadowColor}`,
-        minHeight: '800px',
-        height: `${Math.min(totalHeight, 800)}px`,
         overflow: 'hidden'
       }}>
         {/* Hamburger menu button (top-left) */}
@@ -567,12 +565,11 @@ const BeeAdventureMap: React.FC<BeeAdventureMapProps> = ({
           style={{
             position: 'relative',
             width: '100%',
-            height: '600px',
+            height: '400px',
             background: `radial-gradient(circle at center, ${getCurrentScrollTheme().backgroundColor}40, ${getCurrentScrollTheme().secondaryColor}20)`,
             borderRadius: '15px',
             border: `3px solid ${getCurrentScrollTheme().primaryColor}`,
             padding: '1rem',
-            marginBottom: '1rem',
             overflow: 'auto',
             overflowX: 'hidden',
             transition: 'all 0.5s ease-in-out'
@@ -1430,19 +1427,6 @@ const BeeAdventureMap: React.FC<BeeAdventureMapProps> = ({
           })}
         </div>
 
-        {/* Progress Info */}
-        <div style={{
-          textAlign: 'center',
-          color: '#2E8B57',
-          marginBottom: '1rem'
-        }}>
-          <p style={{ margin: 0, fontSize: '1.1rem', fontWeight: 'bold' }}>
-            🐝 Current Game: {currentGame} - {ADVENTURE_THEMES[Math.floor((currentGame - 1) / 200)]?.name || 'Unknown'}
-          </p>
-          <p style={{ margin: '0.5rem 0 0 0', fontSize: '1rem' }}>
-            Progress: {gamesCompleted.length} / 2000 levels completed
-          </p>
-        </div>
       </div>
     );
   };
@@ -1477,7 +1461,7 @@ const BeeAdventureMap: React.FC<BeeAdventureMapProps> = ({
           🗺️ Adventure Map
         </h1>
         <p style={{ margin: '0.5rem 0 0 0', fontSize: '1rem' }}>
-          Current Game: {currentGame} | Completed: {gamesCompleted.length}/2000
+          Current Game: {currentGame}
         </p>
       </div>
 

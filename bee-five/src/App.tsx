@@ -2234,6 +2234,8 @@ function SimpleWelcome() {
 
   // Handle Take Turns submenu
   if (gameMode === 'show-take-turns-submenu') {
+    const isMobileSubmenu = typeof window !== 'undefined' && window.innerWidth <= 768;
+    
     return (
       <div style={{ 
         background: 'linear-gradient(135deg, #FFC30B 0%, #FFD700 50%, #FFC30B 100%)',
@@ -2244,13 +2246,254 @@ function SimpleWelcome() {
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
-        padding: 'clamp(0.5rem, 2vw, 1rem)',
+        padding: isMobileSubmenu ? '1rem 0.75rem' : 'clamp(1rem, 2vw, 2rem)',
         fontFamily: 'system-ui, -apple-system, sans-serif',
         position: 'relative',
         overflow: 'hidden',
         boxSizing: 'border-box'
       }}>
-        {/* Decorative bee pattern background */}
+        {/* Decorative bee pattern background - hidden on mobile */}
+        {!isMobileSubmenu && (
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            opacity: 0.05,
+            fontSize: 'clamp(2rem, 8vw, 4rem)',
+            pointerEvents: 'none',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))',
+            gap: '2rem',
+            padding: '2rem',
+            zIndex: 0
+          }}>
+            {['🐝', '🍯', '🐝', '🍯', '🐝', '🍯', '🐝', '🍯', '🐝'].map((emoji, i) => (
+              <div key={i} style={{ textAlign: 'center', transform: `rotate(${i * 15}deg)` }}>
+                {emoji}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Main content card */}
+        <div style={{
+          background: 'rgba(255, 255, 255, 0.95)',
+          borderRadius: isMobileSubmenu ? '20px' : 'clamp(15px, 3vw, 25px)',
+          padding: isMobileSubmenu ? '1.5rem 1rem' : 'clamp(1.5rem, 3vw, 2rem)',
+          width: '90vw',
+          maxWidth: '90vw',
+          minHeight: '90vh',
+          maxHeight: '90vh',
+          boxShadow: '0 20px 40px rgba(0,0,0,0.1), 0 0 0 3px rgba(0,0,0,0.1)',
+          backdropFilter: 'blur(10px)',
+          textAlign: 'center',
+          position: 'relative',
+          zIndex: 1,
+          animation: 'slideIn 0.6s ease-out',
+          margin: '0 auto',
+          boxSizing: 'border-box',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          overflowY: 'auto'
+        }}>
+          {/* Content wrapper for flex spacing */}
+          <div style={{ 
+            flex: '1',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            width: '100%'
+          }}>
+            {/* Title */}
+            <div style={{ marginBottom: isMobileSubmenu ? '1.5rem' : 'clamp(1.5rem, 4vw, 2.5rem)' }}>
+              <h1 style={{ 
+                fontSize: isMobileSubmenu ? 'clamp(2rem, 10vw, 2.5rem)' : 'clamp(2.5rem, 8vw, 4rem)', 
+                color: '#FFC30B',
+                textShadow: isMobileSubmenu 
+                  ? '2px 2px 0px black, -1px -1px 0px black' 
+                  : '3px 3px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black',
+                margin: '0 0 0.75rem 0',
+                lineHeight: '1.2',
+                fontWeight: 'bold',
+                WebkitTextStroke: isMobileSubmenu ? '0.5px black' : 'initial'
+              }}>
+                👥 Take Turns 👥
+              </h1>
+              <p style={{
+                fontSize: isMobileSubmenu ? '1rem' : 'clamp(1rem, 3vw, 1.2rem)',
+                color: '#333',
+                margin: '0 0 clamp(1rem, 3vw, 1.5rem) 0',
+                fontWeight: 'bold'
+              }}>
+                Choose your game mode:
+              </p>
+            </div>
+
+            {/* Submenu buttons */}
+            <div style={{ 
+              display: 'flex',
+              flexDirection: 'column',
+              gap: isMobileSubmenu ? '1rem' : 'clamp(0.75rem, 2vw, 1rem)',
+              marginBottom: isMobileSubmenu ? '1.5rem' : 'clamp(1.5rem, 4vw, 2rem)',
+              width: '100%',
+              maxWidth: '100%',
+              alignItems: 'center'
+            }}>
+            <button 
+              onClick={() => {
+                soundManager.playClickSound();
+                setGameMode('local-multiplayer');
+              }}
+              onMouseEnter={(e) => {
+                if (!isMobileSubmenu) {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isMobileSubmenu) {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
+                }
+              }}
+              style={{
+                padding: isMobileSubmenu ? '1rem 1.25rem' : 'clamp(0.75rem, 3vw, 1rem) clamp(1rem, 4vw, 1.5rem)',
+                fontSize: isMobileSubmenu ? '1.1rem' : 'clamp(0.9rem, 2.5vw, 1.1rem)',
+                fontWeight: 'bold',
+                backgroundColor: 'black',
+                color: '#FFC30B',
+                border: '3px solid #FFC30B',
+                borderRadius: isMobileSubmenu ? '12px' : 'clamp(8px, 2vw, 12px)',
+                cursor: 'pointer',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                minHeight: isMobileSubmenu ? '56px' : '60px',
+                width: '100%',
+                maxWidth: isMobileSubmenu ? '100%' : '300px',
+                touchAction: 'manipulation',
+                WebkitTapHighlightColor: 'transparent'
+              }}
+            >
+              <span style={{ fontSize: '1.3em' }}>🎮</span>
+              <span>Single Game</span>
+            </button>
+
+            <button 
+              onClick={() => {
+                soundManager.playClickSound();
+                setGameMode('tournament');
+              }}
+              onMouseEnter={(e) => {
+                if (!isMobileSubmenu) {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isMobileSubmenu) {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
+                }
+              }}
+              style={{
+                padding: isMobileSubmenu ? '1rem 1.25rem' : 'clamp(0.75rem, 3vw, 1rem) clamp(1rem, 4vw, 1.5rem)',
+                fontSize: isMobileSubmenu ? '1.1rem' : 'clamp(0.9rem, 2.5vw, 1.1rem)',
+                fontWeight: 'bold',
+                backgroundColor: 'black',
+                color: '#FFC30B',
+                border: '3px solid #FFC30B',
+                borderRadius: isMobileSubmenu ? '12px' : 'clamp(8px, 2vw, 12px)',
+                cursor: 'pointer',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                minHeight: isMobileSubmenu ? '56px' : '60px',
+                width: '100%',
+                maxWidth: isMobileSubmenu ? '100%' : '300px',
+                touchAction: 'manipulation',
+                WebkitTapHighlightColor: 'transparent'
+              }}
+            >
+              <span style={{ fontSize: '1.3em' }}>🏆</span>
+              <span>Tournament</span>
+            </button>
+            </div>
+
+            {/* Back button */}
+            <button
+              onClick={() => {
+                soundManager.playClickSound();
+                setGameMode('menu');
+              }}
+              style={{
+                padding: isMobileSubmenu ? '1rem 1.25rem' : '0.75rem 1.5rem',
+                fontSize: isMobileSubmenu ? '1rem' : '1rem',
+                fontWeight: 'bold',
+                backgroundColor: '#666',
+                color: 'white',
+                border: '2px solid black',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                minHeight: isMobileSubmenu ? '48px' : 'auto',
+                touchAction: 'manipulation',
+                WebkitTapHighlightColor: 'transparent'
+              }}
+            >
+              ← Back to Menu
+            </button>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <footer style={{ 
+          marginTop: isMobileSubmenu ? '1rem' : 'clamp(1rem, 3vw, 2rem)',
+          color: 'rgba(0,0,0,0.7)',
+          fontSize: isMobileSubmenu ? '0.8rem' : 'clamp(0.7rem, 2vw, 0.8rem)',
+          textAlign: 'center',
+          zIndex: 1,
+          padding: isMobileSubmenu ? '0 1rem 0.5rem' : '0'
+        }}>
+          <p style={{ margin: 0 }}>
+            &copy; 2025 Bee-Five. Made with 🐝 and ❤️
+          </p>
+        </footer>
+      </div>
+    );
+  }
+
+  // Check if we're on mobile
+  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+
+  return (
+    <div style={{ 
+      background: 'linear-gradient(135deg, #FFC30B 0%, #FFD700 50%, #FFC30B 100%)',
+      minHeight: '100vh',
+      width: '100%',
+      maxWidth: '100vw',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: isMobile ? '1rem 0.75rem' : 'clamp(1rem, 2vw, 2rem)',
+      fontFamily: 'system-ui, -apple-system, sans-serif',
+      position: 'relative',
+      overflow: 'hidden',
+      boxSizing: 'border-box'
+    }}>
+      {/* Decorative bee pattern background - hidden on very small mobile screens */}
+      {!isMobile && (
         <div style={{
           position: 'absolute',
           top: 0,
@@ -2272,214 +2515,17 @@ function SimpleWelcome() {
             </div>
           ))}
         </div>
-
-        {/* Main content card */}
-        <div style={{
-          background: 'rgba(255, 255, 255, 0.95)',
-          borderRadius: 'clamp(15px, 3vw, 25px)',
-          padding: 'clamp(1rem, 3vw, 2rem)',
-          width: '100%',
-          maxWidth: 'min(90vw, 450px)',
-          boxShadow: '0 20px 40px rgba(0,0,0,0.1), 0 0 0 3px rgba(0,0,0,0.1)',
-          backdropFilter: 'blur(10px)',
-          textAlign: 'center',
-          position: 'relative',
-          zIndex: 1,
-          animation: 'slideIn 0.6s ease-out',
-          margin: '0 auto',
-          boxSizing: 'border-box'
-        }}>
-          {/* Title */}
-          <div style={{ marginBottom: 'clamp(1.5rem, 4vw, 2.5rem)' }}>
-            <h1 style={{ 
-              fontSize: 'clamp(2.5rem, 8vw, 4rem)', 
-              color: '#FFC30B',
-              textShadow: '3px 3px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black',
-              margin: '0 0 clamp(0.5rem, 2vw, 1rem) 0',
-              lineHeight: '1.1',
-              fontWeight: 'bold'
-            }}>
-              👥 Take Turns 👥
-            </h1>
-            <p style={{
-              fontSize: 'clamp(1rem, 3vw, 1.2rem)',
-              color: '#333',
-              margin: '0 0 clamp(1rem, 3vw, 1.5rem) 0',
-              fontWeight: 'bold'
-            }}>
-              Choose your game mode:
-            </p>
-          </div>
-
-          {/* Submenu buttons */}
-          <div style={{ 
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 'clamp(0.75rem, 2vw, 1rem)',
-            marginBottom: 'clamp(1.5rem, 4vw, 2rem)',
-            width: '100%',
-            maxWidth: '100%',
-            alignItems: 'center'
-          }}>
-            <button 
-              onClick={() => {
-                soundManager.playClickSound();
-                setGameMode('local-multiplayer');
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
-              }}
-              style={{
-                padding: 'clamp(0.75rem, 3vw, 1rem) clamp(1rem, 4vw, 1.5rem)',
-                fontSize: 'clamp(0.9rem, 2.5vw, 1.1rem)',
-                fontWeight: 'bold',
-                backgroundColor: 'black',
-                color: '#FFC30B',
-                border: '3px solid #FFC30B',
-                borderRadius: 'clamp(8px, 2vw, 12px)',
-                cursor: 'pointer',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem',
-                minHeight: '60px',
-                width: '100%',
-                maxWidth: '300px'
-              }}
-            >
-              <span style={{ fontSize: '1.2em' }}>🎮</span>
-              <span>Single Game</span>
-            </button>
-
-            <button 
-              onClick={() => {
-                soundManager.playClickSound();
-                setGameMode('tournament');
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
-              }}
-              style={{
-                padding: 'clamp(0.75rem, 3vw, 1rem) clamp(1rem, 4vw, 1.5rem)',
-                fontSize: 'clamp(0.9rem, 2.5vw, 1.1rem)',
-                fontWeight: 'bold',
-                backgroundColor: 'black',
-                color: '#FFC30B',
-                border: '3px solid #FFC30B',
-                borderRadius: 'clamp(8px, 2vw, 12px)',
-                cursor: 'pointer',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem',
-                minHeight: '60px',
-                width: '100%',
-                maxWidth: '300px'
-              }}
-            >
-              <span style={{ fontSize: '1.2em' }}>🏆</span>
-              <span>Tournament</span>
-            </button>
-          </div>
-
-          {/* Back button */}
-          <button
-            onClick={() => {
-              soundManager.playClickSound();
-              setGameMode('menu');
-            }}
-            style={{
-              padding: '0.75rem 1.5rem',
-              fontSize: '1rem',
-              fontWeight: 'bold',
-              backgroundColor: '#666',
-              color: 'white',
-              border: '2px solid black',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              transition: 'all 0.3s ease'
-            }}
-          >
-            ← Back to Menu
-          </button>
-        </div>
-
-        {/* Footer */}
-        <footer style={{ 
-          marginTop: 'clamp(1rem, 3vw, 2rem)',
-          color: 'rgba(0,0,0,0.6)',
-          fontSize: 'clamp(0.7rem, 2vw, 0.8rem)',
-          textAlign: 'center',
-          zIndex: 1
-        }}>
-          <p style={{ margin: 0 }}>
-            &copy; 2025 Bee-Five. Made with 🐝 and ❤️
-          </p>
-        </footer>
-      </div>
-    );
-  }
-
-  return (
-    <div style={{ 
-      background: 'linear-gradient(135deg, #FFC30B 0%, #FFD700 50%, #FFC30B 100%)',
-      minHeight: '100vh',
-      width: '100%',
-      maxWidth: '100vw',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center',
-      padding: 'clamp(0.5rem, 2vw, 1rem)',
-      fontFamily: 'system-ui, -apple-system, sans-serif',
-      position: 'relative',
-      overflow: 'hidden',
-      boxSizing: 'border-box'
-    }}>
-      {/* Decorative bee pattern background */}
-      <div style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        opacity: 0.05,
-        fontSize: 'clamp(2rem, 8vw, 4rem)',
-        pointerEvents: 'none',
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))',
-        gap: '2rem',
-        padding: '2rem',
-        zIndex: 0
-      }}>
-        {['🐝', '🍯', '🐝', '🍯', '🐝', '🍯', '🐝', '🍯', '🐝'].map((emoji, i) => (
-          <div key={i} style={{ textAlign: 'center', transform: `rotate(${i * 15}deg)` }}>
-            {emoji}
-          </div>
-        ))}
-      </div>
+      )}
 
       {/* Main content card */}
       <div style={{
         background: 'rgba(255, 255, 255, 0.95)',
-        borderRadius: 'clamp(15px, 3vw, 25px)',
-        padding: 'clamp(1rem, 3vw, 2rem)',
-        width: '100%',
-        maxWidth: 'min(90vw, 450px)',
+        borderRadius: isMobile ? '20px' : 'clamp(15px, 3vw, 25px)',
+        padding: isMobile ? '1.5rem 1rem' : 'clamp(1.5rem, 3vw, 2rem)',
+        width: '90vw',
+        maxWidth: '90vw',
+        minHeight: '90vh',
+        maxHeight: '90vh',
         boxShadow: '0 20px 40px rgba(0,0,0,0.1), 0 0 0 3px rgba(0,0,0,0.1)',
         backdropFilter: 'blur(10px)',
         textAlign: 'center',
@@ -2487,53 +2533,79 @@ function SimpleWelcome() {
         zIndex: 1,
         animation: 'slideIn 0.6s ease-out',
         margin: '0 auto',
-        boxSizing: 'border-box'
+        boxSizing: 'border-box',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        overflowY: 'auto'
       }}>
-        {/* Title */}
-        <div style={{ marginBottom: 'clamp(1.5rem, 4vw, 2.5rem)' }}>
-          <h1 style={{ 
-            fontSize: 'clamp(2.5rem, 8vw, 4rem)', 
-            color: '#FFC30B',
-            textShadow: '3px 3px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black',
-            margin: '0 0 clamp(0.5rem, 2vw, 1rem) 0',
-            lineHeight: '1.1',
-            fontWeight: 'bold'
-          }}>
-            🐝 Bee-<span style={{ color: 'black', textShadow: '3px 3px 0px #FFC30B, -1px -1px 0px #FFC30B, 1px -1px 0px #FFC30B, -1px 1px 0px #FFC30B' }}>Five</span> 🐝
-          </h1>
-        </div>
-
-        {/* Game mode buttons */}
+        {/* Content wrapper for flex spacing */}
         <div style={{ 
+          flex: '1',
           display: 'flex',
           flexDirection: 'column',
-          gap: 'clamp(0.75rem, 2vw, 1rem)',
-          marginBottom: 'clamp(1.5rem, 4vw, 2rem)',
-          width: '100%',
-          maxWidth: '100%',
-          alignItems: 'center'
+          justifyContent: 'center',
+          alignItems: 'center',
+          width: '100%'
         }}>
+          {/* Title */}
+          <div style={{ marginBottom: isMobile ? '1.5rem' : 'clamp(1.5rem, 4vw, 2.5rem)' }}>
+            <h1 style={{ 
+              fontSize: isMobile ? 'clamp(2rem, 10vw, 2.5rem)' : 'clamp(2.5rem, 8vw, 4rem)', 
+              color: '#FFC30B',
+              textShadow: isMobile 
+                ? '2px 2px 0px black, -1px -1px 0px black' 
+                : '3px 3px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black',
+              margin: '0 0 0.75rem 0',
+              lineHeight: '1.2',
+              fontWeight: 'bold',
+              WebkitTextStroke: isMobile ? '0.5px black' : 'initial'
+            }}>
+              🐝 Bee-<span style={{ 
+                color: 'black', 
+                textShadow: isMobile 
+                  ? '2px 2px 0px #FFC30B, -1px -1px 0px #FFC30B' 
+                  : '3px 3px 0px #FFC30B, -1px -1px 0px #FFC30B, 1px -1px 0px #FFC30B, -1px 1px 0px #FFC30B',
+                WebkitTextStroke: isMobile ? '0.5px #FFC30B' : 'initial'
+              }}>Five</span> 🐝
+            </h1>
+          </div>
+
+          {/* Game mode buttons */}
+          <div style={{ 
+            display: 'flex',
+            flexDirection: 'column',
+            gap: isMobile ? '1rem' : 'clamp(0.75rem, 2vw, 1rem)',
+            marginBottom: isMobile ? '1.5rem' : 'clamp(1.5rem, 4vw, 2rem)',
+            width: '100%',
+            maxWidth: '100%',
+            alignItems: 'center'
+          }}>
           <button 
             onClick={() => {
               soundManager.playClickSound();
               setShowDifficultyModal(true);
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
+              if (!isMobile) {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
+              }
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
+              if (!isMobile) {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
+              }
             }}
             style={{
-              padding: 'clamp(0.75rem, 3vw, 1rem) clamp(1rem, 4vw, 1.5rem)',
-              fontSize: 'clamp(0.9rem, 2.5vw, 1.1rem)',
+              padding: isMobile ? '1rem 1.25rem' : 'clamp(0.75rem, 3vw, 1rem) clamp(1rem, 4vw, 1.5rem)',
+              fontSize: isMobile ? '1.1rem' : 'clamp(0.9rem, 2.5vw, 1.1rem)',
               fontWeight: 'bold',
               backgroundColor: 'black',
               color: '#FFC30B',
               border: '3px solid #FFC30B',
-              borderRadius: 'clamp(8px, 2vw, 12px)',
+              borderRadius: isMobile ? '12px' : 'clamp(8px, 2vw, 12px)',
               cursor: 'pointer',
               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
@@ -2541,12 +2613,14 @@ function SimpleWelcome() {
               alignItems: 'center',
               justifyContent: 'center',
               gap: '0.5rem',
-              minHeight: '60px',
+              minHeight: isMobile ? '56px' : '60px',
               width: '100%',
-              maxWidth: '300px'
+              maxWidth: isMobile ? '100%' : '300px',
+              touchAction: 'manipulation',
+              WebkitTapHighlightColor: 'transparent'
             }}
           >
-            <span style={{ fontSize: '1.2em' }}>🤖</span>
+            <span style={{ fontSize: '1.3em' }}>🤖</span>
             <span>Play AI</span>
           </button>
 
@@ -2556,21 +2630,25 @@ function SimpleWelcome() {
               setGameMode('show-take-turns-submenu');
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
+              if (!isMobile) {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
+              }
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
+              if (!isMobile) {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
+              }
             }}
             style={{
-              padding: 'clamp(0.75rem, 3vw, 1rem) clamp(1rem, 4vw, 1.5rem)',
-              fontSize: 'clamp(0.9rem, 2.5vw, 1.1rem)',
+              padding: isMobile ? '1rem 1.25rem' : 'clamp(0.75rem, 3vw, 1rem) clamp(1rem, 4vw, 1.5rem)',
+              fontSize: isMobile ? '1.1rem' : 'clamp(0.9rem, 2.5vw, 1.1rem)',
               fontWeight: 'bold',
               backgroundColor: 'black',
               color: '#FFC30B',
               border: '3px solid #FFC30B',
-              borderRadius: 'clamp(8px, 2vw, 12px)',
+              borderRadius: isMobile ? '12px' : 'clamp(8px, 2vw, 12px)',
               cursor: 'pointer',
               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
@@ -2578,12 +2656,14 @@ function SimpleWelcome() {
               alignItems: 'center',
               justifyContent: 'center',
               gap: '0.5rem',
-              minHeight: '60px',
+              minHeight: isMobile ? '56px' : '60px',
               width: '100%',
-              maxWidth: '300px'
+              maxWidth: isMobile ? '100%' : '300px',
+              touchAction: 'manipulation',
+              WebkitTapHighlightColor: 'transparent'
             }}
           >
-            <span style={{ fontSize: '1.2em' }}>👥</span>
+            <span style={{ fontSize: '1.3em' }}>👥</span>
             <span>Take Turns</span>
           </button>
 
@@ -2593,21 +2673,25 @@ function SimpleWelcome() {
               setGameMode('online-lobby');
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
+              if (!isMobile) {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
+              }
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
+              if (!isMobile) {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
+              }
             }}
             style={{
-              padding: 'clamp(0.75rem, 3vw, 1rem) clamp(1rem, 4vw, 1.5rem)',
-              fontSize: 'clamp(0.9rem, 2.5vw, 1.1rem)',
+              padding: isMobile ? '1rem 1.25rem' : 'clamp(0.75rem, 3vw, 1rem) clamp(1rem, 4vw, 1.5rem)',
+              fontSize: isMobile ? '1.1rem' : 'clamp(0.9rem, 2.5vw, 1.1rem)',
               fontWeight: 'bold',
               backgroundColor: 'black',
               color: '#FFC30B',
               border: '3px solid #FFC30B',
-              borderRadius: 'clamp(8px, 2vw, 12px)',
+              borderRadius: isMobile ? '12px' : 'clamp(8px, 2vw, 12px)',
               cursor: 'pointer',
               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
@@ -2615,39 +2699,44 @@ function SimpleWelcome() {
               alignItems: 'center',
               justifyContent: 'center',
               gap: '0.5rem',
-              minHeight: '60px',
+              minHeight: isMobile ? '56px' : '60px',
               width: '100%',
-              maxWidth: '300px'
+              maxWidth: isMobile ? '100%' : '300px',
+              touchAction: 'manipulation',
+              WebkitTapHighlightColor: 'transparent'
             }}
           >
-            <span style={{ fontSize: '1.2em' }}>🌐</span>
+            <span style={{ fontSize: '1.3em' }}>🌐</span>
             <span>Online Play</span>
           </button>
         </div>
 
-        {/* How to play */}
-        <div style={{ 
-          fontSize: 'clamp(0.75rem, 2vw, 0.85rem)',
-          color: '#666',
-          lineHeight: '1.5',
-          marginBottom: 'clamp(1rem, 3vw, 1.5rem)'
-        }}>
-          <p style={{ margin: '0 0 0.5rem 0' }}>
-            <strong>How to play:</strong> Click to place your pieces and try to get 5 in a row!
-          </p>
-          <p style={{ margin: 0 }}>
-            🖤 <strong>Black pieces</strong> vs 🟡 <strong>Yellow pieces</strong>
-          </p>
+          {/* How to play */}
+          <div style={{ 
+            fontSize: isMobile ? '0.9rem' : 'clamp(0.75rem, 2vw, 0.85rem)',
+            color: '#666',
+            lineHeight: '1.6',
+            marginBottom: isMobile ? '0' : 'clamp(1rem, 3vw, 1.5rem)',
+            padding: isMobile ? '0 0.25rem' : '0'
+          }}>
+            <p style={{ margin: '0 0 0.5rem 0' }}>
+              <strong>How to play:</strong> {isMobile ? 'Tap' : 'Click'} to place your pieces and get 5 in a row!
+            </p>
+            <p style={{ margin: 0 }}>
+              🖤 <strong>Black</strong> vs 🟡 <strong>Yellow</strong>
+            </p>
+          </div>
         </div>
       </div>
 
       {/* Footer */}
       <footer style={{ 
-        marginTop: 'clamp(1rem, 3vw, 2rem)',
-        color: 'rgba(0,0,0,0.6)',
-        fontSize: 'clamp(0.7rem, 2vw, 0.8rem)',
+        marginTop: isMobile ? '1rem' : 'clamp(1rem, 3vw, 2rem)',
+        color: 'rgba(0,0,0,0.7)',
+        fontSize: isMobile ? '0.8rem' : 'clamp(0.7rem, 2vw, 0.8rem)',
         textAlign: 'center',
-        zIndex: 1
+        zIndex: 1,
+        padding: isMobile ? '0 1rem 0.5rem' : '0'
       }}>
         <p style={{ margin: 0 }}>
           &copy; 2025 Bee-Five. Made with 🐝 and ❤️
@@ -2691,35 +2780,39 @@ function SimpleWelcome() {
           left: 0,
           width: '100%',
           height: '100%',
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          zIndex: 1000
+          zIndex: 1000,
+          padding: isMobile ? '1rem' : '2rem'
         }}>
           <div style={{
             backgroundColor: '#FFC30B',
-            padding: '40px',
-            borderRadius: '20px',
+            padding: isMobile ? '1.5rem 1.25rem' : '40px',
+            borderRadius: isMobile ? '16px' : '20px',
             border: '4px solid black',
             textAlign: 'center',
-            minWidth: '300px',
-            maxWidth: '90vw',
+            width: isMobile ? '100%' : 'auto',
+            minWidth: isMobile ? 'auto' : '300px',
+            maxWidth: isMobile ? '100%' : '90vw',
             position: 'relative',
-            boxShadow: '0 20px 40px rgba(0,0,0,0.3)'
+            boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+            boxSizing: 'border-box'
           }}>
             <h2 style={{
-              fontSize: '2em',
+              fontSize: isMobile ? '1.5em' : '2em',
               color: 'black',
-              marginBottom: '20px',
+              marginBottom: isMobile ? '1rem' : '20px',
               textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
             }}>
               Choose AI Mode
             </h2>
             <p style={{
-              fontSize: '1.1em',
+              fontSize: isMobile ? '1rem' : '1.1em',
               color: '#333',
-              marginBottom: '30px'
+              marginBottom: isMobile ? '1.25rem' : '30px',
+              padding: isMobile ? '0 0.5rem' : '0'
             }}>
               Select your preferred AI game mode:
             </p>
@@ -2737,8 +2830,8 @@ function SimpleWelcome() {
                   soundManager.playClickSound();
                 }}
                 style={{
-                  padding: '0.75rem 1.5rem',
-                  fontSize: '1rem',
+                  padding: isMobile ? '1rem 1.25rem' : '0.75rem 1.5rem',
+                  fontSize: isMobile ? '1.05rem' : '1rem',
                   fontWeight: 'bold',
                   backgroundColor: '#4CAF50',
                   color: 'white',
@@ -2749,7 +2842,10 @@ function SimpleWelcome() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '0.5rem'
+                  gap: '0.5rem',
+                  minHeight: isMobile ? '52px' : 'auto',
+                  touchAction: 'manipulation',
+                  WebkitTapHighlightColor: 'transparent'
                 }}
               >
                 <span style={{ fontSize: '1.2em' }}>🎯</span>
@@ -2763,8 +2859,8 @@ function SimpleWelcome() {
                   soundManager.playClickSound();
                 }}
                 style={{
-                  padding: '0.75rem 1.5rem',
-                  fontSize: '1rem',
+                  padding: isMobile ? '1rem 1.25rem' : '0.75rem 1.5rem',
+                  fontSize: isMobile ? '1.05rem' : '1rem',
                   fontWeight: 'bold',
                   backgroundColor: '#2196F3',
                   color: 'white',
@@ -2775,7 +2871,10 @@ function SimpleWelcome() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '0.5rem'
+                  gap: '0.5rem',
+                  minHeight: isMobile ? '52px' : 'auto',
+                  touchAction: 'manipulation',
+                  WebkitTapHighlightColor: 'transparent'
                 }}
               >
                 <span style={{ fontSize: '1.2em' }}>🗺️</span>
@@ -2789,15 +2888,18 @@ function SimpleWelcome() {
                 soundManager.playClickSound();
               }}
               style={{
-                padding: '0.5rem 1rem',
-                fontSize: '0.9rem',
+                padding: isMobile ? '0.75rem 1rem' : '0.5rem 1rem',
+                fontSize: isMobile ? '0.95rem' : '0.9rem',
                 backgroundColor: '#666',
                 color: 'white',
                 border: '2px solid black',
                 borderRadius: '6px',
                 cursor: 'pointer',
                 fontWeight: 'bold',
-                transition: 'all 0.3s ease'
+                transition: 'all 0.3s ease',
+                minHeight: isMobile ? '44px' : 'auto',
+                touchAction: 'manipulation',
+                WebkitTapHighlightColor: 'transparent'
               }}
             >
               Cancel
@@ -2814,37 +2916,41 @@ function SimpleWelcome() {
           left: 0,
           width: '100%',
           height: '100%',
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          zIndex: 1000
+          zIndex: 1000,
+          padding: isMobile ? '1rem' : '2rem'
         }}>
           <div style={{
             backgroundColor: '#FFC30B',
-            padding: '40px',
-            borderRadius: '20px',
+            padding: isMobile ? '1.5rem 1.25rem' : '40px',
+            borderRadius: isMobile ? '16px' : '20px',
             border: '4px solid black',
             textAlign: 'center',
-            minWidth: '300px',
-            maxWidth: '90vw',
+            width: isMobile ? '100%' : 'auto',
+            minWidth: isMobile ? 'auto' : '300px',
+            maxWidth: isMobile ? '100%' : '90vw',
             position: 'relative',
-            boxShadow: '0 20px 40px rgba(0,0,0,0.3)'
+            boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+            boxSizing: 'border-box'
           }}>
             <h2 style={{
-              fontSize: '2em',
+              fontSize: isMobile ? '1.5em' : '2em',
               color: 'black',
-              marginBottom: '20px',
+              marginBottom: isMobile ? '1rem' : '20px',
               textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
             }}>
               Classic Mode
             </h2>
             <p style={{
-              fontSize: '1.1em',
+              fontSize: isMobile ? '1rem' : '1.1em',
               color: '#333',
-              marginBottom: '30px'
+              marginBottom: isMobile ? '1.25rem' : '30px',
+              padding: isMobile ? '0 0.5rem' : '0'
             }}>
-              Choose the difficulty level for the AI opponent:
+              Choose the difficulty level:
             </p>
             <div style={{ 
               position: 'relative',
@@ -2858,11 +2964,11 @@ function SimpleWelcome() {
                 }}
                 style={{
                   width: '100%',
-                  padding: '0.75rem 1rem',
-                  fontSize: '1rem',
+                  padding: isMobile ? '1rem' : '0.75rem 1rem',
+                  fontSize: isMobile ? '1.05rem' : '1rem',
                   fontWeight: 'bold',
                   backgroundColor: '#f5f5f5',
-                  border: '1px solid #e0e0e0',
+                  border: '2px solid #e0e0e0',
                   borderRadius: '6px',
                   cursor: 'pointer',
                   appearance: 'none',
@@ -2872,7 +2978,11 @@ function SimpleWelcome() {
                   backgroundSize: '1rem',
                   paddingRight: '2.5rem',
                   color: '#333',
-                  fontFamily: 'system-ui, -apple-system, sans-serif'
+                  fontFamily: 'system-ui, -apple-system, sans-serif',
+                  minHeight: isMobile ? '52px' : 'auto',
+                  touchAction: 'manipulation',
+                  WebkitTapHighlightColor: 'transparent',
+                  boxSizing: 'border-box'
                 }}
               >
                 <option value="easy" style={{ padding: '0.5rem', backgroundColor: 'white' }}>
@@ -2886,7 +2996,12 @@ function SimpleWelcome() {
                 </option>
               </select>
             </div>
-            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+            <div style={{ 
+              display: 'flex', 
+              gap: '1rem', 
+              justifyContent: 'center',
+              flexDirection: isMobile ? 'column' : 'row'
+            }}>
               <button
                 onClick={() => {
                   setShowClassicModal(false);
@@ -2894,15 +3009,19 @@ function SimpleWelcome() {
                   soundManager.playClickSound();
                 }}
                 style={{
-                  padding: '0.75rem 1.5rem',
-                  fontSize: '1rem',
+                  padding: isMobile ? '1rem 1.25rem' : '0.75rem 1.5rem',
+                  fontSize: isMobile ? '1.05rem' : '1rem',
                   backgroundColor: '#4CAF50',
                   color: 'white',
                   border: '2px solid black',
                   borderRadius: '8px',
                   cursor: 'pointer',
                   fontWeight: 'bold',
-                  transition: 'all 0.3s ease'
+                  transition: 'all 0.3s ease',
+                  minHeight: isMobile ? '52px' : 'auto',
+                  touchAction: 'manipulation',
+                  WebkitTapHighlightColor: 'transparent',
+                  width: isMobile ? '100%' : 'auto'
                 }}
               >
                 Start Game
@@ -2915,15 +3034,19 @@ function SimpleWelcome() {
                   soundManager.playClickSound();
                 }}
                 style={{
-                  padding: '0.75rem 1.5rem',
-                  fontSize: '1rem',
+                  padding: isMobile ? '1rem 1.25rem' : '0.75rem 1.5rem',
+                  fontSize: isMobile ? '1.05rem' : '1rem',
                   backgroundColor: '#666',
                   color: 'white',
                   border: '2px solid black',
                   borderRadius: '8px',
                   cursor: 'pointer',
                   fontWeight: 'bold',
-                  transition: 'all 0.3s ease'
+                  transition: 'all 0.3s ease',
+                  minHeight: isMobile ? '52px' : 'auto',
+                  touchAction: 'manipulation',
+                  WebkitTapHighlightColor: 'transparent',
+                  width: isMobile ? '100%' : 'auto'
                 }}
               >
                 Back

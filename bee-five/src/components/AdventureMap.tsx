@@ -202,7 +202,7 @@ const AdventureMap: React.FC<AdventureMapProps> = ({
         padding: '2rem',
         border: `3px solid ${currentTheme.primaryColor}`,
         boxShadow: `0 0 20px ${currentTheme.shadowColor}`,
-        minHeight: '600px',
+        minHeight: '400px',
         overflow: 'hidden'
       }}>
         {/* Animated Background Pattern */}
@@ -363,7 +363,7 @@ const AdventureMap: React.FC<AdventureMapProps> = ({
         <div style={{
           position: 'relative',
           width: '100%',
-          height: '600px',
+          height: '400px',
           background: `radial-gradient(circle at center, ${currentTheme.backgroundColor}40, ${currentTheme.gridColor}20)`,
           borderRadius: '15px',
           border: `2px solid ${currentTheme.borderColor}`,
