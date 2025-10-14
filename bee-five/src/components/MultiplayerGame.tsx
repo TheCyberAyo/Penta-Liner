@@ -204,9 +204,9 @@ export function MultiplayerGame({ roomInfo, playerNumber, onBackToLobby }: Multi
           const isWinningPiece = winningPieces.some(piece => piece.row === row && piece.col === col);
           
           if (cellValue === 1) {
-            ctx.fillStyle = isWinningPiece ? '#FFD700' : '#000000'; // Gold for winning pieces, black otherwise
+            ctx.fillStyle = isWinningPiece ? '#C0C0C0' : '#000000'; // Silver for winning pieces, black otherwise
           } else {
-            ctx.fillStyle = isWinningPiece ? '#FFD700' : '#FFC30B'; // Gold for winning pieces, yellow otherwise
+            ctx.fillStyle = isWinningPiece ? '#C0C0C0' : '#FFC30B'; // Silver for winning pieces, yellow otherwise
           }
 
           ctx.beginPath();

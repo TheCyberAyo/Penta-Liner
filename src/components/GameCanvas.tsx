@@ -53,12 +53,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         const isWinningPiece = gameState.winningPieces && gameState.winningPieces.some(piece => piece.row === row && piece.col === col);
         
         if (cellValue === 1) {
-          ctx.fillStyle = isWinningPiece ? '#FFD700' : '#000000'; // Gold for winning pieces, black otherwise
+          ctx.fillStyle = isWinningPiece ? '#C0C0C0' : '#000000'; // Silver for winning pieces, black otherwise
           ctx.beginPath();
           ctx.arc(x + CELL_SIZE / 2, y + CELL_SIZE / 2, CELL_SIZE / 3, 0, Math.PI * 2);
           ctx.fill();
         } else if (cellValue === 2) {
-          ctx.fillStyle = isWinningPiece ? '#FFD700' : '#FFC30B'; // Gold for winning pieces, yellow otherwise
+          ctx.fillStyle = isWinningPiece ? '#C0C0C0' : '#FFC30B'; // Silver for winning pieces, yellow otherwise
           ctx.beginPath();
           ctx.arc(x + CELL_SIZE / 2, y + CELL_SIZE / 2, CELL_SIZE / 3, 0, Math.PI * 2);
           ctx.fill();

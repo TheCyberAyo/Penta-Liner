@@ -40,17 +40,16 @@ const AdventureMap: React.FC<AdventureMapProps> = ({
 
   const getGameColor = (gameNumber: number) => {
     const status = getGameStatus(gameNumber);
-    const stageIndex = Math.floor((gameNumber - 1) / 200);
     
     switch (status) {
       case 'completed':
-        return '#4CAF50'; // Green for completed
+        return '#FFC30B'; // Yellow for completed
       case 'current':
-        return '#FFC30B'; // Yellow for current
+        return '#000000'; // Black for current
       case 'available':
-        return ADVENTURE_THEMES[stageIndex]?.primaryColor || '#2196F3'; // Stage color for available
+        return '#FFC30B'; // Yellow for available
       default:
-        return '#2196F3';
+        return '#FFC30B';
     }
   };
 
@@ -133,20 +132,21 @@ const AdventureMap: React.FC<AdventureMapProps> = ({
           borderRadius: isMilestone ? '30%' : '50%',
           backgroundColor: getGameColor(gameNumber),
           border: selectedGame === gameNumber ? '3px solid #000' : 
-                 isMilestone ? '2px solid #fff' : '1px solid #fff',
+                 status === 'current' ? (isMilestone ? '2px solid #FFC30B' : '1px solid #FFC30B') :
+                 isMilestone ? '2px solid #000' : '1px solid #000',
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           fontSize: isMilestone ? '10px' : '8px',
           fontWeight: 'bold',
-          color: status === 'completed' ? '#000' : '#fff',
-          textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
+          color: status === 'current' ? '#FFC30B' : '#000',
+          textShadow: status === 'current' ? '1px 1px 2px rgba(0,0,0,0.8)' : '1px 1px 2px rgba(0,0,0,0.3)',
           transition: 'all 0.3s ease',
           transform: status === 'current' ? 'scale(1.2) translateZ(0)' : selectedGame === gameNumber ? 'scale(1.1) translateZ(0)' : 'scale(1) translateZ(0)',
           zIndex: status === 'current' ? 10 : selectedGame === gameNumber ? 5 : 1,
-          boxShadow: status === 'current' ? '0 0 12px rgba(255, 195, 11, 0.8)' : 
-                    (isMilestone && shouldAnimate) ? `0 0 8px ${stage.primaryColor}60` : 'none',
+          boxShadow: status === 'current' ? '0 0 12px rgba(0, 0, 0, 0.8)' : 
+                    (isMilestone && shouldAnimate) ? '0 0 8px rgba(255, 195, 11, 0.6)' : 'none',
           position: 'relative',
           animation: shouldAnimate && isMilestone ? 'milestonePulse 3s ease-in-out infinite' : 
                     status === 'current' ? 'currentPulse 2s ease-in-out infinite' : 'none',
@@ -156,13 +156,13 @@ const AdventureMap: React.FC<AdventureMapProps> = ({
         onMouseEnter={(e) => {
           e.currentTarget.style.transform = 'scale(1.3)';
           e.currentTarget.style.zIndex = '10';
-          e.currentTarget.style.boxShadow = `0 0 16px ${stage.primaryColor}80`;
+          e.currentTarget.style.boxShadow = status === 'current' ? '0 0 16px rgba(0, 0, 0, 0.8)' : '0 0 16px rgba(255, 195, 11, 0.8)';
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.transform = status === 'current' ? 'scale(1.2)' : 'scale(1)';
           e.currentTarget.style.zIndex = status === 'current' ? '10' : '1';
-          e.currentTarget.style.boxShadow = status === 'current' ? '0 0 12px rgba(255, 195, 11, 0.8)' : 
-                                           isMilestone ? `0 0 8px ${stage.primaryColor}60` : 'none';
+          e.currentTarget.style.boxShadow = status === 'current' ? '0 0 12px rgba(0, 0, 0, 0.8)' : 
+                                           isMilestone ? '0 0 8px rgba(255, 195, 11, 0.6)' : 'none';
         }}
         title={`${locationEmoji} Game ${gameNumber} - ${stage?.name || 'Unknown Stage'}\n${stage?.beeLifeStage || ''}`}
       >
@@ -176,13 +176,13 @@ const AdventureMap: React.FC<AdventureMapProps> = ({
             width: '8px',
             height: '8px',
             borderRadius: '50%',
-            backgroundColor: stage.primaryColor,
-            border: '1px solid #fff',
+            backgroundColor: status === 'current' ? '#FFC30B' : '#000000',
+            border: status === 'current' ? '1px solid #000' : '1px solid #FFC30B',
             fontSize: '6px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: '#fff',
+            color: status === 'current' ? '#000' : '#FFC30B',
             fontWeight: 'bold'
           }}>
             {stageIndex + 1}
@@ -331,7 +331,7 @@ const AdventureMap: React.FC<AdventureMapProps> = ({
               width: '16px', 
               height: '16px', 
               borderRadius: '50%', 
-              backgroundColor: '#4CAF50', 
+              backgroundColor: '#FFC30B', 
               border: '2px solid white',
               animation: 'legendPulse 2s ease-in-out infinite'
             }}></div>
@@ -342,9 +342,9 @@ const AdventureMap: React.FC<AdventureMapProps> = ({
               width: '16px', 
               height: '16px', 
               borderRadius: '50%', 
-              backgroundColor: '#FFC30B', 
+              backgroundColor: '#000000', 
               border: '2px solid white', 
-              boxShadow: '0 0 8px rgba(255, 195, 11, 0.8)',
+              boxShadow: '0 0 8px rgba(0, 0, 0, 0.8)',
               animation: 'currentGlow 1.5s ease-in-out infinite'
             }}></div>
             <span>Current</span>
@@ -354,7 +354,7 @@ const AdventureMap: React.FC<AdventureMapProps> = ({
               width: '16px', 
               height: '16px', 
               borderRadius: '50%', 
-              backgroundColor: currentTheme.primaryColor, 
+              backgroundColor: '#FFC30B', 
               border: '2px solid white',
               animation: 'availableShimmer 3s ease-in-out infinite'
             }}></div>
@@ -666,15 +666,15 @@ const AdventureMap: React.FC<AdventureMapProps> = ({
           fontSize: '0.9rem'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: '#4CAF50', border: '1px solid #000' }}></div>
+            <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: '#FFC30B', border: '1px solid #000' }}></div>
             <span>Completed Games</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: '#FFC30B', border: '1px solid #000' }}></div>
+            <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: '#000000', border: '1px solid #000' }}></div>
             <span>Current Game</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: '#2196F3', border: '1px solid #000' }}></div>
+            <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: '#FFC30B', border: '1px solid #000' }}></div>
             <span>Available Games</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>

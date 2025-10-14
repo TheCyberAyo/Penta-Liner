@@ -93,8 +93,9 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
   const [isWaitingForNextGame, setIsWaitingForNextGame] = useState(false);
   const [gameProcessed, setGameProcessed] = useState(false);
   const [showStartCountdown, setShowStartCountdown] = useState(false);
-  const [startCountdown, setStartCountdown] = useState(2);
+  const [startCountdown, setStartCountdown] = useState(3);
   const [gameStarted, setGameStarted] = useState(false);
+  const [gameInitialized, setGameInitialized] = useState(false); // Track if a game has been selected from map
   const winPopupTimerRef = React.useRef<number | null>(null);
   
   const { gameState, handleCellClick, resetGame } = useGameLogic({
@@ -102,7 +103,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
     gameNumber: currentGame,
     currentMatch: currentMatch,
     startingPlayer: getAdventureStartingPlayer(currentGame),
-    pauseTimer: showStartCountdown
+    pauseTimer: showStartCountdown || showMap // Pause timer while map is showing
   });
 
   const { currentTheme } = useTheme({ gameNumber: currentGame });
@@ -188,7 +189,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
     setGameProcessed(false);
   }, []);
 
-   // Handle start countdown (2 seconds before game starts)
+   // Handle start countdown (3 seconds before game starts)
    React.useEffect(() => {
      if (showStartCountdown && startCountdown > 0) {
        const timer = setTimeout(() => {
@@ -212,9 +213,10 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
        setCurrentMatch(prev => prev + 1);
        setGameProcessed(false);
        resetGame();
-       setStartCountdown(2);
+       setStartCountdown(3);
        setShowStartCountdown(true);
        setGameStarted(false);
+       setGameInitialized(true); // Mark game as initialized when countdown starts for next match
      }
    }, [isWaitingForNextGame, countdownTimer, resetGame, currentGame, currentMatch, playerWins, aiWins]);
 
@@ -227,8 +229,8 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
   }, [currentGame, currentStage]);
 
   React.useEffect(() => {
-    // Don't process win/loss during the start countdown or story carousel
-    if (showStartCountdown || showStoryCarousel) {
+    // Don't process win/loss during the start countdown, story carousel, bee fact, or if game hasn't been initialized
+    if (showStartCountdown || showStoryCarousel || showBeeFact || !gameInitialized) {
       return;
     }
     
@@ -402,10 +404,10 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
         winPopupTimerRef.current = null;
       }
     };
-  }, [gameState.winner, gameState.isGameActive, gameState.timeLeft, gameState.currentPlayer, currentGame, currentMatch, playerWins, aiWins, showStartCountdown, showStoryCarousel, soundEnabled]);
+  }, [gameState.winner, gameState.isGameActive, gameState.timeLeft, gameState.currentPlayer, currentGame, currentMatch, playerWins, aiWins, showStartCountdown, showStoryCarousel, showBeeFact, soundEnabled, gameInitialized]);
 
   React.useEffect(() => {
-    if (gameState.currentPlayer === 2 && gameState.isGameActive && gameState.winner === 0 && gameStarted && !showStartCountdown && !showStoryCarousel) {
+    if (gameState.currentPlayer === 2 && gameState.isGameActive && gameState.winner === 0 && gameStarted && !showStartCountdown && !showStoryCarousel && !showBeeFact && gameInitialized) {
       // AI must play in 1000ms for games 1801-2000, otherwise use 1500ms
       const aiDelay = (currentGame >= 1801 && currentGame <= 2000) ? 1000 : 1500;
       const timer = setTimeout(() => {
@@ -413,7 +415,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
       }, aiDelay);
       return () => clearTimeout(timer);
     }
-  }, [gameState.currentPlayer, gameState.isGameActive, gameState.winner, gameState.board, gameState.isBlindPlay, gameState.mudZones, gameStarted, showStartCountdown, showStoryCarousel]);
+  }, [gameState.currentPlayer, gameState.isGameActive, gameState.winner, gameState.board, gameState.isBlindPlay, gameState.mudZones, gameStarted, showStartCountdown, showStoryCarousel, showBeeFact, gameInitialized]);
 
   const makeAdventureAIMove = () => {
     const availableCells = [];
@@ -1030,10 +1032,11 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
        const requiredWins = getRequiredWins(currentGame);
        const totalGames = getTotalGames(currentGame);
        
-       if (playerWins >= requiredWins || aiWins >= requiredWins || currentMatch >= totalGames) {
-         setIsMatchComplete(true);
-         setShowMap(true);
-       } else {
+      if (playerWins >= requiredWins || aiWins >= requiredWins || currentMatch >= totalGames) {
+        setIsMatchComplete(true);
+        setShowMap(true);
+        setGameInitialized(false); // Reset game initialization when returning to map
+      } else {
          setIsWaitingForNextGame(true);
          setCountdownTimer(3);
        }
@@ -1049,9 +1052,10 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
           setShowBeeFact(true);
         } else {
           resetGame();
-          setStartCountdown(2);
+          setStartCountdown(3);
           setShowStartCountdown(true);
           setGameStarted(false);
+          setGameInitialized(true); // Mark game as initialized when countdown starts
         }
         
         setCurrentMatch(1);
@@ -1063,9 +1067,11 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
         setGameProcessed(false);
       } else {
         setShowMap(true);
+        setGameInitialized(false); // Reset game initialization when returning to map
       }
      } else {
        setShowMap(true);
+       setGameInitialized(false); // Reset game initialization when returning to map
      }
    };
 
@@ -1080,9 +1086,10 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
       setShowBeeFact(true);
     } else {
       resetGame();
-      setStartCountdown(2);
+      setStartCountdown(3);
       setShowStartCountdown(true);
       setGameStarted(false);
+      setGameInitialized(true); // Mark game as initialized when countdown starts
     }
     
     setCurrentMatch(1);
@@ -1126,9 +1133,10 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
     } else {
       // No bee fact, go straight to start countdown
       resetGame();
-      setStartCountdown(2);
+      setStartCountdown(3);
       setShowStartCountdown(true);
       setGameStarted(false);
+      setGameInitialized(true); // Mark game as initialized when countdown starts
     }
     
     setCurrentMatch(1);
@@ -1314,9 +1322,10 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
                     setShowBeeFact(true);
                   } else {
                     resetGame();
-                    setStartCountdown(2);
+                    setStartCountdown(3);
                     setShowStartCountdown(true);
                     setGameStarted(false);
+                    setGameInitialized(true); // Mark game as initialized when countdown starts
                   }
                   
                   if (soundEnabled) soundManager.playClickSound();
@@ -1401,9 +1410,10 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
               setShowBeeFact(false);
               setCurrentBeeFact(null);
               resetGame();
-              setStartCountdown(2);
+              setStartCountdown(3);
               setShowStartCountdown(true);
               setGameStarted(false);
+              setGameInitialized(true); // Mark game as initialized when countdown starts
               if (soundEnabled) soundManager.playClickSound();
             }}
             style={{
@@ -1532,6 +1542,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
           <button
             onClick={() => {
               setShowMap(true);
+              setGameInitialized(false); // Reset game initialization when returning to map
               if (soundEnabled) soundManager.playClickSound();
             }}
             disabled={requiresMatchSystem(currentGame) && !isMatchComplete}
@@ -1645,7 +1656,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
               gridColor={getMatchGridColor(currentGame, currentMatch)}
               gameNumber={currentGame}
               onCellClick={(row, col) => {
-                if (gameState.currentPlayer === 1 && !showStartCountdown) {
+                if (gameState.currentPlayer === 1 && !showStartCountdown && gameStarted && !showStoryCarousel && !showBeeFact) {
                   handleCellClick(row, col);
                 }
               }}
@@ -2021,7 +2032,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
                           setShowBeeFact(true);
                         } else {
                           resetGame();
-                          setStartCountdown(2);
+                          setStartCountdown(3);
                           setShowStartCountdown(true);
                           setGameStarted(false);
                         }
@@ -2057,7 +2068,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
                       onClick={() => {
                         setShowWinPopup(false);
                         resetGame();
-                        setStartCountdown(2);
+                        setStartCountdown(3);
                         setShowStartCountdown(true);
                         setGameStarted(false);
                         setGameProcessed(false);

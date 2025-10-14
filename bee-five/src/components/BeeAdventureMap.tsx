@@ -240,7 +240,7 @@ const BeeAdventureMap: React.FC<BeeAdventureMapProps> = ({
   };
 
   const handleGameClick = (gameNumber: number) => {
-    // Directly start the game without showing selection panel
+    // Directly start the game when clicked
     onGameSelect(gameNumber);
     if (soundEnabled) soundManager.playClickSound();
   };
@@ -1448,7 +1448,6 @@ const BeeAdventureMap: React.FC<BeeAdventureMapProps> = ({
           {renderBeeAdventureMap()}
         </div>
       </BeeLifeStageEffects>
-
 
       {/* Controls */}
       <div style={{
