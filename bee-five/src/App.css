@@ -174,13 +174,17 @@ body {
 }
 
 .timer {
-  font-size: 1.2em;
+  font-size: 1.8em;
   font-weight: bold;
   color: black;
   background-color: white;
-  padding: 8px 15px;
-  border-radius: 5px;
-  border: 2px solid black;
+  padding: 12px 20px;
+  border-radius: 8px;
+  border: 3px solid black;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  text-align: center;
+  min-width: 180px;
+  animation: timerPulse 2s ease-in-out infinite;
 }
 
 .game-content {
@@ -188,6 +192,36 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+.game-grid-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.game-grid-container canvas {
+  display: block;
+}
+
+/* Desktop layout: timer on the left, grid on the right */
+@media (min-width: 769px) {
+  .game-grid-container {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 30px;
+  }
+  
+  .timer {
+    order: 1;
+    margin-top: 20px;
+  }
+  
+  .game-content canvas {
+    order: 2;
+  }
 }
 
 .game-status {
@@ -279,6 +313,22 @@ body {
     font-size: 2em;
   }
 
+  /* Mobile layout: timer above grid */
+  .game-grid-container {
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+  }
+  
+  .timer {
+    order: 1;
+    margin-top: 0;
+  }
+  
+  .game-content canvas {
+    order: 2;
+  }
+
   .status-text {
     font-size: 1.2em;
     padding: 8px 15px;
@@ -310,8 +360,9 @@ body {
   }
 
   .timer {
-    font-size: 1em;
-    padding: 6px 12px;
+    font-size: 1.4em;
+    padding: 8px 16px;
+    min-width: 150px;
   }
 
   .status-text {
@@ -327,6 +378,22 @@ body {
 
   .game-page {
     padding: 0.5em;
+  }
+
+  /* Mobile layout: timer above grid */
+  .game-grid-container {
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+  }
+  
+  .timer {
+    order: 1;
+    margin-top: 0;
+  }
+  
+  .game-content canvas {
+    order: 2;
   }
 }
 
@@ -393,6 +460,17 @@ body {
   50% {
     opacity: 0.5;
     transform: scale(1.2);
+  }
+}
+
+@keyframes timerPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.3);
   }
 }
 

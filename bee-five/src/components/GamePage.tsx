@@ -20,17 +20,18 @@ const GamePage: React.FC<GamePageProps> = ({ onBackToWelcome }) => {
         <h1 className="game-title">
           Bee-<span>Five</span>
         </h1>
-        
-        <div className="timer">
-          Time Left: {gameState.timeLeft}s
-        </div>
       </div>
 
       <div className="game-content">
-        <GameCanvas
-          gameState={gameState}
-          onCellClick={handleCellClick}
-        />
+        <div className="game-grid-container">
+          <div className="timer">
+            Time Left: {gameState.timeLeft}s
+          </div>
+          <GameCanvas
+            gameState={gameState}
+            onCellClick={handleCellClick}
+          />
+        </div>
       </div>
 
 

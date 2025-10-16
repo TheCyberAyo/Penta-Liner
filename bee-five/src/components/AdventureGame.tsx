@@ -1469,6 +1469,16 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
             70% { box-shadow: 0 0 0 10px rgba(255, 215, 0, 0); }
             100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); }
           }
+          @keyframes timerPulse {
+            0%, 100% {
+              transform: scale(1);
+              box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            }
+            50% {
+              transform: scale(1.05);
+              box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+            }
+          }
         `}
       </style>
       <div style={{ 
@@ -1615,23 +1625,6 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
               ⚙️
             </button>
           )}
-          
-          <div style={{
-            padding: isMobile ? '0.5rem' : '0.5rem 0.75rem',
-            fontSize: isMobile ? '1em' : '0.9em',
-            backgroundColor: currentTheme.cardBackground,
-            color: 'black',
-            border: '2px solid black',
-            borderRadius: '8px',
-            fontWeight: 'bold',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.25rem',
-            minWidth: '80px',
-            justifyContent: 'center'
-          }}>
-            ⏱️ {gameState.timeLeft}s
-          </div>
         </div>
       </div>
 
@@ -1647,10 +1640,38 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
         <div style={{
           position: 'relative',
           display: 'flex',
+          flexDirection: isMobile ? 'column' : 'row',
           justifyContent: 'center',
           alignItems: 'center',
+          gap: isMobile ? '15px' : '20px',
           animation: gameState.currentPlayer === 2 ? 'aiMoveHighlight 1.5s ease-out' : 'none'
         }}>
+          {/* Timer positioned to the left on desktop, above on mobile */}
+          <div style={{
+            padding: isMobile ? '0.75rem 1rem' : '1rem 1.25rem',
+            fontSize: isMobile ? '1.4em' : '1.8em',
+            backgroundColor: currentTheme.cardBackground,
+            color: 'black',
+            border: '3px solid black',
+            borderRadius: '10px',
+            fontWeight: 'bold',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            minWidth: isMobile ? '140px' : '180px',
+            justifyContent: 'center',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+            textAlign: 'center'
+          }}>
+            ⏱️ {gameState.timeLeft}s
+          </div>
+
+          <div style={{
+            position: 'relative',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}>
             <GameCanvas
               gameState={gameState}
               gridColor={getMatchGridColor(currentGame, currentMatch)}
@@ -1661,6 +1682,41 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
                 }
               }}
             />
+            
+            {/* Match Score Display - only show for match system games */}
+            {requiresMatchSystem(currentGame) && (
+              <div style={{
+                position: 'absolute',
+                top: isMobile ? '100%' : '50%',
+                left: isMobile ? '50%' : '100%',
+                transform: isMobile ? 'translateX(-50%)' : 'translateY(-50%)',
+                marginTop: isMobile ? '15px' : '0',
+                marginLeft: isMobile ? '0' : '20px',
+                padding: '0.75rem 1rem',
+                backgroundColor: currentTheme.cardBackground,
+                color: 'black',
+                border: '2px solid black',
+                borderRadius: '8px',
+                fontWeight: 'bold',
+                fontSize: isMobile ? '1em' : '1.1em',
+                textAlign: 'center',
+                boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
+                minWidth: isMobile ? '120px' : '140px',
+                zIndex: 10
+              }}>
+                <div style={{ marginBottom: '5px' }}>
+                  Game {currentMatch}/{getTotalGames(currentGame)}
+                </div>
+                <div style={{ 
+                  fontSize: '0.9em', 
+                  color: '#666',
+                  borderTop: '1px solid #ccc',
+                  paddingTop: '5px'
+                }}>
+                  You: {playerWins} - AI: {aiWins}
+                </div>
+              </div>
+            )}
             
             {/* Start Countdown Overlay */}
             {showStartCountdown && (
@@ -1700,6 +1756,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
                 </div>
               </div>
             )}
+          </div>
         </div>
       </div>
 
