@@ -202,6 +202,13 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
      }
    }, [showStartCountdown, startCountdown]);
 
+   // Play "Get Ready" sound when countdown starts
+   React.useEffect(() => {
+     if (showStartCountdown && startCountdown === 3 && soundEnabled) {
+       soundManager.playGetReadySound();
+     }
+   }, [showStartCountdown, startCountdown, soundEnabled]);
+
    React.useEffect(() => {
      if (isWaitingForNextGame && countdownTimer > 0) {
        const timer = setTimeout(() => {

@@ -157,6 +157,21 @@ class SoundGenerator {
     oscillator.stop(now + 0.1);
   }
 
+  // Play the "Get Ready" audio file during countdown
+  playGetReadySound() {
+    if (this.isMuted) return;
+
+    try {
+      const audio = new Audio('/Get Ready.m4a');
+      audio.volume = this.volume;
+      audio.play().catch(error => {
+        console.warn('Could not play Get Ready sound:', error);
+      });
+    } catch (error) {
+      console.warn('Error loading Get Ready sound:', error);
+    }
+  }
+
   // Volume and mute controls
   setVolume(volume: number) {
     this.volume = Math.max(0, Math.min(1, volume));
