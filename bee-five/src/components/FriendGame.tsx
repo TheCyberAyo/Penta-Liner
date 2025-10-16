@@ -260,78 +260,224 @@ const FriendGame: React.FC<FriendGameProps> = ({ onBackToMenu }) => {
     );
   }
 
-  // Game Over Modal
+  // Enhanced Game Over Modal
   if (showGameOverModal && gameSeries) {
     const seriesWinner = getSeriesWinner();
+    const isTie = !seriesWinner;
     
     return (
       <div style={{
-        background: 'linear-gradient(135deg, #FFC30B 0%, #FFD700 50%, #FFC30B 100%)',
+        background: isTie 
+          ? 'linear-gradient(135deg, #6c757d 0%, #495057 50%, #6c757d 100%)'
+          : 'linear-gradient(135deg, #FFC30B 0%, #FFD700 50%, #FFC30B 100%)',
         width: '100vw',
         height: '100vh',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        fontFamily: 'system-ui, -apple-system, sans-serif'
+        fontFamily: 'system-ui, -apple-system, sans-serif',
+        position: 'relative',
+        overflow: 'hidden'
       }}>
-        <div style={{
-          background: 'rgba(255, 255, 255, 0.95)',
-          borderRadius: '20px',
-          padding: '2rem',
-          width: '90%',
-          maxWidth: '500px',
-          boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
-          backdropFilter: 'blur(10px)',
-          textAlign: 'center'
-        }}>
-          <h1 style={{
-            fontSize: '2.5em',
-            color: '#FFC30B',
-            textShadow: '2px 2px 0px black',
-            marginBottom: '1rem'
+        {/* Celebration Effects for Winner */}
+        {seriesWinner && (
+          <div style={{
+            position: 'absolute',
+            top: '20%',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            fontSize: '4em',
+            animation: 'confetti 3s ease-out infinite',
+            zIndex: 1
           }}>
-            🏆 Series Complete! 🏆
+            🎊🎉🏆🎉🎊
+          </div>
+        )}
+        
+        <div style={{
+          background: isTie 
+            ? 'rgba(248, 249, 250, 0.95)'
+            : 'rgba(255, 255, 255, 0.95)',
+          borderRadius: '25px',
+          padding: '3rem',
+          width: '90%',
+          maxWidth: '600px',
+          boxShadow: isTie 
+            ? '0 25px 50px rgba(108, 117, 125, 0.3)'
+            : '0 25px 50px rgba(255, 215, 0, 0.4), 0 0 30px rgba(255, 195, 11, 0.6)',
+          backdropFilter: 'blur(15px)',
+          textAlign: 'center',
+          position: 'relative',
+          zIndex: 2,
+          animation: seriesWinner ? 'victoryBounce 1s ease-out' : 'popIn 0.6s ease-out',
+          border: `5px solid ${isTie ? '#6c757d' : '#FFC30B'}`
+        }}>
+          <div style={{
+            fontSize: isTie ? '4em' : '5em',
+            marginBottom: '20px',
+            animation: isTie ? 'bounce 1s ease-out infinite' : 'victorySpin 2s ease-out infinite'
+          }}>
+            {isTie ? '🤝' : '🏆'}
+          </div>
+          
+          <h1 style={{
+            fontSize: isTie ? '2.5em' : '3em',
+            color: isTie ? '#495057' : '#B8860B',
+            textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+            marginBottom: '15px',
+            fontWeight: 'bold'
+          }}>
+            {isTie ? 'Series Complete!' : 'CONGRATULATIONS!'}
           </h1>
+          
+          <div style={{
+            fontSize: '1.4em',
+            color: isTie ? '#6c757d' : '#8B4513',
+            marginBottom: '20px',
+            fontWeight: 'bold'
+          }}>
+            Best of {gameSeries.totalGames} Series
+          </div>
           
           {seriesWinner ? (
             <div>
               <h2 style={{
-                fontSize: '2em',
-                color: 'black',
-                marginBottom: '1rem'
+                fontSize: '2.2em',
+                color: '#228B22',
+                marginBottom: '15px',
+                fontWeight: 'bold',
+                textShadow: '1px 1px 2px rgba(0,0,0,0.2)'
               }}>
-                {seriesWinner.name} Wins!
+                {seriesWinner.name} Wins! 🎉
               </h2>
-              <p style={{
-                fontSize: '1.5em',
+              
+              {/* Enhanced Score Display */}
+              <div style={{
+                fontSize: '1.3em',
                 color: '#333',
-                marginBottom: '2rem'
+                marginBottom: '25px',
+                display: 'flex',
+                justifyContent: 'center',
+                gap: '3rem',
+                alignItems: 'center'
               }}>
-                Final Score: {seriesWinner.score} - {seriesWinner.name === gameSeries.player1Name ? gameSeries.player2Score : gameSeries.player1Score}
-              </p>
+                <div style={{
+                  backgroundColor: '#4CAF50',
+                  color: 'white',
+                  padding: '15px 25px',
+                  borderRadius: '15px',
+                  fontWeight: 'bold',
+                  boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
+                }}>
+                  <div style={{ fontSize: '0.9em', marginBottom: '5px' }}>{gameSeries.player1Name}</div>
+                  <div style={{ fontSize: '2em' }}>{gameSeries.player1Score}</div>
+                </div>
+                <div style={{ 
+                  fontSize: '1.5em', 
+                  fontWeight: 'bold',
+                  color: '#666'
+                }}>vs</div>
+                <div style={{
+                  backgroundColor: '#f44336',
+                  color: 'white',
+                  padding: '15px 25px',
+                  borderRadius: '15px',
+                  fontWeight: 'bold',
+                  boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
+                }}>
+                  <div style={{ fontSize: '0.9em', marginBottom: '5px' }}>{gameSeries.player2Name}</div>
+                  <div style={{ fontSize: '2em' }}>{gameSeries.player2Score}</div>
+                </div>
+              </div>
+              
+              {/* Congratulatory Message */}
+              <div style={{
+                fontSize: '1.2em',
+                color: '#8B4513',
+                marginBottom: '30px',
+                fontStyle: 'italic',
+                lineHeight: '1.4'
+              }}>
+                <div style={{ marginBottom: '10px' }}>
+                  🐝 Outstanding performance, {seriesWinner.name}! 🐝
+                </div>
+                <div>
+                  You've proven yourself as a true Bee Master in this {gameSeries.totalGames}-game series!
+                </div>
+              </div>
             </div>
           ) : (
             <div>
               <h2 style={{
-                fontSize: '2em',
-                color: 'black',
-                marginBottom: '1rem'
+                fontSize: '2.2em',
+                color: '#dc3545',
+                marginBottom: '15px',
+                fontWeight: 'bold',
+                textShadow: '1px 1px 2px rgba(0,0,0,0.2)'
               }}>
-                It's a Tie!
+                It's a Tie! 🤝
               </h2>
-              <p style={{
-                fontSize: '1.5em',
+              
+              {/* Enhanced Score Display for Tie */}
+              <div style={{
+                fontSize: '1.3em',
                 color: '#333',
-                marginBottom: '2rem'
+                marginBottom: '25px',
+                display: 'flex',
+                justifyContent: 'center',
+                gap: '3rem',
+                alignItems: 'center'
               }}>
-                Final Score: {gameSeries.player1Score} - {gameSeries.player2Score}
-              </p>
+                <div style={{
+                  backgroundColor: '#17a2b8',
+                  color: 'white',
+                  padding: '15px 25px',
+                  borderRadius: '15px',
+                  fontWeight: 'bold',
+                  boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
+                }}>
+                  <div style={{ fontSize: '0.9em', marginBottom: '5px' }}>{gameSeries.player1Name}</div>
+                  <div style={{ fontSize: '2em' }}>{gameSeries.player1Score}</div>
+                </div>
+                <div style={{ 
+                  fontSize: '1.5em', 
+                  fontWeight: 'bold',
+                  color: '#666'
+                }}>vs</div>
+                <div style={{
+                  backgroundColor: '#17a2b8',
+                  color: 'white',
+                  padding: '15px 25px',
+                  borderRadius: '15px',
+                  fontWeight: 'bold',
+                  boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
+                }}>
+                  <div style={{ fontSize: '0.9em', marginBottom: '5px' }}>{gameSeries.player2Name}</div>
+                  <div style={{ fontSize: '2em' }}>{gameSeries.player2Score}</div>
+                </div>
+              </div>
+              
+              {/* Tie Message */}
+              <div style={{
+                fontSize: '1.2em',
+                color: '#6c757d',
+                marginBottom: '30px',
+                fontStyle: 'italic',
+                lineHeight: '1.4'
+              }}>
+                <div style={{ marginBottom: '10px' }}>
+                  🐝 What an epic battle! 🐝
+                </div>
+                <div>
+                  Both players showed incredible skill - time for a rematch to settle the score!
+                </div>
+              </div>
             </div>
           )}
 
           <div style={{
             display: 'flex',
-            gap: '1rem',
+            gap: '20px',
             justifyContent: 'center',
             flexWrap: 'wrap'
           }}>
@@ -342,18 +488,29 @@ const FriendGame: React.FC<FriendGameProps> = ({ onBackToMenu }) => {
                 if (soundEnabled) soundManager.playClickSound();
               }}
               style={{
-                padding: '12px 24px',
-                fontSize: '1.1em',
+                padding: '15px 30px',
+                fontSize: '1.2em',
                 fontWeight: 'bold',
-                backgroundColor: '#4CAF50',
+                backgroundColor: seriesWinner ? '#28a745' : '#17a2b8',
                 color: 'white',
-                border: '2px solid black',
-                borderRadius: '10px',
+                border: '3px solid #000',
+                borderRadius: '15px',
                 cursor: 'pointer',
-                transition: 'all 0.3s ease'
+                transition: 'all 0.3s ease',
+                minWidth: '150px',
+                boxShadow: '0 6px 12px rgba(0,0,0,0.2)',
+                textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,0.3)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 6px 12px rgba(0,0,0,0.2)';
               }}
             >
-              New Series
+              {seriesWinner ? '🏆 New Series' : '🔄 Rematch'}
             </button>
             
             <button
@@ -363,18 +520,29 @@ const FriendGame: React.FC<FriendGameProps> = ({ onBackToMenu }) => {
                 if (soundEnabled) soundManager.playClickSound();
               }}
               style={{
-                padding: '12px 24px',
-                fontSize: '1.1em',
+                padding: '15px 30px',
+                fontSize: '1.2em',
                 fontWeight: 'bold',
-                backgroundColor: '#2196F3',
+                backgroundColor: '#6c757d',
                 color: 'white',
-                border: '2px solid black',
-                borderRadius: '10px',
+                border: '3px solid #000',
+                borderRadius: '15px',
                 cursor: 'pointer',
-                transition: 'all 0.3s ease'
+                transition: 'all 0.3s ease',
+                minWidth: '150px',
+                boxShadow: '0 6px 12px rgba(0,0,0,0.2)',
+                textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,0.3)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 6px 12px rgba(0,0,0,0.2)';
               }}
             >
-              Back to Menu
+              🏠 Back to Menu
             </button>
           </div>
         </div>
@@ -384,8 +552,43 @@ const FriendGame: React.FC<FriendGameProps> = ({ onBackToMenu }) => {
 
   // Main Game Interface
   return (
-    <div style={{ 
-      background: 'linear-gradient(135deg, #FFC30B 0%, #FFD700 50%, #FFC30B 100%)',
+    <>
+      <style>
+        {`
+          @keyframes victoryBounce {
+            0% { transform: scale(0.3) rotate(-10deg); opacity: 0; }
+            50% { transform: scale(1.1) rotate(5deg); opacity: 1; }
+            70% { transform: scale(0.9) rotate(-2deg); }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+          }
+          @keyframes confetti {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            25% { transform: translateY(-20px) rotate(90deg); opacity: 0.8; }
+            50% { transform: translateY(-40px) rotate(180deg); opacity: 0.6; }
+            75% { transform: translateY(-60px) rotate(270deg); opacity: 0.4; }
+            100% { transform: translateY(-80px) rotate(360deg); opacity: 0; }
+          }
+          @keyframes victorySpin {
+            0% { transform: rotate(0deg) scale(1); }
+            25% { transform: rotate(90deg) scale(1.1); }
+            50% { transform: rotate(180deg) scale(1.2); }
+            75% { transform: rotate(270deg) scale(1.1); }
+            100% { transform: rotate(360deg) scale(1); }
+          }
+          @keyframes popIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.05); opacity: 1; }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); opacity: 1; }
+          }
+          @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+          }
+        `}
+      </style>
+      <div style={{ 
+        background: 'linear-gradient(135deg, #FFC30B 0%, #FFD700 50%, #FFC30B 100%)',
       width: '100vw', 
       height: '100vh', 
       display: 'flex', 
@@ -707,6 +910,7 @@ const FriendGame: React.FC<FriendGameProps> = ({ onBackToMenu }) => {
         </div>
       )}
     </div>
+    </>
   );
 };
 

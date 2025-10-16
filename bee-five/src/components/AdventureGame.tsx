@@ -257,44 +257,66 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
       }
       
        if (requiresMatchSystem(currentGame)) {
-         const newPlayerWins = gameState.winner === 1 ? playerWins + 1 : playerWins;
-         const newAiWins = gameState.winner === 2 ? aiWins + 1 : aiWins;
-         
+         // Update scores first
          if (gameState.winner === 1) {
-           setPlayerWins(prev => prev + 1);
-         } else {
-           setAiWins(prev => prev + 1);
-         }
-         
-         const requiredWins = getRequiredWins(currentGame);
-         const totalGames = getTotalGames(currentGame);
-         
-         if (newPlayerWins >= requiredWins || newAiWins >= requiredWins || (currentMatch >= totalGames)) {
-           setIsMatchComplete(true);
-           
-           if (newPlayerWins >= requiredWins) {
-             setGamesWon(prev => prev + 1);
+           setPlayerWins(prev => {
+             const newPlayerWins = prev + 1;
+             const requiredWins = getRequiredWins(currentGame);
+             const totalGames = getTotalGames(currentGame);
              
-            // Match victory message removed
-           } else {
-            // Match defeat message removed
-           }
-           
-           setGamesCompleted(prev => {
-             if (!prev.includes(currentGame)) {
-               return [...prev, currentGame];
+             // Check if match is complete after this win
+             if (newPlayerWins >= requiredWins || (currentMatch > totalGames)) {
+               setIsMatchComplete(true);
+               setGamesWon(prevGames => prevGames + 1);
+               
+               setGamesCompleted(prev => {
+                 if (!prev.includes(currentGame)) {
+                   return [...prev, currentGame];
+                 }
+                 return prev;
+               });
+               
+               // Show results popup for best-of-3 matches with 1 second delay
+               winPopupTimerRef.current = window.setTimeout(() => {
+                 setShowResultsPopup(true);
+                 winPopupTimerRef.current = null;
+               }, 1000);
+             } else {
+               setIsWaitingForNextGame(true);
+               setCountdownTimer(3);
              }
-             return prev;
+             
+             return newPlayerWins;
            });
-           
-           // Show results popup for best-of-3 matches with 1 second delay
-           winPopupTimerRef.current = window.setTimeout(() => {
-             setShowResultsPopup(true);
-             winPopupTimerRef.current = null;
-           }, 1000);
          } else {
-           setIsWaitingForNextGame(true);
-           setCountdownTimer(3);
+           setAiWins(prev => {
+             const newAiWins = prev + 1;
+             const requiredWins = getRequiredWins(currentGame);
+             const totalGames = getTotalGames(currentGame);
+             
+             // Check if match is complete after this win
+             if (newAiWins >= requiredWins || (currentMatch > totalGames)) {
+               setIsMatchComplete(true);
+               
+               setGamesCompleted(prev => {
+                 if (!prev.includes(currentGame)) {
+                   return [...prev, currentGame];
+                 }
+                 return prev;
+               });
+               
+               // Show results popup for best-of-3 matches with 1 second delay
+               winPopupTimerRef.current = window.setTimeout(() => {
+                 setShowResultsPopup(true);
+                 winPopupTimerRef.current = null;
+               }, 1000);
+             } else {
+               setIsWaitingForNextGame(true);
+               setCountdownTimer(3);
+             }
+             
+             return newAiWins;
+           });
          }
        } else {
         const winText = gameState.winner === 1 ? 'You Won!' : 'You Lost';
@@ -343,44 +365,66 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
       setWinMessage(`${winText} 🐝`);
       
        if (requiresMatchSystem(currentGame)) {
-         const newPlayerWins = gameState.currentPlayer === 2 ? playerWins + 1 : playerWins;
-         const newAiWins = gameState.currentPlayer === 1 ? aiWins + 1 : aiWins;
-         
+         // Update scores first
          if (gameState.currentPlayer === 2) {
-           setPlayerWins(prev => prev + 1);
-         } else {
-           setAiWins(prev => prev + 1);
-         }
-         
-         const requiredWins = getRequiredWins(currentGame);
-         const totalGames = getTotalGames(currentGame);
-         
-         if (newPlayerWins >= requiredWins || newAiWins >= requiredWins || (currentMatch >= totalGames)) {
-           setIsMatchComplete(true);
-           
-           if (newPlayerWins >= requiredWins) {
-             setGamesWon(prev => prev + 1);
+           setPlayerWins(prev => {
+             const newPlayerWins = prev + 1;
+             const requiredWins = getRequiredWins(currentGame);
+             const totalGames = getTotalGames(currentGame);
              
-            // Match victory message removed
-           } else {
-            // Match defeat message removed
-           }
-           
-           setGamesCompleted(prev => {
-             if (!prev.includes(currentGame)) {
-               return [...prev, currentGame];
+             // Check if match is complete after this win
+             if (newPlayerWins >= requiredWins || (currentMatch > totalGames)) {
+               setIsMatchComplete(true);
+               setGamesWon(prevGames => prevGames + 1);
+               
+               setGamesCompleted(prev => {
+                 if (!prev.includes(currentGame)) {
+                   return [...prev, currentGame];
+                 }
+                 return prev;
+               });
+               
+               // Show results popup for best-of-3 matches with 1 second delay
+               winPopupTimerRef.current = window.setTimeout(() => {
+                 setShowResultsPopup(true);
+                 winPopupTimerRef.current = null;
+               }, 1000);
+             } else {
+               setIsWaitingForNextGame(true);
+               setCountdownTimer(3);
              }
-             return prev;
+             
+             return newPlayerWins;
            });
-           
-           // Show results popup for best-of-3 matches with 1 second delay
-           winPopupTimerRef.current = window.setTimeout(() => {
-             setShowResultsPopup(true);
-             winPopupTimerRef.current = null;
-           }, 1000);
          } else {
-           setIsWaitingForNextGame(true);
-           setCountdownTimer(3);
+           setAiWins(prev => {
+             const newAiWins = prev + 1;
+             const requiredWins = getRequiredWins(currentGame);
+             const totalGames = getTotalGames(currentGame);
+             
+             // Check if match is complete after this win
+             if (newAiWins >= requiredWins || (currentMatch > totalGames)) {
+               setIsMatchComplete(true);
+               
+               setGamesCompleted(prev => {
+                 if (!prev.includes(currentGame)) {
+                   return [...prev, currentGame];
+                 }
+                 return prev;
+               });
+               
+               // Show results popup for best-of-3 matches with 1 second delay
+               winPopupTimerRef.current = window.setTimeout(() => {
+                 setShowResultsPopup(true);
+                 winPopupTimerRef.current = null;
+               }, 1000);
+             } else {
+               setIsWaitingForNextGame(true);
+               setCountdownTimer(3);
+             }
+             
+             return newAiWins;
+           });
          }
        } else {
         const winText = gameState.currentPlayer === 1 ? 'Time\'s Up - You Lost' : 'Time\'s Up - You Won!';
@@ -411,7 +455,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
         winPopupTimerRef.current = null;
       }
     };
-  }, [gameState.winner, gameState.isGameActive, gameState.timeLeft, gameState.currentPlayer, currentGame, currentMatch, playerWins, aiWins, showStartCountdown, showStoryCarousel, showBeeFact, soundEnabled, gameInitialized]);
+  }, [gameState.winner, gameState.isGameActive, gameState.timeLeft, gameState.currentPlayer, currentGame, currentMatch, showStartCountdown, showStoryCarousel, showBeeFact, soundEnabled, gameInitialized]);
 
   React.useEffect(() => {
     if (gameState.currentPlayer === 2 && gameState.isGameActive && gameState.winner === 0 && gameStarted && !showStartCountdown && !showStoryCarousel && !showBeeFact && gameInitialized) {
@@ -1039,7 +1083,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
        const requiredWins = getRequiredWins(currentGame);
        const totalGames = getTotalGames(currentGame);
        
-      if (playerWins >= requiredWins || aiWins >= requiredWins || currentMatch >= totalGames) {
+      if (playerWins >= requiredWins || aiWins >= requiredWins || currentMatch > totalGames) {
         setIsMatchComplete(true);
         setShowMap(true);
         setGameInitialized(false); // Reset game initialization when returning to map
@@ -1485,6 +1529,26 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
               transform: scale(1.05);
               box-shadow: 0 6px 16px rgba(0,0,0,0.4);
             }
+          }
+          @keyframes victoryBounce {
+            0% { transform: scale(0.3) rotate(-10deg); opacity: 0; }
+            50% { transform: scale(1.1) rotate(5deg); opacity: 1; }
+            70% { transform: scale(0.9) rotate(-2deg); }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+          }
+          @keyframes confetti {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            25% { transform: translateY(-20px) rotate(90deg); opacity: 0.8; }
+            50% { transform: translateY(-40px) rotate(180deg); opacity: 0.6; }
+            75% { transform: translateY(-60px) rotate(270deg); opacity: 0.4; }
+            100% { transform: translateY(-80px) rotate(360deg); opacity: 0; }
+          }
+          @keyframes victorySpin {
+            0% { transform: rotate(0deg) scale(1); }
+            25% { transform: rotate(90deg) scale(1.1); }
+            50% { transform: rotate(180deg) scale(1.2); }
+            75% { transform: rotate(270deg) scale(1.1); }
+            100% { transform: rotate(360deg) scale(1); }
           }
         `}
       </style>
@@ -2201,7 +2265,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
         </div>
       )}
 
-      {/* Results Popup for Best-of-3 Matches */}
+      {/* Enhanced Results Popup for Best-of-3/5 Matches */}
       {showResultsPopup && (
         <div style={{
           position: 'fixed',
@@ -2217,93 +2281,172 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
           animation: 'fadeIn 0.3s ease-out'
         }}>
           <div style={{
-            backgroundColor: currentTheme.cardBackground,
-            padding: '40px',
-            borderRadius: '20px',
-            border: `4px solid ${currentTheme.borderColor}`,
+            background: playerWins > aiWins 
+              ? 'linear-gradient(135deg, #FFD700 0%, #FFC30B 50%, #FFD700 100%)'
+              : 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 50%, #f8f9fa 100%)',
+            padding: '50px',
+            borderRadius: '25px',
+            border: `5px solid ${playerWins > aiWins ? '#FFC30B' : '#6c757d'}`,
             textAlign: 'center',
-            minWidth: '400px',
+            minWidth: '450px',
             maxWidth: '90vw',
             position: 'relative',
-            animation: 'popIn 0.5s ease-out',
-            boxShadow: '0 20px 40px rgba(0,0,0,0.3)'
+            animation: playerWins > aiWins ? 'victoryBounce 0.8s ease-out' : 'popIn 0.5s ease-out',
+            boxShadow: playerWins > aiWins 
+              ? '0 25px 50px rgba(255, 215, 0, 0.4), 0 0 30px rgba(255, 195, 11, 0.6)'
+              : '0 20px 40px rgba(0,0,0,0.3)'
           }}>
+            {/* Celebration Effects for Wins */}
+            {playerWins > aiWins && (
+              <div style={{
+                position: 'absolute',
+                top: '-20px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                fontSize: '3em',
+                animation: 'confetti 2s ease-out infinite'
+              }}>
+                🎊🎉🎊
+              </div>
+            )}
+            
             <div style={{
-              fontSize: '4em',
+              fontSize: '5em',
               marginBottom: '20px',
-              animation: 'bounce 1s ease-out infinite'
+              animation: playerWins > aiWins ? 'victorySpin 1.5s ease-out infinite' : 'bounce 1s ease-out infinite'
             }}>
-              🏆
+              {playerWins > aiWins ? '🏆' : '😔'}
             </div>
             
             <h1 style={{
-              fontSize: '2.5em',
-              color: 'black',
-              marginBottom: '20px',
-              textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
+              fontSize: playerWins > aiWins ? '3em' : '2.5em',
+              color: playerWins > aiWins ? '#B8860B' : '#495057',
+              marginBottom: '15px',
+              textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+              fontWeight: 'bold'
             }}>
-              Match Results
+              {playerWins > aiWins ? 'CONGRATULATIONS!' : 'Match Complete'}
             </h1>
             
             <div style={{
-              fontSize: '1.5em',
-              color: '#333',
-              marginBottom: '20px',
+              fontSize: '1.6em',
+              color: playerWins > aiWins ? '#8B4513' : '#6c757d',
+              marginBottom: '15px',
               fontWeight: 'bold'
             }}>
               {getMatchType(currentGame) === 'best-of-5' ? 'Best of 5 Match' : 'Best of 3 Match'}
             </div>
             
             <div style={{
-              fontSize: '2em',
-              color: playerWins > aiWins ? '#4CAF50' : '#f44336',
+              fontSize: playerWins > aiWins ? '2.5em' : '2em',
+              color: playerWins > aiWins ? '#228B22' : '#dc3545',
               marginBottom: '20px',
-              fontWeight: 'bold'
+              fontWeight: 'bold',
+              textShadow: '1px 1px 2px rgba(0,0,0,0.2)'
             }}>
-              {playerWins > aiWins ? 'Match Won! 🎉' : 'Match Lost'}
+              {playerWins > aiWins ? 'You Won 🎉' : 'You Lost'}
             </div>
             
+            {/* Enhanced Score Display */}
             <div style={{
-              fontSize: '1.2em',
+              fontSize: '1.3em',
               color: '#333',
               marginBottom: '30px',
               display: 'flex',
               justifyContent: 'center',
-              gap: '2rem'
+              gap: '3rem',
+              alignItems: 'center'
             }}>
-              <div>
-                <div style={{ fontWeight: 'bold', color: '#4CAF50' }}>You</div>
-                <div style={{ fontSize: '1.5em' }}>{playerWins}</div>
+              <div style={{
+                backgroundColor: playerWins > aiWins ? '#4CAF50' : '#f44336',
+                color: 'white',
+                padding: '15px 25px',
+                borderRadius: '15px',
+                fontWeight: 'bold',
+                boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
+              }}>
+                <div style={{ fontSize: '0.9em', marginBottom: '5px' }}>You</div>
+                <div style={{ fontSize: '2em' }}>{playerWins}</div>
               </div>
-              <div style={{ fontSize: '1.5em', alignSelf: 'center' }}>vs</div>
-              <div>
-                <div style={{ fontWeight: 'bold', color: '#f44336' }}>AI</div>
-                <div style={{ fontSize: '1.5em' }}>{aiWins}</div>
+              <div style={{ 
+                fontSize: '1.5em', 
+                fontWeight: 'bold',
+                color: '#666'
+              }}>vs</div>
+              <div style={{
+                backgroundColor: playerWins > aiWins ? '#f44336' : '#4CAF50',
+                color: 'white',
+                padding: '15px 25px',
+                borderRadius: '15px',
+                fontWeight: 'bold',
+                boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
+              }}>
+                <div style={{ fontSize: '0.9em', marginBottom: '5px' }}>AI</div>
+                <div style={{ fontSize: '2em' }}>{aiWins}</div>
               </div>
+            </div>
+            
+            {/* Conditional Message */}
+            <div style={{
+              fontSize: '1.2em',
+              color: playerWins > aiWins ? '#8B4513' : '#6c757d',
+              marginBottom: '30px',
+              fontStyle: 'italic',
+              lineHeight: '1.4'
+            }}>
+              {playerWins > aiWins ? (
+                <>
+                  <div style={{ marginBottom: '10px' }}>
+                    🐝 Excellent work, Bee Angel! 🐝
+                  </div>
+                  <div>
+                    You've proven your strategic prowess in this {getMatchType(currentGame) === 'best-of-5' ? '5-game' : '3-game'} showdown!
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div style={{ marginBottom: '10px' }}>
+                    🐝 Don't give up, Bee Angel! 🐝
+                  </div>
+                  <div>
+                    Every defeat is an opportunity to improve
+                  </div>
+                </>
+              )}
             </div>
             
             <div style={{
               display: 'flex',
-              gap: '15px',
+              gap: '20px',
               justifyContent: 'center',
               flexWrap: 'wrap'
             }}>
               <button 
                 onClick={handleResultsPopupNext}
                 style={{
-                  padding: '12px 24px',
-                  fontSize: '1.1em',
+                  padding: '15px 30px',
+                  fontSize: '1.2em',
                   fontWeight: 'bold',
-                  backgroundColor: '#4CAF50',
+                  backgroundColor: playerWins > aiWins ? '#28a745' : '#17a2b8',
                   color: 'white',
-                  border: '2px solid black',
-                  borderRadius: '10px',
+                  border: '3px solid #000',
+                  borderRadius: '15px',
                   cursor: 'pointer',
                   transition: 'all 0.3s ease',
-                  minWidth: '120px'
+                  minWidth: '150px',
+                  boxShadow: '0 6px 12px rgba(0,0,0,0.2)',
+                  textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,0.3)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 6px 12px rgba(0,0,0,0.2)';
                 }}
               >
-                ➡️ Continue
+                {playerWins > aiWins ? '🏆 Continue Adventure' : '🔄 Play Again'}
               </button>
               
               <button 
@@ -2312,19 +2455,29 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
                   onBackToMenu();
                 }}
                 style={{
-                  padding: '12px 24px',
-                  fontSize: '1.1em',
+                  padding: '15px 30px',
+                  fontSize: '1.2em',
                   fontWeight: 'bold',
-                  backgroundColor: '#2196F3',
+                  backgroundColor: '#6c757d',
                   color: 'white',
-                  border: '2px solid black',
-                  borderRadius: '10px',
+                  border: '3px solid #000',
+                  borderRadius: '15px',
                   cursor: 'pointer',
                   transition: 'all 0.3s ease',
-                  minWidth: '120px'
+                  minWidth: '150px',
+                  boxShadow: '0 6px 12px rgba(0,0,0,0.2)',
+                  textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,0.3)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 6px 12px rgba(0,0,0,0.2)';
                 }}
               >
-                Back to Menu
+                🏠 Back to Menu
               </button>
             </div>
             
@@ -2332,15 +2485,18 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
               onClick={() => setShowResultsPopup(false)}
               style={{
                 position: 'absolute',
-                top: '10px',
-                right: '15px',
+                top: '15px',
+                right: '20px',
                 background: 'none',
                 border: 'none',
-                fontSize: '1.5em',
+                fontSize: '2em',
                 cursor: 'pointer',
-                color: 'black',
-                fontWeight: 'bold'
+                color: '#666',
+                fontWeight: 'bold',
+                transition: 'color 0.3s ease'
               }}
+              onMouseEnter={(e) => e.currentTarget.style.color = '#000'}
+              onMouseLeave={(e) => e.currentTarget.style.color = '#666'}
             >
               ×
             </button>

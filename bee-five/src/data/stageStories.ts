@@ -9,7 +9,7 @@ export const stageStories: Record<number, StageStory> = {
   0: {
     title: "🥚 The Sacred Egg - Your Divine Appointment",
     slides: [
-      "The Bee God has appointed you to bee watcher. Your duty starts when a new egg is laid, you are to protect it throughout its entire life, until it becomes a queen bee. You do this in a form of challenges that you must win. With every single victory, the egg becomes stronger and safer.",
+      "The Bee God has appointed you to become a Bee Watcher. Your duty starts when a new egg is laid, you are to protect it throughout its entire life, until it becomes a queen bee. You do this in a form of challenges that you must win. With every single victory, the egg becomes stronger and safer.",
       "Behold—your egg rests in a golden cell, no larger than a grain of rice. Predators lurk. Disease threatens. Temperature must remain perfect. Only through your victories can you shield this fragile beginning from the dangers that surround it."
     ]
   },
