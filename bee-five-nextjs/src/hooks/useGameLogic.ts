@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { checkWinCondition, getWinningPieces, isBoardFull, createEmptyBoard, createBoardWithBlocks, removeTwoBlockedCells, gameEndsWith3, gameEndsWith7After250, gameEndsWith8After600, isMultipleOf7Between500And1000, isMultipleOf4From1000, getProgressiveBlockRules, addProgressiveBlocks, shiftAllBlocks, moveRandomBlockToStrategicPosition, removeOldestPiecesOfPlayer, ageAllPieces, initializePieceAges, generateMudZones, isInMudZone, processMudZoneEffects, gameEndsWith1InSpecifiedRanges, addStrategicBlock, gameEndsWith2SpecificPattern, isMultipleOf50Match2, isMultipleOf50Match3, isMultipleOf50Match4, isMultipleOf17, isMultipleOf10Match1From110, isMultipleOf10Match1From810, isMultipleOf10Match2From30, isMultipleOf10Match2From1200, enforcePieceCapacity, rearrangeBoard, swapOpponentPiecePairs, swapThreeOpponentPiecePairs } from '../utils/gameLogic';
 

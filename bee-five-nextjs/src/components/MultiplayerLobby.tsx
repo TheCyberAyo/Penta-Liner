@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect } from 'react';
 import { simpleMultiplayerClient } from '../utils/simpleMultiplayer';
 import { soundManager } from '../utils/sounds';

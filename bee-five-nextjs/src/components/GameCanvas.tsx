@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { type GameState } from '../hooks/useGameLogic';
 import { GRID_SIZE, CELL_SIZE, BORDER_WIDTH, CANVAS_SIZE, MULTIPLAYER_CELL_SIZE, MULTIPLAYER_CANVAS_SIZE } from '../constants/gameConstants';

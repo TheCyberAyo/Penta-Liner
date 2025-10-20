@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from 'react';
 import { soundManager } from '../utils/sounds';
 import { useTheme, ADVENTURE_THEMES } from '../hooks/useTheme';
