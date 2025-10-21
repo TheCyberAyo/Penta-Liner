@@ -405,17 +405,6 @@ function AIGame({ onBackToMenu, initialDifficulty = 'medium' }: { onBackToMenu: 
     if (soundEnabled) soundManager.playClickSound();
   };
 
-  // AI move logic
-  React.useEffect(() => {
-    if (gameState.currentPlayer === 2 && gameState.isGameActive && gameState.winner === 0) {
-      // AI's turn - make a move after a short delay
-      const timer = setTimeout(() => {
-        makeAIMove();
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [gameState.currentPlayer, gameState.isGameActive, gameState.winner]);
-
   // Track game results for dynamic difficulty
   React.useEffect(() => {
     if (gameState.winner > 0) {
@@ -427,7 +416,17 @@ function AIGame({ onBackToMenu, initialDifficulty = 'medium' }: { onBackToMenu: 
     }
   }, [gameState.winner]);
 
-  const makeAIMove = () => {
+  const getBestAIMove = React.useCallback((availableCells: {row: number, col: number}[]) => {
+    if (aiDifficulty === 'easy') {
+      return getEasyAIMove(availableCells);
+    } else if (aiDifficulty === 'medium') {
+      return getMediumAIMove(availableCells);
+    } else {
+      return getHardAIMove(availableCells);
+    }
+  }, [aiDifficulty]);
+
+  const makeAIMove = React.useCallback(() => {
     // Get available cells
     const availableCells = [];
     for (let row = 0; row < 10; row++) {
@@ -445,19 +444,20 @@ function AIGame({ onBackToMenu, initialDifficulty = 'medium' }: { onBackToMenu: 
 
     // Make the AI move
     handleCellClick(selectedCell.row, selectedCell.col);
-  };
+  }, [gameState.board, handleCellClick, getBestAIMove]);
 
-  const getBestAIMove = (availableCells: {row: number, col: number}[]) => {
-    if (aiDifficulty === 'easy') {
-      return getEasyAIMove(availableCells);
-    } else if (aiDifficulty === 'medium') {
-      return getMediumAIMove(availableCells);
-    } else {
-      return getHardAIMove(availableCells);
+  // AI move logic
+  React.useEffect(() => {
+    if (gameState.currentPlayer === 2 && gameState.isGameActive && gameState.winner === 0) {
+      // AI's turn - make a move after a short delay
+      const timer = setTimeout(() => {
+        makeAIMove();
+      }, 500);
+      return () => clearTimeout(timer);
     }
-  };
+  }, [gameState.currentPlayer, gameState.isGameActive, gameState.winner, makeAIMove]);
 
-  const getEasyAIMove = (availableCells: {row: number, col: number}[]) => {
+  const getEasyAIMove = React.useCallback((availableCells: {row: number, col: number}[]) => {
     // Easy AI: Focus on building 5-in-a-row, only block when human has 4-in-a-row
     
     // Priority 1: Check if AI can win in one move
@@ -500,7 +500,7 @@ function AIGame({ onBackToMenu, initialDifficulty = 'medium' }: { onBackToMenu: 
 
     // Priority 5: Random move
     return availableCells[Math.floor(Math.random() * availableCells.length)];
-  };
+  }, [gameState.board]);
 
   const getMediumAIMove = (availableCells: {row: number, col: number}[]) => {
     // Medium AI: Fixed logic with proper threat detection
@@ -1189,254 +1189,7 @@ function AIGame({ onBackToMenu, initialDifficulty = 'medium' }: { onBackToMenu: 
 
 
 
-  // Minimax algorithm with alpha-beta pruning for optimal move selection
-  const minimax = (board: (0 | 1 | 2)[][], depth: number, alpha: number, beta: number, isMaximizing: boolean, player: 1 | 2): {score: number, move?: {row: number, col: number}} => {
-    // Base cases
-    if (depth === 0) {
-      return { score: evaluateBoardAdvanced(board, player) };
-    }
 
-    const availableCells = getAvailableCells(board);
-    
-    // Check for terminal states
-    for (let cell of availableCells) {
-      const testBoard = board.map(row => [...row]);
-      testBoard[cell.row][cell.col] = player;
-      if (checkWinCondition(testBoard, cell.row, cell.col, player)) {
-        return { score: isMaximizing ? 100000 : -100000, move: cell };
-      }
-    }
-
-    if (availableCells.length === 0) {
-      return { score: 0 }; // Draw
-    }
-
-    let bestMove: {row: number, col: number} | undefined;
-    
-    if (isMaximizing) {
-      let maxScore = -Infinity;
-      for (let cell of availableCells) {
-        const testBoard = board.map(row => [...row]);
-        testBoard[cell.row][cell.col] = player;
-        
-        const result = minimax(testBoard, depth - 1, alpha, beta, false, player === 1 ? 2 : 1);
-        const score = result.score;
-        
-        if (score > maxScore) {
-          maxScore = score;
-          bestMove = cell;
-        }
-        
-        alpha = Math.max(alpha, score);
-        if (beta <= alpha) {
-          break; // Alpha-beta pruning
-        }
-      }
-      return { score: maxScore, move: bestMove };
-    } else {
-      let minScore = Infinity;
-      for (let cell of availableCells) {
-        const testBoard = board.map(row => [...row]);
-        testBoard[cell.row][cell.col] = player;
-        
-        const result = minimax(testBoard, depth - 1, alpha, beta, true, player === 1 ? 2 : 1);
-        const score = result.score;
-        
-        if (score < minScore) {
-          minScore = score;
-          bestMove = cell;
-        }
-        
-        beta = Math.min(beta, score);
-        if (beta <= alpha) {
-          break; // Alpha-beta pruning
-        }
-      }
-      return { score: minScore, move: bestMove };
-    }
-  };
-
-  // Advanced evaluation function with weighted scoring
-  const evaluateBoardAdvanced = (board: (0 | 1 | 2)[][], player: 1 | 2): number => {
-    let score = 0;
-    const opponent = player === 1 ? 2 : 1;
-    
-    // Evaluate all positions on the board
-    for (let row = 0; row < 10; row++) {
-      for (let col = 0; col < 10; col++) {
-        if (board[row][col] === player) {
-          score += evaluatePositionAdvanced(board, row, col, player);
-        } else if (board[row][col] === opponent) {
-          score -= evaluatePositionAdvanced(board, row, col, opponent);
-        }
-      }
-    }
-    
-    // Bonus for center control
-    score += getCenterControlBonus(board, player);
-    
-    // Bonus for mobility (available moves)
-    score += getMobilityBonus(board);
-    
-    // Bonus for threat patterns
-    score += getThreatPatternBonus(board, player);
-    
-    return score;
-  };
-
-  const evaluatePositionAdvanced = (board: (0 | 1 | 2)[][], row: number, col: number, player: 1 | 2): number => {
-    let score = 0;
-    const directions = [[0, 1], [1, 0], [1, 1], [1, -1]];
-    
-    for (let [dr, dc] of directions) {
-      const lineScore = evaluateLineAdvanced(board, row, col, dr, dc, player);
-      score += lineScore;
-    }
-    
-    return score;
-  };
-
-  const evaluateLineAdvanced = (board: (0 | 1 | 2)[][], row: number, col: number, dr: number, dc: number, player: 1 | 2): number => {
-    let count = 1; // Count the current piece
-    let emptySpaces = 0;
-    let blocked = false;
-    
-    // Check both directions
-    for (let direction = -1; direction <= 1; direction += 2) {
-      for (let i = 1; i <= 4; i++) {
-        const newRow = row + (dr * i * direction);
-        const newCol = col + (dc * i * direction);
-        
-        if (newRow < 0 || newRow >= 10 || newCol < 0 || newCol >= 10) {
-          blocked = true;
-          break;
-        }
-        
-        if (board[newRow][newCol] === player) {
-          count++;
-        } else if (board[newRow][newCol] === 0) {
-          emptySpaces++;
-        } else {
-          blocked = true;
-          break;
-        }
-      }
-    }
-    
-    // Advanced scoring based on line potential and threats
-    if (count >= 5) return 100000; // Win
-    if (count === 4 && emptySpaces >= 1) return 10000; // 4-in-a-row
-    if (count === 3 && emptySpaces >= 2) return 1000; // 3-in-a-row
-    if (count === 2 && emptySpaces >= 3) return 100; // 2-in-a-row
-    if (count === 1 && emptySpaces >= 4) return 10; // 1-in-a-row
-    
-    // Bonus for unblocked lines
-    if (!blocked) {
-      return 5;
-    }
-    
-    return 0;
-  };
-
-  const getCenterControlBonus = (board: (0 | 1 | 2)[][], player: 1 | 2): number => {
-    let bonus = 0;
-    const centerCells = [
-      [4, 4], [4, 5], [5, 4], [5, 5],
-      [3, 4], [3, 5], [4, 3], [4, 6],
-      [5, 3], [5, 6], [6, 4], [6, 5]
-    ];
-    
-    for (let [row, col] of centerCells) {
-      if (board[row][col] === player) {
-        bonus += 10;
-      } else if (board[row][col] !== 0) {
-        bonus -= 10;
-      }
-    }
-    
-    return bonus;
-  };
-
-  const getMobilityBonus = (board: (0 | 1 | 2)[][]): number => {
-    const availableCells = getAvailableCells(board);
-    return availableCells.length * 2; // More available moves = better position
-  };
-
-  const getThreatPatternBonus = (board: (0 | 1 | 2)[][], player: 1 | 2): number => {
-    let bonus = 0;
-    
-    // Check for forks (multiple threats)
-    const forks = detectForks(board, player);
-    bonus += forks * 500;
-    
-    // Check for double threats
-    const doubleThreats = detectDoubleThreats(board, player);
-    bonus += doubleThreats * 200;
-    
-    return bonus;
-  };
-
-  const detectForks = (board: (0 | 1 | 2)[][], player: 1 | 2): number => {
-    let forkCount = 0;
-    const availableCells = getAvailableCells(board);
-    
-    for (let cell of availableCells) {
-      const testBoard = board.map(row => [...row]);
-      testBoard[cell.row][cell.col] = player;
-      
-      let threats = 0;
-      const directions = [[0, 1], [1, 0], [1, 1], [1, -1]];
-      
-      for (let _ of directions) {
-        if (checkThreeInARow(testBoard, cell.row, cell.col, player)) {
-          threats++;
-        }
-      }
-      
-      if (threats >= 2) {
-        forkCount++;
-      }
-    }
-    
-    return forkCount;
-  };
-
-  const detectDoubleThreats = (board: (0 | 1 | 2)[][], player: 1 | 2): number => {
-    let doubleThreatCount = 0;
-    const availableCells = getAvailableCells(board);
-    
-    for (let cell of availableCells) {
-      const testBoard = board.map(row => [...row]);
-      testBoard[cell.row][cell.col] = player;
-      
-      let threats = 0;
-      const directions = [[0, 1], [1, 0], [1, 1], [1, -1]];
-      
-      for (let _ of directions) {
-        if (checkTwoInARow(testBoard, cell.row, cell.col, player)) {
-          threats++;
-        }
-      }
-      
-      if (threats >= 2) {
-        doubleThreatCount++;
-      }
-    }
-    
-    return doubleThreatCount;
-  };
-
-  const getAvailableCells = (board: (0 | 1 | 2)[][]): {row: number, col: number}[] => {
-    const cells = [];
-    for (let row = 0; row < 10; row++) {
-      for (let col = 0; col < 10; col++) {
-        if (board[row][col] === 0) {
-          cells.push({ row, col });
-        }
-      }
-    }
-    return cells;
-  };
 
 
   const findThreatCells = (availableCells: {row: number, col: number}[], player: 1 | 2) => {
