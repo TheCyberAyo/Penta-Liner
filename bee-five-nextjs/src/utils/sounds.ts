@@ -172,6 +172,26 @@ class SoundGenerator {
     }
   }
 
+  // Play countdown sound synchronized with countdown number
+  playCountdownSound(countdownNumber: number) {
+    if (this.isMuted || countdownNumber < 1 || countdownNumber > 3) return;
+
+    try {
+      // Try to load individual countdown sound files
+      const audio = new Audio(`/countdown_${countdownNumber}.m4a`);
+      audio.volume = this.volume;
+      audio.play().catch(error => {
+        // Fallback to click sound if countdown files don't exist
+        console.warn(`Could not play countdown ${countdownNumber} sound:`, error);
+        this.playClickSound();
+      });
+    } catch (error) {
+      // Fallback to click sound if countdown files don't exist
+      console.warn(`Error loading countdown ${countdownNumber} sound:`, error);
+      this.playClickSound();
+    }
+  }
+
   // Volume and mute controls
   setVolume(volume: number) {
     this.volume = Math.max(0, Math.min(1, volume));

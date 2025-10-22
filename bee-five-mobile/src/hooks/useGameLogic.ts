@@ -7,17 +7,17 @@ export interface GameState {
   isGameActive: boolean;
   winner: 0 | 1 | 2;
   timeLeft: number;
-  humanMoveCount: number; // Track human moves for disappearing blocks
-  pieceAges: number[][]; // Track how long pieces have been on the board
-  player1MoveCount: number; // Track moves made by player 1
-  player2MoveCount: number; // Track moves made by player 2
-  mudZones: { row: number; col: number }[]; // Track mud zone positions
-  stuckPieces: { [key: string]: number }; // Track pieces stuck in mud (key: "row,col", value: turns remaining)
-  isBlindPlay: boolean; // Track if game is in blind play mode
-  totalMoveCount: number; // Track total moves made in the game
-  blockShiftMoveCount: number; // Track moves for block shifting timing
-  blindPlayTriggerMove: number; // Track the move number when blind play was triggered
-  winningPieces: { row: number; col: number }[]; // Track the 5 pieces that won the game
+  humanMoveCount: number;
+  pieceAges: number[][];
+  player1MoveCount: number;
+  player2MoveCount: number;
+  mudZones: { row: number; col: number }[];
+  stuckPieces: { [key: string]: number };
+  isBlindPlay: boolean;
+  totalMoveCount: number;
+  blockShiftMoveCount: number;
+  blindPlayTriggerMove: number;
+  winningPieces: { row: number; col: number }[];
 }
 
 export interface UseGameLogicOptions {
@@ -45,11 +45,11 @@ export const useGameLogic = (options: UseGameLogicOptions) => {
     mudZones: gameNumber ? generateMudZones(gameNumber) : [],
     stuckPieces: {},
     isBlindPlay: gameNumber ? (gameEndsWith2SpecificPattern(gameNumber) || isMultipleOf50Match2(gameNumber, currentMatch)) : false,
-      totalMoveCount: 0,
-      blockShiftMoveCount: 0,
-      blindPlayTriggerMove: 0,
-      winningPieces: []
-    });
+    totalMoveCount: 0,
+    blockShiftMoveCount: 0,
+    blindPlayTriggerMove: 0,
+    winningPieces: []
+  });
 
   // Update time limit when game number changes
   useEffect(() => {
@@ -62,7 +62,7 @@ export const useGameLogic = (options: UseGameLogicOptions) => {
   // Update board when game number changes
   useEffect(() => {
     setGameState(prevState => ({
-              ...prevState,
+      ...prevState,
       board: gameNumber ? createBoardWithBlocks(gameNumber, gameEndsWith2SpecificPattern(gameNumber) || isMultipleOf50Match2(gameNumber, currentMatch), currentMatch) : createEmptyBoard(),
       currentPlayer: startingPlayer,
       isGameActive: true,
@@ -81,7 +81,6 @@ export const useGameLogic = (options: UseGameLogicOptions) => {
       winningPieces: []
     }));
   }, [gameNumber, startingPlayer, timeLimit, currentMatch]);
-
 
   // Handle cell click
   const handleCellClick = useCallback((row: number, col: number) => {
@@ -191,7 +190,6 @@ export const useGameLogic = (options: UseGameLogicOptions) => {
       if (newBlockShiftMoveCount % 2 === 0) {
         updatedBoard = shiftAllBlocks(updatedBoard);
       }
-      // Note: Block shifting doesn't affect piece ages since it only moves blocks, not pieces
     }
     
     // Handle block shifting for games ending with 8 after game 600
@@ -200,7 +198,6 @@ export const useGameLogic = (options: UseGameLogicOptions) => {
       if (newBlockShiftMoveCount % 5 === 0) {
         updatedBoard = shiftAllBlocks(updatedBoard);
       }
-      // Note: Block shifting doesn't affect piece ages since it only moves blocks, not pieces
     }
 
     // Handle strategic block movement for games ending with 9 from game 400
@@ -223,7 +220,7 @@ export const useGameLogic = (options: UseGameLogicOptions) => {
       // These games should have blind play for the entire game
       shouldBeBlindPlay = true;
       newBlindPlayTriggerMove = 0; // No trigger move needed for persistent blind play
-        } else {
+    } else {
       // For all other games (temporary blind play only):
       
       // Handle temporary blind play for multiples of 10 from game 110 in match 1/3
@@ -281,7 +278,7 @@ export const useGameLogic = (options: UseGameLogicOptions) => {
     }
 
     setGameState(prevState => ({
-        ...prevState,
+      ...prevState,
       board: updatedBoard,
       currentPlayer: prevState.currentPlayer === 1 ? 2 : 1,
       winner,
