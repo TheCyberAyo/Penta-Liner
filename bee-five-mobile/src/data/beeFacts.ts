@@ -252,3 +252,4 @@ export const getBeeFactForGame = (gameNumber: number): string | null => {
   const factIndex = Math.floor((gameNumber - 1) / 10) % beeFacts.length;
   return beeFacts[factIndex];
 };
+

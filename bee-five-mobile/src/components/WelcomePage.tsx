@@ -1,11 +1,17 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { soundManager } from '../utils/sounds';
 
 interface WelcomePageProps {
-  onGameModeSelect: (gameMode: 'local' | 'online' | 'ai') => void;
+  onGameModeSelect: (gameMode: 'local' | 'online' | 'ai' | 'adventure') => void;
 }
 
 const WelcomePage: React.FC<WelcomePageProps> = ({ onGameModeSelect }) => {
+  const handleGameModeSelect = (gameMode: 'local' | 'online' | 'ai' | 'adventure') => {
+    soundManager.playClickSound();
+    onGameModeSelect(gameMode);
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.contentContainer}>
@@ -18,19 +24,25 @@ const WelcomePage: React.FC<WelcomePageProps> = ({ onGameModeSelect }) => {
             <View style={styles.modeSelection}>
               <TouchableOpacity
                 style={styles.modeButton}
-                onPress={() => onGameModeSelect('local')}
+                onPress={() => handleGameModeSelect('adventure')}
+              >
+                <Text style={styles.modeButtonText}>Adventure Map</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.modeButton}
+                onPress={() => handleGameModeSelect('local')}
               >
                 <Text style={styles.modeButtonText}>Take Turns</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.modeButton}
-                onPress={() => onGameModeSelect('online')}
+                onPress={() => handleGameModeSelect('online')}
               >
                 <Text style={styles.modeButtonText}>Online Play</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.modeButton}
-                onPress={() => onGameModeSelect('ai')}
+                onPress={() => handleGameModeSelect('ai')}
               >
                 <Text style={styles.modeButtonText}>Play AI</Text>
               </TouchableOpacity>

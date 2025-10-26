@@ -928,3 +928,4 @@ export const getTimeLimitForLevel = (gameNumber: number): number => {
     return 15;
   }
 };
+

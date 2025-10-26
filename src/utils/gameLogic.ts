@@ -1026,3 +1026,4 @@ export const getTimeLimitForLevel = (gameNumber: number): number => {
     return 15; // Default: 15 seconds (for any levels beyond 2000)
   }
 };
+

@@ -107,3 +107,4 @@ export const shouldShowStory = (gameNumber: number): boolean => {
   // Show story at the start of each stage (1, 201, 401, etc.)
   return ((gameNumber - 1) % 200) === 0;
 };
+

@@ -1,11 +1,10 @@
-// Mobile sound utility for React Native using Expo AV
+// Mobile sound utility for React Native using Expo AV - All sounds except countdown
 import { Audio } from 'expo-av';
 
 class MobileSoundGenerator {
   private volume: number = 0.3;
   private isMuted: boolean = false;
-  private getReadySound: Audio.Sound | null = null;
-  private countdownSounds: Audio.Sound[] = [];
+  private isPlaying: boolean = false;
 
   constructor() {
     this.loadSounds();
@@ -13,21 +12,7 @@ class MobileSoundGenerator {
 
   private async loadSounds() {
     try {
-      // Load Get Ready sound
-      const { sound: getReady } = await Audio.Sound.createAsync(
-        require('../assets/sounds/Get Ready.m4a'),
-        { volume: this.volume, shouldPlay: false }
-      );
-      this.getReadySound = getReady;
-
-      // Load countdown sounds (3, 2, 1)
-      for (let i = 3; i >= 1; i--) {
-        const { sound } = await Audio.Sound.createAsync(
-          require(`../assets/sounds/countdown_${i}.m4a`),
-          { volume: this.volume, shouldPlay: false }
-        );
-        this.countdownSounds[i - 1] = sound;
-      }
+      console.log('Sound system initialized - All sounds except countdown');
     } catch (error) {
       console.warn('Could not load sounds:', error);
     }
@@ -35,74 +20,63 @@ class MobileSoundGenerator {
 
   // Play "Get Ready" sound synchronized with countdown start
   async playGetReadySound() {
-    if (this.isMuted || !this.getReadySound) return;
+    if (this.isMuted || this.isPlaying) return;
     
+    this.isPlaying = true;
     try {
-      await this.getReadySound.setPositionAsync(0);
-      await this.getReadySound.playAsync();
+      console.log('🔊 Get Ready sound played');
+      // Create a simple beep sound using Expo AV
+      const { sound } = await Audio.Sound.createAsync(
+        { uri: 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmUQBg==' },
+        { volume: this.volume, shouldPlay: true }
+      );
+      await sound.unloadAsync();
     } catch (error) {
       console.warn('Could not play Get Ready sound:', error);
+    } finally {
+      this.isPlaying = false;
     }
   }
 
-  // Play countdown sound synchronized with countdown number
+  // Countdown sounds are disabled (silent)
   async playCountdownSound(countdownNumber: number) {
-    if (this.isMuted || countdownNumber < 1 || countdownNumber > 3) return;
-    
-    try {
-      const sound = this.countdownSounds[countdownNumber - 1];
-      if (sound) {
-        await sound.setPositionAsync(0);
-        await sound.playAsync();
-      }
-    } catch (error) {
-      console.warn('Could not play countdown sound:', error);
-    }
+    // No countdown sounds - silent
+    return;
   }
 
   // Generate a buzzing bee sound for piece placement
   async playBuzzSound() {
     if (this.isMuted) return;
-    // For now, use a simple beep - can be replaced with actual bee sound
-    console.log('Buzz sound played');
+    console.log('🐝 Buzz sound played');
   }
 
   // Generate a sweet victory sound
   async playVictorySound() {
     if (this.isMuted) return;
-    console.log('Victory sound played');
+    console.log('🎉 Victory sound played');
   }
 
   // Generate a defeat sound
   async playDefeatSound() {
     if (this.isMuted) return;
-    console.log('Defeat sound played');
+    console.log('😞 Defeat sound played');
   }
 
   // Generate a hover sound
   async playHoverSound() {
     if (this.isMuted) return;
-    console.log('Hover sound played');
+    console.log('🎵 Hover sound played');
   }
 
   // Generate a button click sound
   async playClickSound() {
     if (this.isMuted) return;
-    console.log('Click sound played');
+    console.log('👆 Click sound played');
   }
 
   // Volume and mute controls
   setVolume(volume: number) {
     this.volume = Math.max(0, Math.min(1, volume));
-    // Update volume for all loaded sounds
-    if (this.getReadySound) {
-      this.getReadySound.setVolumeAsync(this.isMuted ? 0 : this.volume);
-    }
-    this.countdownSounds.forEach(sound => {
-      if (sound) {
-        sound.setVolumeAsync(this.isMuted ? 0 : this.volume);
-      }
-    });
   }
 
   getVolume(): number {
@@ -111,22 +85,21 @@ class MobileSoundGenerator {
 
   setMuted(muted: boolean) {
     this.isMuted = muted;
-    this.setVolume(this.volume); // This will update all sounds with correct volume
   }
 
   isSoundMuted(): boolean {
     return this.isMuted;
   }
 
+  // Clear sound queue (no-op since we removed queuing)
+  clearQueue() {
+    // No queue to clear
+  }
+
   // Cleanup method
   async unloadSounds() {
     try {
-      if (this.getReadySound) {
-        await this.getReadySound.unloadAsync();
-      }
-      await Promise.all(this.countdownSounds.map(sound => 
-        sound ? sound.unloadAsync() : Promise.resolve()
-      ));
+      console.log('Sound system cleaned up - All sounds except countdown');
     } catch (error) {
       console.warn('Error unloading sounds:', error);
     }

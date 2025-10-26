@@ -33,11 +33,24 @@ const FriendGame: React.FC<FriendGameProps> = ({ onBackToMenu }) => {
   const [showWinPopup, setShowWinPopup] = useState(false);
   const [winMessage, setWinMessage] = useState('');
   const [countdown, setCountdown] = useState(3);
+  const [isMobile, setIsMobile] = useState(false);
   
   const [timeLimit] = useState(15);
   const { gameState, handleCellClick, resetGame } = useGameLogic({
     timeLimit
   });
+
+  // Initialize mobile detection
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Initialize sound manager settings
   useEffect(() => {
@@ -145,7 +158,6 @@ const FriendGame: React.FC<FriendGameProps> = ({ onBackToMenu }) => {
     setShowSetupModal(false);
     
     // Reset the game with the correct starting player (Player 1 goes first in Game 1)
-    console.log(`Game 1: ${player1Name} starts first`);
     resetGame(1);
     if (soundEnabled) soundManager.playClickSound();
   };
@@ -211,11 +223,6 @@ const FriendGame: React.FC<FriendGameProps> = ({ onBackToMenu }) => {
     }
   };
 
-  const calculateResponsiveSizes = () => {
-    return window.innerWidth <= 768;
-  };
-
-  const isMobile = calculateResponsiveSizes();
 
   // Setup Modal
   if (showSetupModal) {
@@ -231,32 +238,34 @@ const FriendGame: React.FC<FriendGameProps> = ({ onBackToMenu }) => {
       }}>
         <div style={{
           background: 'rgba(255, 255, 255, 0.95)',
-          borderRadius: '20px',
-          padding: '2rem',
+          borderRadius: isMobile ? '16px' : '20px',
+          padding: isMobile ? '1.5rem 1rem' : '2rem',
           width: '90%',
           maxWidth: '500px',
           boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
           backdropFilter: 'blur(10px)',
-          textAlign: 'center'
+          textAlign: 'center',
+          maxHeight: isMobile ? '90vh' : 'auto',
+          overflowY: isMobile ? 'auto' : 'visible'
         }}>
           <h1 style={{
-            fontSize: '2.5em',
+            fontSize: isMobile ? '2em' : '2.5em',
             color: '#FFC30B',
             textShadow: '2px 2px 0px black',
-            marginBottom: '1rem'
+            marginBottom: isMobile ? '0.75rem' : '1rem'
           }}>
             🏆 Tournament 🏆
           </h1>
           
           <p style={{
-            fontSize: '1.2em',
+            fontSize: isMobile ? '1rem' : '1.2em',
             color: '#333',
-            marginBottom: '2rem'
+            marginBottom: isMobile ? '1.5rem' : '2rem'
           }}>
             Set up your match!
           </p>
 
-          <FriendGameSetup onStart={startNewGameSeries} />
+          <FriendGameSetup onStart={startNewGameSeries} isMobile={isMobile} />
         </div>
       </div>
     );
@@ -919,9 +928,10 @@ const FriendGame: React.FC<FriendGameProps> = ({ onBackToMenu }) => {
 // Setup Component
 interface FriendGameSetupProps {
   onStart: (player1Name: string, player2Name: string, totalGames: number) => void;
+  isMobile: boolean;
 }
 
-const FriendGameSetup: React.FC<FriendGameSetupProps> = ({ onStart }) => {
+const FriendGameSetup: React.FC<FriendGameSetupProps> = ({ onStart, isMobile }) => {
   const [player1Name, setPlayer1Name] = useState('');
   const [player2Name, setPlayer2Name] = useState('');
   const [totalGames, setTotalGames] = useState(5);
@@ -939,7 +949,8 @@ const FriendGameSetup: React.FC<FriendGameSetupProps> = ({ onStart }) => {
           display: 'block', 
           marginBottom: '0.5rem', 
           fontWeight: 'bold', 
-          color: '#333' 
+          color: '#333',
+          fontSize: isMobile ? '0.95rem' : '1rem'
         }}>
           Player 1 Name (Black pieces):
         </label>
@@ -950,11 +961,13 @@ const FriendGameSetup: React.FC<FriendGameSetupProps> = ({ onStart }) => {
           placeholder="Enter Player 1 name"
           style={{
             width: '100%',
-            padding: '0.75rem',
-            fontSize: '1rem',
+            padding: isMobile ? '1rem' : '0.75rem',
+            fontSize: isMobile ? '1.1rem' : '1rem',
             border: '2px solid #ddd',
             borderRadius: '8px',
-            backgroundColor: '#f9f9f9'
+            backgroundColor: '#f9f9f9',
+            minHeight: isMobile ? '48px' : 'auto',
+            boxSizing: 'border-box'
           }}
         />
       </div>
@@ -964,7 +977,8 @@ const FriendGameSetup: React.FC<FriendGameSetupProps> = ({ onStart }) => {
           display: 'block', 
           marginBottom: '0.5rem', 
           fontWeight: 'bold', 
-          color: '#333' 
+          color: '#333',
+          fontSize: isMobile ? '0.95rem' : '1rem'
         }}>
           Player 2 Name (Yellow pieces):
         </label>
@@ -975,11 +989,13 @@ const FriendGameSetup: React.FC<FriendGameSetupProps> = ({ onStart }) => {
           placeholder="Enter Player 2 name"
           style={{
             width: '100%',
-            padding: '0.75rem',
-            fontSize: '1rem',
+            padding: isMobile ? '1rem' : '0.75rem',
+            fontSize: isMobile ? '1.1rem' : '1rem',
             border: '2px solid #ddd',
             borderRadius: '8px',
-            backgroundColor: '#f9f9f9'
+            backgroundColor: '#f9f9f9',
+            minHeight: isMobile ? '48px' : 'auto',
+            boxSizing: 'border-box'
           }}
         />
       </div>
@@ -989,16 +1005,21 @@ const FriendGameSetup: React.FC<FriendGameSetupProps> = ({ onStart }) => {
           display: 'block', 
           marginBottom: '0.5rem', 
           fontWeight: 'bold', 
-          color: '#333' 
+          color: '#333',
+          fontSize: isMobile ? '0.95rem' : '1rem'
         }}>
           Number of Games:
         </label>
-        <div style={{ display: 'flex', gap: '1rem' }}>
+        <div style={{ 
+          display: 'flex', 
+          gap: '1rem',
+          flexDirection: isMobile ? 'column' : 'row'
+        }}>
           <button
             onClick={() => setTotalGames(5)}
             style={{
-              padding: '0.75rem 1.5rem',
-              fontSize: '1rem',
+              padding: isMobile ? '1rem 1.5rem' : '0.75rem 1.5rem',
+              fontSize: isMobile ? '1.1rem' : '1rem',
               fontWeight: 'bold',
               backgroundColor: totalGames === 5 ? '#4CAF50' : '#f0f0f0',
               color: totalGames === 5 ? 'white' : '#333',
@@ -1006,7 +1027,11 @@ const FriendGameSetup: React.FC<FriendGameSetupProps> = ({ onStart }) => {
               borderRadius: '8px',
               cursor: 'pointer',
               transition: 'all 0.3s ease',
-              flex: 1
+              flex: isMobile ? 'none' : 1,
+              width: isMobile ? '100%' : 'auto',
+              minHeight: isMobile ? '56px' : 'auto',
+              touchAction: 'manipulation',
+              WebkitTapHighlightColor: 'transparent'
             }}
           >
             5 Games
@@ -1014,8 +1039,8 @@ const FriendGameSetup: React.FC<FriendGameSetupProps> = ({ onStart }) => {
           <button
             onClick={() => setTotalGames(7)}
             style={{
-              padding: '0.75rem 1.5rem',
-              fontSize: '1rem',
+              padding: isMobile ? '1rem 1.5rem' : '0.75rem 1.5rem',
+              fontSize: isMobile ? '1.1rem' : '1rem',
               fontWeight: 'bold',
               backgroundColor: totalGames === 7 ? '#4CAF50' : '#f0f0f0',
               color: totalGames === 7 ? 'white' : '#333',
@@ -1023,7 +1048,11 @@ const FriendGameSetup: React.FC<FriendGameSetupProps> = ({ onStart }) => {
               borderRadius: '8px',
               cursor: 'pointer',
               transition: 'all 0.3s ease',
-              flex: 1
+              flex: isMobile ? 'none' : 1,
+              width: isMobile ? '100%' : 'auto',
+              minHeight: isMobile ? '56px' : 'auto',
+              touchAction: 'manipulation',
+              WebkitTapHighlightColor: 'transparent'
             }}
           >
             7 Games
@@ -1036,15 +1065,18 @@ const FriendGameSetup: React.FC<FriendGameSetupProps> = ({ onStart }) => {
         disabled={!player1Name.trim() || !player2Name.trim()}
         style={{
           width: '100%',
-          padding: '1rem',
-          fontSize: '1.2em',
+          padding: isMobile ? '1.25rem' : '1rem',
+          fontSize: isMobile ? '1.3em' : '1.2em',
           fontWeight: 'bold',
           backgroundColor: (!player1Name.trim() || !player2Name.trim()) ? '#ccc' : '#4CAF50',
           color: 'white',
           border: '2px solid black',
           borderRadius: '10px',
           cursor: (!player1Name.trim() || !player2Name.trim()) ? 'not-allowed' : 'pointer',
-          transition: 'all 0.3s ease'
+          transition: 'all 0.3s ease',
+          minHeight: isMobile ? '60px' : 'auto',
+          touchAction: 'manipulation',
+          WebkitTapHighlightColor: 'transparent'
         }}
       >
         Start Match!

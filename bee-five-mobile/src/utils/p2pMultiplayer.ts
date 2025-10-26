@@ -27,3 +27,4 @@ export const joinRoom = (roomId: string): RoomInfo => {
     maxPlayers: 2,
   };
 };
+

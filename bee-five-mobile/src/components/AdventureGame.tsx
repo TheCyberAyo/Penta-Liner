@@ -2,33 +2,23 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, Alert } from 'react-native';
 import { useGameLogic } from '../hooks/useGameLogic';
 import GameCanvas from './GameCanvas';
+import BeeAdventureMap from './BeeAdventureMap';
+import BeeLifeStageEffects from './BeeLifeStageEffects';
 import { soundManager } from '../utils/sounds';
 import { getAdventureStartingPlayer, getTimeLimitForLevel } from '../utils/gameLogic';
 import { getBeeFactForGame, shouldShowStory, getStoryForGame } from '../data/beeFacts';
+import { useTheme } from '../hooks/useTheme';
 
 interface AdventureGameProps {
-  gameNumber: number;
-  matchNumber: number;
   onBackToMenu: () => void;
-  onNextGame: () => void;
-  gameState: any;
-  handleCellClick: (row: number, col: number) => void;
-  resetGame: (startingPlayer?: 1 | 2) => void;
-  updateGameState: (newState: any) => void;
-  timeLimit: number;
 }
 
 const AdventureGame: React.FC<AdventureGameProps> = ({
-  gameNumber,
-  matchNumber,
   onBackToMenu,
-  onNextGame,
-  gameState,
-  handleCellClick,
-  resetGame,
-  updateGameState,
-  timeLimit,
 }) => {
+  const [currentGame, setCurrentGame] = useState(1);
+  const [gamesCompleted, setGamesCompleted] = useState<number[]>([]);
+  const [showMap, setShowMap] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [volume, setVolume] = useState(0.3);
   const [showStartCountdown, setShowStartCountdown] = useState(false);
@@ -39,6 +29,17 @@ const AdventureGame: React.FC<AdventureGameProps> = ({
   const [showStageStory, setShowStageStory] = useState(false);
   const [currentStageStory, setCurrentStageStory] = useState<{ title: string; slides: string[] } | null>(null);
   const [storySlideIndex, setStorySlideIndex] = useState(0);
+
+  // Get theme for current game
+  const { currentTheme } = useTheme({ gameNumber: currentGame });
+
+  // Game logic hook for adventure mode
+  const { gameState, handleCellClick, resetGame, updateGameState } = useGameLogic({
+    timeLimit: getTimeLimitForLevel(currentGame),
+    startingPlayer: 1,
+    gameNumber: currentGame,
+    currentMatch: 1,
+  });
 
   useEffect(() => {
     soundManager.setVolume(volume);
@@ -58,45 +59,96 @@ const AdventureGame: React.FC<AdventureGameProps> = ({
     }
   }, [showStartCountdown, startCountdown]);
 
-  // Play "Get Ready" sound when countdown starts (synchronized)
+  // Play "Get Ready" sound only when countdown starts
   useEffect(() => {
     if (showStartCountdown && startCountdown === 3 && soundEnabled) {
       soundManager.playGetReadySound();
     }
   }, [showStartCountdown, startCountdown, soundEnabled]);
 
-  // Play countdown sounds synchronized with countdown numbers
-  useEffect(() => {
-    if (showStartCountdown && startCountdown >= 1 && startCountdown <= 3 && soundEnabled) {
-      soundManager.playCountdownSound(startCountdown);
+  const handleGameSelect = (gameNumber: number) => {
+    setCurrentGame(gameNumber);
+    setShowMap(false);
+    
+    // Show story if available
+    if (shouldShowStory(gameNumber)) {
+      const story = getStoryForGame(gameNumber);
+      if (story) {
+        setCurrentStageStory(story);
+        setStorySlideIndex(0);
+        setShowStageStory(true);
+        return;
+      }
     }
-  }, [showStartCountdown, startCountdown, soundEnabled]);
+    
+    // Show bee fact
+    const fact = getBeeFactForGame(gameNumber);
+    if (fact) {
+      setCurrentBeeFact(fact);
+      setShowBeeFact(true);
+    } else {
+      // Start countdown directly if no fact
+      setStartCountdown(3);
+      setShowStartCountdown(true);
+    }
+  };
+
+  const handleBackToMap = () => {
+    setShowMap(true);
+    setGameStarted(false);
+    setShowStartCountdown(false);
+  };
 
   const handleNextStorySlide = useCallback(() => {
     if (currentStageStory && storySlideIndex < currentStageStory.slides.length - 1) {
       setStorySlideIndex(prev => prev + 1);
     } else {
       setShowStageStory(false);
-      const fact = getBeeFactForGame(gameNumber);
+      const fact = getBeeFactForGame(currentGame);
       if (fact) {
         setCurrentBeeFact(fact);
         setShowBeeFact(true);
+      } else {
+        setStartCountdown(3);
+        setShowStartCountdown(true);
       }
     }
-  }, [currentStageStory, storySlideIndex, gameNumber]);
+  }, [currentStageStory, storySlideIndex, currentGame]);
 
   const handleCloseBeeFact = useCallback(() => {
     setShowBeeFact(false);
-    // Start countdown after closing bee fact
     setStartCountdown(3);
     setShowStartCountdown(true);
   }, []);
 
-  const handleStartGame = useCallback(() => {
-    setStartCountdown(3);
-    setShowStartCountdown(true);
-    setGameStarted(false);
-  }, []);
+  const handleGameComplete = (gameNumber: number) => {
+    if (!gamesCompleted.includes(gameNumber)) {
+      setGamesCompleted(prev => [...prev, gameNumber]);
+    }
+    // Return to map after game completion
+    setTimeout(() => {
+      handleBackToMap();
+    }, 2000);
+  };
+
+  // Handle game completion when winner is determined
+  useEffect(() => {
+    if (gameState.winner > 0) {
+      handleGameComplete(currentGame);
+    }
+  }, [gameState.winner, currentGame]);
+
+  // Show map if showMap is true
+  if (showMap) {
+    return (
+      <BeeAdventureMap
+        currentGame={currentGame}
+        gamesCompleted={gamesCompleted}
+        onGameSelect={handleGameSelect}
+        onBackToMenu={onBackToMenu}
+      />
+    );
+  }
 
   const renderGameContent = () => {
     if (showStartCountdown) {
@@ -112,8 +164,13 @@ const AdventureGame: React.FC<AdventureGameProps> = ({
       return (
         <View style={styles.startContainer}>
           <Text style={styles.gameTitle}>Bee-Five Adventure</Text>
-          <Text style={styles.levelText}>Level {gameNumber} - Match {matchNumber}</Text>
-          <TouchableOpacity style={styles.startButton} onPress={handleStartGame}>
+          <Text style={styles.levelText}>Game {currentGame}</Text>
+          <TouchableOpacity style={styles.startButton} onPress={() => {
+            soundManager.playClickSound();
+            setStartCountdown(3);
+            setShowStartCountdown(true);
+            setGameStarted(false);
+          }}>
             <Text style={styles.startButtonText}>Start Game</Text>
           </TouchableOpacity>
         </View>
@@ -123,29 +180,36 @@ const AdventureGame: React.FC<AdventureGameProps> = ({
     return (
       <View style={styles.gameContainer}>
         <View style={styles.gameHeader}>
-          <Text style={styles.gameTitle}>Level {gameNumber} - Match {matchNumber}</Text>
-          <Text style={styles.timerText}>Time: {gameState.timeLeft}s</Text>
+          <Text style={styles.gameTitle}>Bee-Five Adventure</Text>
+          <Text style={styles.levelText}>Game {currentGame}</Text>
+          <Text style={styles.timer}>Time Left: {gameState.timeLeft}s</Text>
         </View>
-        
-        <GameCanvas
-          board={gameState.board}
-          onCellClick={handleCellClick}
-          winningPieces={gameState.winningPieces}
-          isBlindPlay={gameState.isBlindPlay}
-          mudZones={gameState.mudZones}
-        />
-        
-        <View style={styles.gameInfo}>
-          <Text style={styles.playerText}>
-            Current Player: {gameState.currentPlayer === 1 ? 'Black' : 'Yellow'}
-          </Text>
+
+        <View style={styles.gameBoard}>
+          <GameCanvas
+            gameState={gameState}
+            onCellClick={handleCellClick}
+            onGameStateChange={updateGameState}
+          />
         </View>
-        
-        <View style={styles.controls}>
-          <TouchableOpacity style={styles.controlButton} onPress={() => resetGame()}>
+
+        <View style={styles.gameControls}>
+          <TouchableOpacity style={styles.controlButton} onPress={() => {
+            soundManager.playClickSound();
+            resetGame();
+          }}>
             <Text style={styles.controlButtonText}>Reset</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.controlButton} onPress={onBackToMenu}>
+          <TouchableOpacity style={styles.controlButton} onPress={() => {
+            soundManager.playClickSound();
+            handleBackToMap();
+          }}>
+            <Text style={styles.controlButtonText}>Back to Map</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.controlButton} onPress={() => {
+            soundManager.playClickSound();
+            onBackToMenu();
+          }}>
             <Text style={styles.controlButtonText}>Back to Menu</Text>
           </TouchableOpacity>
         </View>
@@ -154,47 +218,55 @@ const AdventureGame: React.FC<AdventureGameProps> = ({
   };
 
   return (
-    <View style={styles.container}>
-      {renderGameContent()}
+    <BeeLifeStageEffects theme={currentTheme}>
+      <View style={[styles.container, { backgroundColor: currentTheme.backgroundColor }]}>
+        {renderGameContent()}
 
-      {/* Bee Fact Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={showBeeFact}
-        onRequestClose={handleCloseBeeFact}
-      >
-        <View style={styles.centeredView}>
-          <View style={styles.modalView}>
-            <Text style={styles.modalTitle}>Did you know?</Text>
-            <Text style={styles.modalText}>{currentBeeFact}</Text>
-            <TouchableOpacity style={styles.modalButton} onPress={handleCloseBeeFact}>
-              <Text style={styles.modalButtonText}>Got it!</Text>
-            </TouchableOpacity>
+        {/* Bee Fact Modal */}
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={showBeeFact}
+          onRequestClose={handleCloseBeeFact}
+        >
+          <View style={styles.centeredView}>
+            <View style={[styles.modalView, { backgroundColor: currentTheme.cardBackground }]}>
+              <Text style={[styles.modalTitle, { color: currentTheme.textColor }]}>Did you know?</Text>
+              <Text style={[styles.modalText, { color: currentTheme.textColor }]}>{currentBeeFact}</Text>
+              <TouchableOpacity style={[styles.modalButton, { backgroundColor: currentTheme.buttonColor }]} onPress={() => {
+                soundManager.playClickSound();
+                handleCloseBeeFact();
+              }}>
+                <Text style={[styles.modalButtonText, { color: currentTheme.textColor }]}>Got it!</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </Modal>
+        </Modal>
 
-      {/* Stage Story Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={showStageStory}
-        onRequestClose={() => setShowStageStory(false)}
-      >
-        <View style={styles.centeredView}>
-          <View style={styles.modalView}>
-            <Text style={styles.modalTitle}>{currentStageStory?.title}</Text>
-            <Text style={styles.modalText}>{currentStageStory?.slides[storySlideIndex]}</Text>
-            <TouchableOpacity style={styles.modalButton} onPress={handleNextStorySlide}>
-              <Text style={styles.modalButtonText}>
-                {storySlideIndex < (currentStageStory?.slides.length || 0) - 1 ? 'Next' : 'Continue'}
-              </Text>
-            </TouchableOpacity>
+        {/* Stage Story Modal */}
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={showStageStory}
+          onRequestClose={() => setShowStageStory(false)}
+        >
+          <View style={styles.centeredView}>
+            <View style={[styles.modalView, { backgroundColor: currentTheme.cardBackground }]}>
+              <Text style={[styles.modalTitle, { color: currentTheme.textColor }]}>{currentStageStory?.title}</Text>
+              <Text style={[styles.modalText, { color: currentTheme.textColor }]}>{currentStageStory?.slides[storySlideIndex]}</Text>
+              <TouchableOpacity style={[styles.modalButton, { backgroundColor: currentTheme.buttonColor }]} onPress={() => {
+                soundManager.playClickSound();
+                handleNextStorySlide();
+              }}>
+                <Text style={[styles.modalButtonText, { color: currentTheme.textColor }]}>
+                  {storySlideIndex < (currentStageStory?.slides.length || 0) - 1 ? 'Next' : 'Continue'}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </Modal>
-    </View>
+        </Modal>
+      </View>
+    </BeeLifeStageEffects>
   );
 };
 
@@ -235,7 +307,7 @@ const styles = StyleSheet.create({
   levelText: {
     fontSize: 18,
     color: '#666',
-    marginBottom: 30,
+    marginBottom: 20,
     textAlign: 'center',
   },
   startButton: {
@@ -243,9 +315,10 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     paddingHorizontal: 30,
     borderRadius: 10,
+    alignItems: 'center',
   },
   startButtonText: {
-    color: 'white',
+    color: '#FFF',
     fontSize: 18,
     fontWeight: 'bold',
   },
@@ -255,51 +328,48 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   gameHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 20,
   },
-  timerText: {
+  timer: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
+    marginTop: 10,
   },
-  gameInfo: {
+  gameBoard: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginVertical: 15,
   },
-  playerText: {
-    fontSize: 18,
-    color: '#333',
-  },
-  controls: {
+  gameControls: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginTop: 20,
   },
   controlButton: {
     backgroundColor: '#333',
-    paddingVertical: 10,
+    paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,
+    flex: 0.3,
   },
   controlButtonText: {
-    color: 'white',
-    fontSize: 16,
+    color: '#FFF',
     fontWeight: 'bold',
+    fontSize: 14,
+    textAlign: 'center',
   },
   centeredView: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
   },
   modalView: {
     margin: 20,
-    backgroundColor: 'white',
     borderRadius: 20,
-    padding: 35,
+    padding: 30,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: {
@@ -309,29 +379,28 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
+    minWidth: 300,
+    maxWidth: '90%',
   },
   modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
     marginBottom: 15,
     textAlign: 'center',
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: 'black',
   },
   modalText: {
-    marginBottom: 15,
-    textAlign: 'center',
     fontSize: 16,
-    color: 'black',
+    marginBottom: 20,
+    textAlign: 'center',
+    lineHeight: 24,
   },
   modalButton: {
-    backgroundColor: 'black',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    marginTop: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 10,
+    alignItems: 'center',
   },
   modalButtonText: {
-    color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
   },

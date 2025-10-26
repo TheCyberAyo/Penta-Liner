@@ -32,23 +32,36 @@ export const useGameLogic = (options: UseGameLogicOptions) => {
   const { timeLimit, startingPlayer = 1, gameNumber = 1, currentMatch = 1, pauseTimer = false } = options;
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const [gameState, setGameState] = useState<GameState>({
-    board: gameNumber ? createBoardWithBlocks(gameNumber, gameEndsWith2SpecificPattern(gameNumber) || isMultipleOf50Match2(gameNumber, currentMatch), currentMatch) : createEmptyBoard(),
-    currentPlayer: startingPlayer,
-    isGameActive: true,
-    winner: 0,
-    timeLeft: timeLimit,
-    humanMoveCount: 0,
-    pieceAges: initializePieceAges(),
-    player1MoveCount: 0,
-    player2MoveCount: 0,
-    mudZones: gameNumber ? generateMudZones(gameNumber) : [],
-    stuckPieces: {},
-    isBlindPlay: gameNumber ? (gameEndsWith2SpecificPattern(gameNumber) || isMultipleOf50Match2(gameNumber, currentMatch)) : false,
-    totalMoveCount: 0,
-    blockShiftMoveCount: 0,
-    blindPlayTriggerMove: 0,
-    winningPieces: []
+  const [gameState, setGameState] = useState<GameState>(() => {
+    const initialBoard = gameNumber ? createBoardWithBlocks(gameNumber, gameEndsWith2SpecificPattern(gameNumber) || isMultipleOf50Match2(gameNumber, currentMatch), currentMatch) : createEmptyBoard();
+    
+    // Debug logging
+    console.log('useGameLogic initial state:', {
+      gameNumber,
+      boardExists: !!initialBoard,
+      boardSize: initialBoard?.length,
+      startingPlayer,
+      timeLimit
+    });
+    
+    return {
+      board: initialBoard,
+      currentPlayer: startingPlayer,
+      isGameActive: true,
+      winner: 0,
+      timeLeft: timeLimit,
+      humanMoveCount: 0,
+      pieceAges: initializePieceAges(),
+      player1MoveCount: 0,
+      player2MoveCount: 0,
+      mudZones: gameNumber ? generateMudZones(gameNumber) : [],
+      stuckPieces: {},
+      isBlindPlay: gameNumber ? (gameEndsWith2SpecificPattern(gameNumber) || isMultipleOf50Match2(gameNumber, currentMatch)) : false,
+      totalMoveCount: 0,
+      blockShiftMoveCount: 0,
+      blindPlayTriggerMove: 0,
+      winningPieces: []
+    };
   });
 
   // Update time limit when game number changes
@@ -380,3 +393,4 @@ export const useGameLogic = (options: UseGameLogicOptions) => {
     updateGameState
   };
 };
+
