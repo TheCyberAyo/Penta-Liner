@@ -14,6 +14,7 @@ interface BattleGameProps {
   battleGamesPlayed: number;
   setBattleGamesPlayed: (games: number) => void;
   setBattleWinner: (winner: string) => void;
+  showBattleWinnerModal: boolean;
   setShowBattleWinnerModal: (show: boolean) => void;
   onBackToMenu: () => void;
 }
@@ -26,7 +27,8 @@ export default function BattleGame({
   setBattleScores, 
   battleGamesPlayed, 
   setBattleGamesPlayed, 
-  setBattleWinner, 
+  setBattleWinner,
+  showBattleWinnerModal,
   setShowBattleWinnerModal, 
   onBackToMenu 
 }: BattleGameProps) {
@@ -71,9 +73,22 @@ export default function BattleGame({
   const [winMessage, setWinMessage] = useState('');
   const [showWinPopup, setShowWinPopup] = useState(false);
   const gameCompletedRef = useRef(false);
+  const [battleComplete, setBattleComplete] = useState(false);
+  const isResettingRef = useRef(false);
+
+  // Wrapper for handleCellClick that prevents moves when battle is complete
+  const handleCellClickWrapper = (row: number, col: number) => {
+    if (battleComplete) {
+      return; // Don't allow moves when battle is complete
+    }
+    handleCellClick(row, col);
+  };
 
   // Handle game completion
   useEffect(() => {
+    // Don't process any more games if battle is complete or winner modal is showing or if we're resetting
+    if (battleComplete || showBattleWinnerModal || isResettingRef.current) return;
+
     if (gameState.winner > 0 && !gameCompletedRef.current) {
       gameCompletedRef.current = true;
       
@@ -98,7 +113,10 @@ export default function BattleGame({
       if (newGamesPlayed >= battleLength) {
         const battleWinner = newScores.player1 > newScores.player2 ? player1Name : player2Name;
         setBattleWinner(battleWinner);
+        setBattleComplete(true);
+        // Close win popup and show final winner modal after a short delay
         setTimeout(() => {
+          setShowWinPopup(false);
           setShowBattleWinnerModal(true);
         }, 2000);
       }
@@ -108,22 +126,26 @@ export default function BattleGame({
       } else {
         soundManager.playDefeatSound();
       }
-    } else if (!gameState.isGameActive && gameState.winner === 0) {
+    } else if (!gameState.isGameActive && gameState.winner === 0 && !battleComplete) {
       setWinMessage('Game Over - Draw! 🐝');
       setShowWinPopup(true);
-    } else if (gameState.timeLeft === 0) {
+    } else if (gameState.timeLeft === 0 && !battleComplete) {
       const winner = gameState.currentPlayer === 1 ? player2Name : player1Name;
       setWinMessage(`${winner} wins due to time limit! 🐝`);
       setShowWinPopup(true);
     }
     
-    // Reset the ref when a new game starts
-    if (gameState.isGameActive && gameState.winner === 0) {
+    // Reset the ref when a new game starts (but only if battle is not complete)
+    if (gameState.isGameActive && gameState.winner === 0 && !battleComplete) {
       gameCompletedRef.current = false;
     }
-  }, [gameState.winner, gameState.isGameActive, gameState.timeLeft, gameState.currentPlayer, player1Name, player2Name, battleLength, setBattleScores, setBattleGamesPlayed, setBattleWinner, setShowBattleWinnerModal]);
+  }, [gameState.winner, gameState.isGameActive, gameState.timeLeft, gameState.currentPlayer, player1Name, player2Name, battleLength, battleComplete, showBattleWinnerModal, battleScores, battleGamesPlayed, setBattleScores, setBattleGamesPlayed, setBattleWinner, setShowBattleWinnerModal]);
 
   const handleNextGame = () => {
+    // Don't allow next game if battle is complete
+    if (battleGamesPlayed >= battleLength) {
+      return;
+    }
     setShowWinPopup(false);
     // Calculate the starting player for the next game
     const nextStartingPlayer = ((battleGamesPlayed + 1) % 2) === 0 ? 1 : 2;
@@ -131,14 +153,34 @@ export default function BattleGame({
   };
 
   const handlePlayAgain = () => {
+    // Set resetting flag to prevent popups during reset
+    isResettingRef.current = true;
+    
+    // Close all modals
     setShowWinPopup(false);
+    setShowBattleWinnerModal(false);
+    
+    // Reset all states
+    setBattleComplete(false);
+    gameCompletedRef.current = false;
+    setWinMessage('');
+    
+    // Reset scores and games played
     setBattleScores({ player1: 0, player2: 0 });
     setBattleGamesPlayed(0);
-    gameCompletedRef.current = false;
-    resetGame(1); // Start with player 1 when playing again
+    
+    // Reset game board after a short delay to ensure state updates complete
+    setTimeout(() => {
+      resetGame(1); // Start with player 1 when playing again
+      // Clear the resetting flag after reset completes
+      setTimeout(() => {
+        isResettingRef.current = false;
+      }, 200);
+    }, 100);
   };
 
   const handleBackToMenu = () => {
+    setShowBattleWinnerModal(false);
     onBackToMenu();
   };
 
@@ -350,7 +392,7 @@ export default function BattleGame({
         }}>
           <GameCanvas
             gameState={gameState}
-            onCellClick={handleCellClick}
+            onCellClick={handleCellClickWrapper}
           />
         </div>
       </div>
@@ -510,6 +552,221 @@ export default function BattleGame({
           </div>
         </div>
       )}
+
+      {/* Final Winner Announcement Modal */}
+      {showBattleWinnerModal && (() => {
+        const finalWinner = battleScores.player1 > battleScores.player2 ? player1Name : player2Name;
+        const finalWinnerScore = battleScores.player1 > battleScores.player2 ? battleScores.player1 : battleScores.player2;
+        const finalLoserScore = battleScores.player1 > battleScores.player2 ? battleScores.player2 : battleScores.player1;
+        const isTie = battleScores.player1 === battleScores.player2;
+        
+        return (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            backgroundColor: 'rgba(0, 0, 0, 0.9)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 2000,
+            padding: isMobile ? '1rem' : '2rem'
+          }}>
+            <div style={{
+              backgroundColor: '#FFC30B',
+              padding: isMobile ? '1.5rem 1.25rem' : '3rem',
+              borderRadius: isMobile ? '16px' : '25px',
+              border: '5px solid black',
+              textAlign: 'center',
+              width: isMobile ? '100%' : 'auto',
+              minWidth: isMobile ? 'auto' : '400px',
+              maxWidth: isMobile ? '100%' : '90vw',
+              position: 'relative',
+              boxShadow: '0 25px 50px rgba(0,0,0,0.4)',
+              boxSizing: 'border-box',
+              animation: 'victoryBounce 1s ease-out'
+            }}>
+              {/* Celebration Icon */}
+              <div style={{
+                fontSize: '5em',
+                marginBottom: '20px',
+                animation: 'victorySpin 2s ease-out infinite'
+              }}>
+                {isTie ? '🤝' : '🏆'}
+              </div>
+              
+              {/* Title */}
+              <h1 style={{
+                fontSize: isMobile ? '2em' : '3em',
+                color: isTie ? '#6c757d' : '#8B4513',
+                marginBottom: '15px',
+                textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+                fontWeight: 'bold'
+              }}>
+                {isTie ? 'It\'s a Tie! 🤝' : 'BATTLE COMPLETE! 🎉'}
+              </h1>
+              
+              {/* Winner Announcement */}
+              {!isTie && (
+                <h2 style={{
+                  fontSize: isMobile ? '1.8em' : '2.2em',
+                  color: '#228B22',
+                  marginBottom: '20px',
+                  fontWeight: 'bold',
+                  textShadow: '1px 1px 2px rgba(0,0,0,0.2)'
+                }}>
+                  {finalWinner} WINS! 🎊
+                </h2>
+              )}
+              
+              {/* Final Score Display */}
+              <div style={{
+                fontSize: '1.3em',
+                color: '#333',
+                marginBottom: '25px',
+                display: 'flex',
+                justifyContent: 'center',
+                gap: '2rem',
+                alignItems: 'center',
+                flexWrap: 'wrap'
+              }}>
+                <div style={{
+                  backgroundColor: battleScores.player1 > battleScores.player2 ? '#4CAF50' : (isTie ? '#17a2b8' : '#f44336'),
+                  color: 'white',
+                  padding: '15px 25px',
+                  borderRadius: '15px',
+                  fontWeight: 'bold',
+                  boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
+                }}>
+                  <div style={{ fontSize: '0.9em', marginBottom: '5px' }}>{player1Name}</div>
+                  <div style={{ fontSize: '2em' }}>{battleScores.player1}</div>
+                </div>
+                <div style={{ 
+                  fontSize: '1.5em', 
+                  fontWeight: 'bold',
+                  color: '#666'
+                }}>vs</div>
+                <div style={{
+                  backgroundColor: battleScores.player2 > battleScores.player1 ? '#4CAF50' : (isTie ? '#17a2b8' : '#f44336'),
+                  color: 'white',
+                  padding: '15px 25px',
+                  borderRadius: '15px',
+                  fontWeight: 'bold',
+                  boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
+                }}>
+                  <div style={{ fontSize: '0.9em', marginBottom: '5px' }}>{player2Name}</div>
+                  <div style={{ fontSize: '2em' }}>{battleScores.player2}</div>
+                </div>
+              </div>
+              
+              {/* Message */}
+              <div style={{
+                fontSize: '1.2em',
+                color: isTie ? '#6c757d' : '#8B4513',
+                marginBottom: '30px',
+                fontStyle: 'italic',
+                lineHeight: '1.4'
+              }}>
+                {isTie ? (
+                  <>
+                    🐝 What an epic battle! 🐝
+                    <br />
+                    Both players showed incredible skill!
+                  </>
+                ) : (
+                  <>
+                    🐝 Outstanding performance, {finalWinner}! 🐝
+                    <br />
+                    You won {finalWinnerScore} games to {finalLoserScore} in this epic {battleLength}-game battle!
+                  </>
+                )}
+              </div>
+              
+              {/* Action Buttons */}
+              <div style={{
+                display: 'flex',
+                gap: '20px',
+                justifyContent: 'center',
+                flexWrap: 'wrap'
+              }}>
+                <button
+                  onClick={handlePlayAgain}
+                  style={{
+                    padding: '15px 30px',
+                    fontSize: '1.2em',
+                    fontWeight: 'bold',
+                    backgroundColor: '#4CAF50',
+                    color: 'white',
+                    border: '3px solid black',
+                    borderRadius: '15px',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    minWidth: '150px',
+                    boxShadow: '0 6px 12px rgba(0,0,0,0.2)',
+                    textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,0.3)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 6px 12px rgba(0,0,0,0.2)';
+                  }}
+                >
+                  {isTie ? '🔄 Rematch' : '🏆 New Battle'}
+                </button>
+                
+                <button
+                  onClick={handleBackToMenu}
+                  style={{
+                    padding: '15px 30px',
+                    fontSize: '1.2em',
+                    fontWeight: 'bold',
+                    backgroundColor: '#6c757d',
+                    color: 'white',
+                    border: '3px solid black',
+                    borderRadius: '15px',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    minWidth: '150px',
+                    boxShadow: '0 6px 12px rgba(0,0,0,0.2)',
+                    textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,0.3)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 6px 12px rgba(0,0,0,0.2)';
+                  }}
+                >
+                  🏠 Back to Menu
+                </button>
+              </div>
+              
+              <style>{`
+                @keyframes victoryBounce {
+                  0% { transform: scale(0.3) rotate(-10deg); opacity: 0; }
+                  50% { transform: scale(1.1) rotate(5deg); opacity: 1; }
+                  70% { transform: scale(0.9) rotate(-2deg); }
+                  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+                }
+                @keyframes victorySpin {
+                  0% { transform: rotate(0deg) scale(1); }
+                  25% { transform: rotate(90deg) scale(1.1); }
+                  50% { transform: rotate(180deg) scale(1.2); }
+                  75% { transform: rotate(270deg) scale(1.1); }
+                  100% { transform: rotate(360deg) scale(1); }
+                }
+              `}</style>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

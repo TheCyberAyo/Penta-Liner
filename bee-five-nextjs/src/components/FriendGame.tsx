@@ -34,11 +34,20 @@ const FriendGame: React.FC<FriendGameProps> = ({ onBackToMenu }) => {
   const [winMessage, setWinMessage] = useState('');
   const [countdown, setCountdown] = useState(3);
   const [isMobile, setIsMobile] = useState(false);
+  const [seriesComplete, setSeriesComplete] = useState(false);
   
   const [timeLimit] = useState(15);
   const { gameState, handleCellClick, resetGame } = useGameLogic({
     timeLimit
   });
+
+  // Wrapper for handleCellClick that prevents moves when series is complete
+  const handleCellClickWrapper = (row: number, col: number) => {
+    if (seriesComplete || showGameOverModal) {
+      return; // Don't allow moves when series is complete
+    }
+    handleCellClick(row, col);
+  };
 
   // Initialize mobile detection
   useEffect(() => {
@@ -60,6 +69,9 @@ const FriendGame: React.FC<FriendGameProps> = ({ onBackToMenu }) => {
 
   // Show popup when individual game ends
   useEffect(() => {
+    // Don't process if series is complete or modals are showing
+    if (seriesComplete || showGameOverModal) return;
+
     if (gameState.winner > 0 && gameSeries) {
       const winnerName = gameState.winner === 1 ? gameSeries.player1Name : gameSeries.player2Name;
       setWinMessage(`${winnerName} wins Game ${gameSeries.currentGame}! 🐝`);
@@ -140,7 +152,7 @@ const FriendGame: React.FC<FriendGameProps> = ({ onBackToMenu }) => {
         setCountdown(0);
       }
     }
-  }, [gameState.winner, gameState.isGameActive, gameState.timeLeft, gameState.currentPlayer, gameSeries]);
+  }, [gameState.winner, gameState.isGameActive, gameState.timeLeft, gameState.currentPlayer, gameSeries, seriesComplete, showGameOverModal]);
 
   const startNewGameSeries = (player1Name: string, player2Name: string, totalGames: number) => {
     const newSeries: GameSeries = {
@@ -156,6 +168,7 @@ const FriendGame: React.FC<FriendGameProps> = ({ onBackToMenu }) => {
     
     setGameSeries(newSeries);
     setShowSetupModal(false);
+    setSeriesComplete(false); // Reset series complete status
     
     // Reset the game with the correct starting player (Player 1 goes first in Game 1)
     resetGame(1);
@@ -184,6 +197,7 @@ const FriendGame: React.FC<FriendGameProps> = ({ onBackToMenu }) => {
 
     // Check if series is complete
     if (updatedSeries.currentGame > updatedSeries.totalGames) {
+      setSeriesComplete(true);
       setShowGameOverModal(true);
     }
 
@@ -192,6 +206,9 @@ const FriendGame: React.FC<FriendGameProps> = ({ onBackToMenu }) => {
 
   const startNextGame = () => {
     if (!gameSeries) return;
+    
+    // Don't allow starting a new game if series is complete
+    if (seriesComplete) return;
     
     // Handle the end of the current game and get the updated series
     const updatedSeries = handleGameEnd();
@@ -495,6 +512,7 @@ const FriendGame: React.FC<FriendGameProps> = ({ onBackToMenu }) => {
             <button
               onClick={() => {
                 setShowGameOverModal(false);
+                setSeriesComplete(false);
                 setShowSetupModal(true);
                 if (soundEnabled) soundManager.playClickSound();
               }}
@@ -527,6 +545,7 @@ const FriendGame: React.FC<FriendGameProps> = ({ onBackToMenu }) => {
             <button
               onClick={() => {
                 setShowGameOverModal(false);
+                setSeriesComplete(false);
                 onBackToMenu();
                 if (soundEnabled) soundManager.playClickSound();
               }}
@@ -772,7 +791,7 @@ const FriendGame: React.FC<FriendGameProps> = ({ onBackToMenu }) => {
         }}>
           <GameCanvas
             gameState={gameState}
-            onCellClick={handleCellClick}
+            onCellClick={handleCellClickWrapper}
           />
         </div>
       </div>

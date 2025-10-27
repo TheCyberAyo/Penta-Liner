@@ -70,6 +70,7 @@ export default function SimpleWelcome() {
         battleGamesPlayed={competitionGamesPlayed}
         setBattleGamesPlayed={setCompetitionGamesPlayed}
         setBattleWinner={setCompetitionWinner}
+        showBattleWinnerModal={showCompetitionWinnerModal}
         setShowBattleWinnerModal={setShowCompetitionWinnerModal}
         onBackToMenu={() => setGameMode('menu')}
       />
@@ -322,7 +323,7 @@ export default function SimpleWelcome() {
           padding: isMobile ? '0 1rem 0.5rem' : '0'
         }}>
           <p style={{ margin: 0 }}>
-            &copy; 2025 Bee-Five. Made with 🐝 and ❤️
+            🐝 &copy; 2025 Bee-Five. Product of MindGrind 🐝
           </p>
         </footer>
 
@@ -756,7 +757,7 @@ export default function SimpleWelcome() {
           padding: isMobile ? '0 1rem 0.5rem' : '0'
         }}>
           <p style={{ margin: 0 }}>
-            &copy; 2025 Bee-Five. Made with 🐝 and ❤️
+            🐝 &copy; 2025 Bee-Five. Product of MindGrind 🐝
           </p>
         </footer>
 
@@ -787,18 +788,18 @@ export default function SimpleWelcome() {
               position: 'relative'
             }}>
               <h2 style={{
-                fontSize: isMobile ? '1.5em' : '2em',
+                fontSize: isMobile ? '1.3em' : '1.5em',
                 color: 'black',
-                marginBottom: isMobile ? '1rem' : '1.5rem',
+                marginBottom: isMobile ? '0.5rem' : '0.75rem',
                 textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
               }}>
                 🤖 Select Difficulty 🤖
               </h2>
               
               <p style={{
-                fontSize: isMobile ? '1rem' : '1.1em',
+                fontSize: isMobile ? '0.9em' : '0.95em',
                 color: '#333',
-                marginBottom: isMobile ? '1.5rem' : '2rem'
+                marginBottom: isMobile ? '1rem' : '1.25rem'
               }}>
                 Choose the AI difficulty level:
               </p>
@@ -806,8 +807,8 @@ export default function SimpleWelcome() {
               <div style={{ 
                 display: 'flex',
                 flexDirection: 'column',
-                gap: isMobile ? '0.75rem' : '1rem',
-                marginBottom: isMobile ? '1.5rem' : '2rem'
+                gap: isMobile ? '0.5rem' : '0.6rem',
+                marginBottom: isMobile ? '1rem' : '1.25rem'
               }}>
                 <button
                   onClick={() => {
@@ -817,8 +818,8 @@ export default function SimpleWelcome() {
                     soundManager.playClickSound();
                   }}
                   style={{
-                    padding: isMobile ? '1rem 1.25rem' : '0.75rem 1.5rem',
-                    fontSize: isMobile ? '1.05rem' : '1rem',
+                    padding: isMobile ? '0.75rem 1rem' : '0.6rem 1.25rem',
+                    fontSize: isMobile ? '0.95rem' : '0.9em',
                     backgroundColor: '#4CAF50',
                     color: 'white',
                     border: '2px solid black',
@@ -826,9 +827,10 @@ export default function SimpleWelcome() {
                     cursor: 'pointer',
                     fontWeight: 'bold',
                     transition: 'all 0.3s ease',
-                    minHeight: isMobile ? '52px' : 'auto',
+                    minHeight: isMobile ? '48px' : 'auto',
                     touchAction: 'manipulation',
-                    WebkitTapHighlightColor: 'transparent'
+                    WebkitTapHighlightColor: 'transparent',
+                    width: '100%'
                   }}
                 >
                   🟢 Easy
@@ -842,8 +844,8 @@ export default function SimpleWelcome() {
                     soundManager.playClickSound();
                   }}
                   style={{
-                    padding: isMobile ? '1rem 1.25rem' : '0.75rem 1.5rem',
-                    fontSize: isMobile ? '1.05rem' : '1rem',
+                    padding: isMobile ? '0.75rem 1rem' : '0.6rem 1.25rem',
+                    fontSize: isMobile ? '0.95rem' : '0.9em',
                     backgroundColor: '#FF9800',
                     color: 'white',
                     border: '2px solid black',
@@ -851,9 +853,10 @@ export default function SimpleWelcome() {
                     cursor: 'pointer',
                     fontWeight: 'bold',
                     transition: 'all 0.3s ease',
-                    minHeight: isMobile ? '52px' : 'auto',
+                    minHeight: isMobile ? '48px' : 'auto',
                     touchAction: 'manipulation',
-                    WebkitTapHighlightColor: 'transparent'
+                    WebkitTapHighlightColor: 'transparent',
+                    width: '100%'
                   }}
                 >
                   🟠 Medium
@@ -867,8 +870,8 @@ export default function SimpleWelcome() {
                     soundManager.playClickSound();
                   }}
                   style={{
-                    padding: isMobile ? '1rem 1.25rem' : '0.75rem 1.5rem',
-                    fontSize: isMobile ? '1.05rem' : '1rem',
+                    padding: isMobile ? '0.75rem 1rem' : '0.6rem 1.25rem',
+                    fontSize: isMobile ? '0.95rem' : '0.9em',
                     backgroundColor: '#F44336',
                     color: 'white',
                     border: '2px solid black',
@@ -876,9 +879,10 @@ export default function SimpleWelcome() {
                     cursor: 'pointer',
                     fontWeight: 'bold',
                     transition: 'all 0.3s ease',
-                    minHeight: isMobile ? '52px' : 'auto',
+                    minHeight: isMobile ? '48px' : 'auto',
                     touchAction: 'manipulation',
-                    WebkitTapHighlightColor: 'transparent'
+                    WebkitTapHighlightColor: 'transparent',
+                    width: '100%'
                   }}
                 >
                   🔴 Hard
@@ -1154,7 +1158,7 @@ export default function SimpleWelcome() {
           padding: isMobile ? '0 1rem 0.5rem' : '0'
         }}>
           <p style={{ margin: 0 }}>
-            &copy; 2025 Bee-Five. Made with 🐝 and ❤️
+            🐝 &copy; 2025 Bee-Five. Product of MindGrind 🐝
           </p>
         </footer>
       </div>
@@ -1396,18 +1400,18 @@ export default function SimpleWelcome() {
             position: 'relative'
           }}>
             <h2 style={{
-              fontSize: isMobile ? '1.5em' : '2em',
+              fontSize: isMobile ? '1.3em' : '1.5em',
               color: 'black',
-              marginBottom: isMobile ? '1rem' : '1.5rem',
+              marginBottom: isMobile ? '0.5rem' : '0.75rem',
               textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
             }}>
               🤖 Select Difficulty 🤖
             </h2>
             
             <p style={{
-              fontSize: isMobile ? '1rem' : '1.1em',
+              fontSize: isMobile ? '0.9em' : '0.95em',
               color: '#333',
-              marginBottom: isMobile ? '1.5rem' : '2rem'
+              marginBottom: isMobile ? '1rem' : '1.25rem'
             }}>
               Choose the AI difficulty level:
             </p>
@@ -1415,8 +1419,8 @@ export default function SimpleWelcome() {
             <div style={{ 
               display: 'flex',
               flexDirection: 'column',
-              gap: isMobile ? '0.75rem' : '1rem',
-              marginBottom: isMobile ? '1.5rem' : '2rem'
+              gap: isMobile ? '0.5rem' : '0.6rem',
+              marginBottom: isMobile ? '1rem' : '1.25rem'
             }}>
               <button
                 onClick={() => {
@@ -1426,8 +1430,8 @@ export default function SimpleWelcome() {
                   soundManager.playClickSound();
                 }}
                 style={{
-                  padding: isMobile ? '1rem 1.25rem' : '0.75rem 1.5rem',
-                  fontSize: isMobile ? '1.05rem' : '1rem',
+                  padding: isMobile ? '0.75rem 1rem' : '0.6rem 1.25rem',
+                  fontSize: isMobile ? '0.95rem' : '0.9em',
                   backgroundColor: '#4CAF50',
                   color: 'white',
                   border: '2px solid black',
@@ -1435,9 +1439,10 @@ export default function SimpleWelcome() {
                   cursor: 'pointer',
                   fontWeight: 'bold',
                   transition: 'all 0.3s ease',
-                  minHeight: isMobile ? '52px' : 'auto',
+                  minHeight: isMobile ? '48px' : 'auto',
                   touchAction: 'manipulation',
-                  WebkitTapHighlightColor: 'transparent'
+                  WebkitTapHighlightColor: 'transparent',
+                  width: '100%'
                 }}
               >
                 🟢 Easy
@@ -1451,8 +1456,8 @@ export default function SimpleWelcome() {
                   soundManager.playClickSound();
                 }}
                 style={{
-                  padding: isMobile ? '1rem 1.25rem' : '0.75rem 1.5rem',
-                  fontSize: isMobile ? '1.05rem' : '1rem',
+                  padding: isMobile ? '0.75rem 1rem' : '0.6rem 1.25rem',
+                  fontSize: isMobile ? '0.95rem' : '0.9em',
                   backgroundColor: '#FF9800',
                   color: 'white',
                   border: '2px solid black',
@@ -1460,9 +1465,10 @@ export default function SimpleWelcome() {
                   cursor: 'pointer',
                   fontWeight: 'bold',
                   transition: 'all 0.3s ease',
-                  minHeight: isMobile ? '52px' : 'auto',
+                  minHeight: isMobile ? '48px' : 'auto',
                   touchAction: 'manipulation',
-                  WebkitTapHighlightColor: 'transparent'
+                  WebkitTapHighlightColor: 'transparent',
+                  width: '100%'
                 }}
               >
                 🟠 Medium
@@ -1476,8 +1482,8 @@ export default function SimpleWelcome() {
                   soundManager.playClickSound();
                 }}
                 style={{
-                  padding: isMobile ? '1rem 1.25rem' : '0.75rem 1.5rem',
-                  fontSize: isMobile ? '1.05rem' : '1rem',
+                  padding: isMobile ? '0.75rem 1rem' : '0.6rem 1.25rem',
+                  fontSize: isMobile ? '0.95rem' : '0.9em',
                   backgroundColor: '#F44336',
                   color: 'white',
                   border: '2px solid black',
@@ -1485,9 +1491,10 @@ export default function SimpleWelcome() {
                   cursor: 'pointer',
                   fontWeight: 'bold',
                   transition: 'all 0.3s ease',
-                  minHeight: isMobile ? '52px' : 'auto',
+                  minHeight: isMobile ? '48px' : 'auto',
                   touchAction: 'manipulation',
-                  WebkitTapHighlightColor: 'transparent'
+                  WebkitTapHighlightColor: 'transparent',
+                  width: '100%'
                 }}
               >
                 🔴 Hard

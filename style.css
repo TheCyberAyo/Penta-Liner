@@ -126,39 +126,44 @@ footer {
 
 #modalContent {
     background-color: lightskyblue;
-    padding: 2em;
-    border-radius: 10px;
+    padding: 1.5em;
+    border-radius: 12px;
     text-align: center;
-    max-width: 400px;
-    width: 90%;
+    max-width: 300px;
+    width: 85%;
 }
 
 #modalContent h2 {
     color: #FFC30B;
-    margin-bottom: 1em;
-    font-size: 2em;
+    margin-bottom: 0.5em;
+    font-size: 1.5em;
 }
 
 #modalContent p {
-    margin-bottom: 1.5em;
+    margin-bottom: 1em;
     color: black;
     font-weight: bold;
+    font-size: 0.9em;
 }
 
 #difficultySelection {
-    margin-bottom: 1.5em;
+    margin-bottom: 1em;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 
 #difficultySelection button, #backToWelcome {
-    padding: 10px 20px;
-    font-size: 1.2em;
+    padding: 8px 16px;
+    font-size: 0.95em;
     border: none;
-    border-radius: 5px;
+    border-radius: 8px;
     background-color: #FFC30B;
     color: black;
     cursor: pointer;
-    margin: 5px;
+    margin: 0;
     transition: background-color 0.3s;
+    width: 100%;
 }
 
 #difficultySelection button:hover, #backToWelcome:hover {
