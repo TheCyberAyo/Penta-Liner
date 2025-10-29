@@ -62,7 +62,7 @@ export default function SimpleWelcome() {
   if (gameMode === 'competition') {
     return (
       <BattleGame 
-        key="competition-game" 
+        key={`competition-${timerOption}`}
         battleLength={competitionLength}
         player1Name={competitor1Name}
         player2Name={competitor2Name}

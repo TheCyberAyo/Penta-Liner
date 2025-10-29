@@ -59,7 +59,7 @@ export class MultiplayerService {
       if (roomError) throw roomError;
 
       // Add host as player
-      const { data: player, error: playerError } = await supabase
+      const { data: player, error: playerError } = await supabase!
         .from('game_players')
         .insert({
           room_id: room.id,
@@ -119,7 +119,7 @@ export class MultiplayerService {
       }
 
       // Check if room already has 2 players
-      const { data: players } = await supabase
+      const { data: players } = await supabase!
         .from('game_players')
         .select('*')
         .eq('room_id', room.id);
@@ -129,7 +129,7 @@ export class MultiplayerService {
       }
 
       // Add guest as player
-      const { data: player, error: playerError } = await supabase
+      const { data: player, error: playerError } = await supabase!
         .from('game_players')
         .insert({
           room_id: room.id,
@@ -149,7 +149,7 @@ export class MultiplayerService {
       this.setupSubscriptions(room.id);
 
       // Get all players
-      const { data: allPlayers } = await supabase
+      const { data: allPlayers } = await supabase!
         .from('game_players')
         .select('*')
         .eq('room_id', room.id);
