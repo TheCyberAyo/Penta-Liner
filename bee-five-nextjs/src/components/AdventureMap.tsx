@@ -224,44 +224,7 @@ const AdventureMap: React.FC<AdventureMapProps> = ({
         transform: 'translateZ(0)' // Force hardware acceleration
         }} />
         
-        {/* Map Title */}
-        <div style={{
-          textAlign: 'center',
-          marginBottom: '2rem',
-          position: 'relative',
-          zIndex: 1
-        }}>
-          <h2 style={{
-            margin: '0 0 0.5rem 0',
-            color: currentTheme.primaryColor,
-            fontSize: '2rem',
-            fontWeight: 'bold',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '1rem',
-            textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
-            animation: 'titleGlow 3s ease-in-out infinite',
-            transform: 'translateZ(0)' // Force hardware acceleration
-          }}>
-            <span style={{ 
-              fontSize: '2.5rem', 
-              animation: 'mapIconSpin 4s linear infinite',
-              display: 'inline-block',
-              filter: 'drop-shadow(0 0 8px rgba(255, 195, 11, 0.6))'
-            }}>🗺️</span>
-            Complete Adventure Map
-          </h2>
-          <p style={{
-            margin: 0,
-            color: currentTheme.textColor,
-            fontSize: '1.1rem',
-            fontStyle: 'italic',
-            textShadow: '1px 1px 2px rgba(0,0,0,0.2)'
-          }}>
-            🐝 All bee life stages unlocked for development
-          </p>
-        </div>
+        {/* Map Title - Removed */}
 
         {/* Stage Overview */}
         <div style={{
@@ -472,15 +435,8 @@ const AdventureMap: React.FC<AdventureMapProps> = ({
         border: `2px solid ${currentTheme.primaryColor}40`,
         boxShadow: `0 8px 32px ${currentTheme.shadowColor}`
       }}>
-        <h1 style={{ 
-          margin: 0, 
-          fontSize: '2rem',
-          textShadow: '2px 2px 4px rgba(0,0,0,0.5)'
-        }}>
-          🗺️ Adventure Map
-        </h1>
-        <p style={{ margin: '0.5rem 0 0 0', fontSize: '1rem' }}>
-          Current Game: {currentGame} | Completed: {gamesCompleted.length}/2000
+        <p style={{ margin: '0.5rem 0 0 0', fontSize: '1.5rem', fontWeight: 'bold' }}>
+          Guide a life to greatness
         </p>
       </div>
 

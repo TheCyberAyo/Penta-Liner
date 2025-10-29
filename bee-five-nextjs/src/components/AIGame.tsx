@@ -8,10 +8,11 @@ import GameCanvas from './GameCanvas';
 interface AIGameProps {
   onBackToMenu: () => void;
   initialDifficulty?: string;
+  initialTimer?: number;
 }
 
-export default function AIGame({ onBackToMenu, initialDifficulty = 'medium' }: AIGameProps) {
-  const [timeLimit] = useState(15);
+export default function AIGame({ onBackToMenu, initialDifficulty = 'medium', initialTimer = 15 }: AIGameProps) {
+  const [timeLimit] = useState(initialTimer);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [volume, setVolume] = useState(0.3);
   const [aiDifficulty, setAiDifficulty] = useState(initialDifficulty);
@@ -23,7 +24,8 @@ export default function AIGame({ onBackToMenu, initialDifficulty = 'medium' }: A
   
   const { gameState, handleCellClick, resetGame } = useGameLogic({
     timeLimit,
-    startingPlayer: 2 // AI goes first in classic mode
+    startingPlayer: 2, // AI goes first in classic mode
+    pauseTimer: timeLimit === 0 // Pause timer if "No timer" is selected
   });
 
   // Initialize mobile detection
@@ -59,12 +61,13 @@ export default function AIGame({ onBackToMenu, initialDifficulty = 'medium' }: A
     } else if (!gameState.isGameActive && gameState.winner === 0) {
       setWinMessage('Game Over - Draw! 🐝');
       setShowWinPopup(true);
-    } else if (gameState.timeLeft === 0) {
+    } else if (gameState.timeLeft === 0 && timeLimit > 0) {
+      // Only check for timeout if timer is enabled
       const winText = gameState.currentPlayer === 1 ? 'You lost due to time limit!' : 'You win due to time limit!';
       setWinMessage(`${winText} 🐝`);
       setShowWinPopup(true);
     }
-  }, [gameState.winner, gameState.isGameActive, gameState.timeLeft, gameState.currentPlayer]);
+  }, [gameState.winner, gameState.isGameActive, gameState.timeLeft, gameState.currentPlayer, timeLimit]);
 
   // Handle difficulty change - end current game
   const handleDifficultyChange = (newDifficulty: string) => {
@@ -90,9 +93,9 @@ export default function AIGame({ onBackToMenu, initialDifficulty = 'medium' }: A
   // AI Move Functions - defined before getBestAIMove to avoid hoisting issues
   const getEasyAIMove = React.useCallback((availableCells: {row: number, col: number}[]) => {
     console.log('CLASSIC EASY AI: Called with', availableCells.length, 'available cells');
-    // Easy AI: Much more aggressive defense
+    // Easy AI: Very passive and random
     
-    // Priority 1: Take winning move if available
+    // Priority 1: Take winning move if available (only if obvious)
     for (let cell of availableCells) {
       const testBoard = gameState.board.map(row => [...row]);
       testBoard[cell.row][cell.col] = 2;
@@ -102,55 +105,19 @@ export default function AIGame({ onBackToMenu, initialDifficulty = 'medium' }: A
       }
     }
 
-    // Priority 2: Block if human can win immediately
-    for (let cell of availableCells) {
-      const testBoard = gameState.board.map(row => [...row]);
-      testBoard[cell.row][cell.col] = 1;
-      if (checkWinCondition(testBoard, cell.row, cell.col, 1)) {
-        console.log('CLASSIC EASY AI: Blocking immediate win at', cell.row, cell.col);
-        return cell;
+    // Priority 2: Block if human can win immediately (but only 50% of the time)
+    if (Math.random() > 0.5) {
+      for (let cell of availableCells) {
+        const testBoard = gameState.board.map(row => [...row]);
+        testBoard[cell.row][cell.col] = 1;
+        if (checkWinCondition(testBoard, cell.row, cell.col, 1)) {
+          console.log('CLASSIC EASY AI: Blocking immediate win at', cell.row, cell.col);
+          return cell;
+        }
       }
     }
 
-    // Priority 3: Block 4-in-a-row threats (very aggressive!)
-    for (let cell of availableCells) {
-      const testBoard = gameState.board.map(row => [...row]);
-      testBoard[cell.row][cell.col] = 1;
-      if (checkFourInARow(testBoard, cell.row, cell.col, 1)) {
-        console.log('CLASSIC EASY AI: Blocking 4-in-a-row at', cell.row, cell.col);
-        return cell;
-      }
-    }
-
-    // Priority 4: Block 3-in-a-row threats
-    for (let cell of availableCells) {
-      const testBoard = gameState.board.map(row => [...row]);
-      testBoard[cell.row][cell.col] = 1;
-      if (checkThreeInARow(testBoard, cell.row, cell.col, 1)) {
-        console.log('CLASSIC EASY AI: Blocking 3-in-a-row at', cell.row, cell.col);
-        return cell;
-      }
-    }
-
-    // Priority 5: Block 2-in-a-row threats (aggressive defense)
-    for (let cell of availableCells) {
-      const testBoard = gameState.board.map(row => [...row]);
-      testBoard[cell.row][cell.col] = 1;
-      if (checkTwoInARow(testBoard, cell.row, cell.col, 1)) {
-        console.log('CLASSIC EASY AI: Blocking 2-in-a-row at', cell.row, cell.col);
-        return cell;
-      }
-    }
-
-    // Priority 6: Block single pieces that could become threats
-    for (let cell of availableCells) {
-      if (isNearHumanPiece(gameState.board, cell.row, cell.col)) {
-        console.log('CLASSIC EASY AI: Blocking near human piece at', cell.row, cell.col);
-        return cell;
-      }
-    }
-
-    // Priority 7: Random move
+    // Priority 3: Random move (most of the time)
     console.log('CLASSIC EASY AI: Making random move');
     return availableCells[Math.floor(Math.random() * availableCells.length)];
   }, [gameState.board]);
@@ -1216,23 +1183,25 @@ export default function AIGame({ onBackToMenu, initialDifficulty = 'medium' }: A
             </button>
           )}
           
-          {/* Timer display */}
-          <div style={{
-            padding: isMobile ? '0.5rem' : '0.5rem 0.75rem',
-            fontSize: isMobile ? '1em' : '0.9em',
-            backgroundColor: '#FFC30B',
-            color: 'black',
-            border: '2px solid black',
-            borderRadius: '8px',
-            fontWeight: 'bold',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.25rem',
-            minWidth: '80px',
-            justifyContent: 'center'
-          }}>
-            ⏱️ {gameState.timeLeft}s
-          </div>
+          {/* Timer display - only show if timer is enabled */}
+          {timeLimit > 0 && (
+            <div style={{
+              padding: isMobile ? '0.5rem' : '0.5rem 0.75rem',
+              fontSize: isMobile ? '1em' : '0.9em',
+              backgroundColor: '#FFC30B',
+              color: 'black',
+              border: '2px solid black',
+              borderRadius: '8px',
+              fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.25rem',
+              minWidth: '80px',
+              justifyContent: 'center'
+            }}>
+              ⏱️ {gameState.timeLeft}s
+            </div>
+          )}
         </div>
       </div>
 

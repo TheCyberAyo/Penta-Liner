@@ -17,7 +17,10 @@ export default function SimpleWelcome() {
   const [playerNumber, setPlayerNumber] = useState<1 | 2>(1);
   const [showDifficultyModal, setShowDifficultyModal] = useState(false);
   const [showClassicModal, setShowClassicModal] = useState(false);
+  const [showTimerModal, setShowTimerModal] = useState(false);
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string>('');
   const [aiDifficulty, setAiDifficulty] = useState('medium');
+  const [aiTimer, setAiTimer] = useState<number>(15);
   const [isMobile, setIsMobile] = useState(false);
   
   // Competition system state (fresh tournament implementation)
@@ -50,7 +53,7 @@ export default function SimpleWelcome() {
 
   // Handle AI game mode
   if (gameMode === 'ai-game') {
-    return <AIGame onBackToMenu={() => setGameMode('menu')} initialDifficulty={aiDifficulty} />;
+    return <AIGame onBackToMenu={() => setGameMode('menu')} initialDifficulty={aiDifficulty} initialTimer={aiTimer} />;
   }
 
   // Handle Adventure game mode
@@ -738,7 +741,7 @@ export default function SimpleWelcome() {
               margin: '0 0 clamp(1rem, 3vw, 1.5rem) 0',
               fontWeight: 'bold'
             }}>
-              Choose your AI game type:
+              Do it for the human Race
             </p>
           </div>
 
@@ -772,7 +775,7 @@ export default function SimpleWelcome() {
               style={{
                 background: 'linear-gradient(135deg, #2196F3 0%, #1976D2 100%)',
                 color: 'white',
-                border: '3px solid black',
+                border: '3px solid #FFC30B',
                 borderRadius: isMobile ? '16px' : '20px',
                 padding: isMobile ? '1.25rem 1.5rem' : '1rem 2rem',
                 fontSize: isMobile ? '1.1rem' : '1.2rem',
@@ -815,7 +818,7 @@ export default function SimpleWelcome() {
               style={{
                 background: 'linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%)',
                 color: 'white',
-                border: '3px solid black',
+                border: '3px solid #FFC30B',
                 borderRadius: isMobile ? '16px' : '20px',
                 padding: isMobile ? '1.25rem 1.5rem' : '1rem 2rem',
                 fontSize: isMobile ? '1.1rem' : '1.2rem',
@@ -843,8 +846,8 @@ export default function SimpleWelcome() {
           <button
             onClick={() => setGameMode('menu')}
             style={{
-              padding: isMobile ? '0.75rem 1rem' : '0.5rem 1rem',
-              fontSize: isMobile ? '0.9rem' : '1rem',
+              padding: isMobile ? '0.5rem 0.75rem' : '0.4rem 0.75rem',
+              fontSize: isMobile ? '0.75rem' : '0.85rem',
               fontWeight: 'bold',
               backgroundColor: '#666',
               color: 'white',
@@ -854,10 +857,12 @@ export default function SimpleWelcome() {
               transition: 'all 0.3s ease',
               marginTop: isMobile ? '1rem' : 'clamp(1rem, 2vw, 1.5rem)',
               touchAction: 'manipulation',
-              WebkitTapHighlightColor: 'transparent'
+              WebkitTapHighlightColor: 'transparent',
+              alignSelf: 'center',
+              width: 'auto'
             }}
           >
-            ← Back to Menu
+            Back to Menu
           </button>
         </div>
 
@@ -926,13 +931,13 @@ export default function SimpleWelcome() {
               }}>
                 <button
                   onClick={() => {
-                    setAiDifficulty('easy');
+                    setSelectedDifficulty('easy');
                     setShowDifficultyModal(false);
-                    setGameMode('ai-game');
+                    setShowTimerModal(true);
                     soundManager.playClickSound();
                   }}
                   style={{
-                    padding: isMobile ? '0.75rem 1rem' : '0.6rem 1.25rem',
+                    padding: isMobile ? '0.75rem 0.5rem' : '0.6rem 0.5rem',
                     fontSize: isMobile ? '0.95rem' : '0.9em',
                     backgroundColor: '#4CAF50',
                     color: 'white',
@@ -944,7 +949,9 @@ export default function SimpleWelcome() {
                     minHeight: isMobile ? '48px' : 'auto',
                     touchAction: 'manipulation',
                     WebkitTapHighlightColor: 'transparent',
-                    width: '100%'
+                    width: '100%',
+                    maxWidth: '300px',
+                    margin: '0 auto'
                   }}
                 >
                   🟢 Easy
@@ -952,13 +959,13 @@ export default function SimpleWelcome() {
 
                 <button
                   onClick={() => {
-                    setAiDifficulty('medium');
+                    setSelectedDifficulty('medium');
                     setShowDifficultyModal(false);
-                    setGameMode('ai-game');
+                    setShowTimerModal(true);
                     soundManager.playClickSound();
                   }}
                   style={{
-                    padding: isMobile ? '0.75rem 1rem' : '0.6rem 1.25rem',
+                    padding: isMobile ? '0.75rem 0.5rem' : '0.6rem 0.5rem',
                     fontSize: isMobile ? '0.95rem' : '0.9em',
                     backgroundColor: '#FF9800',
                     color: 'white',
@@ -970,7 +977,9 @@ export default function SimpleWelcome() {
                     minHeight: isMobile ? '48px' : 'auto',
                     touchAction: 'manipulation',
                     WebkitTapHighlightColor: 'transparent',
-                    width: '100%'
+                    width: '100%',
+                    maxWidth: '300px',
+                    margin: '0 auto'
                   }}
                 >
                   🟠 Medium
@@ -978,13 +987,13 @@ export default function SimpleWelcome() {
 
                 <button
                   onClick={() => {
-                    setAiDifficulty('hard');
+                    setSelectedDifficulty('hard');
                     setShowDifficultyModal(false);
-                    setGameMode('ai-game');
+                    setShowTimerModal(true);
                     soundManager.playClickSound();
                   }}
                   style={{
-                    padding: isMobile ? '0.75rem 1rem' : '0.6rem 1.25rem',
+                    padding: isMobile ? '0.75rem 0.5rem' : '0.6rem 0.5rem',
                     fontSize: isMobile ? '0.95rem' : '0.9em',
                     backgroundColor: '#F44336',
                     color: 'white',
@@ -996,7 +1005,9 @@ export default function SimpleWelcome() {
                     minHeight: isMobile ? '48px' : 'auto',
                     touchAction: 'manipulation',
                     WebkitTapHighlightColor: 'transparent',
-                    width: '100%'
+                    width: '100%',
+                    maxWidth: '300px',
+                    margin: '0 auto'
                   }}
                 >
                   🔴 Hard
@@ -1009,7 +1020,7 @@ export default function SimpleWelcome() {
                   soundManager.playClickSound();
                 }}
                 style={{
-                  padding: isMobile ? '1rem 1.25rem' : '0.75rem 1.5rem',
+                  padding: isMobile ? '1rem 0.25rem' : '0.75rem 0.25rem',
                   fontSize: isMobile ? '1.05rem' : '1rem',
                   backgroundColor: '#666',
                   color: 'white',
@@ -1021,7 +1032,148 @@ export default function SimpleWelcome() {
                   minHeight: isMobile ? '52px' : 'auto',
                   touchAction: 'manipulation',
                   WebkitTapHighlightColor: 'transparent',
-                  width: '100%'
+                  width: '100%',
+                  maxWidth: '300px',
+                  margin: '0 auto'
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>,
+          document.body
+        )}
+
+        {/* Timer Selection Modal - appears after selecting difficulty */}
+        {showTimerModal && createPortal(
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 20001,
+            padding: isMobile ? '1rem' : '2rem'
+          }}>
+            <div style={{
+              backgroundColor: '#FFC30B',
+              padding: isMobile ? '1.5rem' : '2rem',
+              borderRadius: isMobile ? '16px' : '20px',
+              border: '4px solid black',
+              textAlign: 'center',
+              width: '100%',
+              maxWidth: isMobile ? '100%' : '500px',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+              position: 'relative'
+            }}>
+              <h2 style={{
+                fontSize: isMobile ? '1.3em' : '1.5em',
+                color: 'black',
+                marginBottom: isMobile ? '0.5rem' : '0.75rem',
+                textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
+              }}>
+                ⏱️ Select Timer ⏱️
+              </h2>
+              
+              <p style={{
+                fontSize: isMobile ? '0.9em' : '0.95em',
+                color: '#333',
+                marginBottom: isMobile ? '1rem' : '1.25rem'
+              }}>
+                Choose timer option:
+              </p>
+              
+              <div style={{ 
+                display: 'flex',
+                flexDirection: 'column',
+                gap: isMobile ? '0.5rem' : '0.6rem',
+                marginBottom: isMobile ? '1rem' : '1.25rem'
+              }}>
+                <button
+                  onClick={() => {
+                    setAiDifficulty(selectedDifficulty);
+                    setAiTimer(15);
+                    setShowTimerModal(false);
+                    setGameMode('ai-game');
+                    soundManager.playClickSound();
+                  }}
+                  style={{
+                    padding: isMobile ? '0.75rem 0.5rem' : '0.6rem 0.5rem',
+                    fontSize: isMobile ? '0.95rem' : '0.9em',
+                    backgroundColor: '#2196F3',
+                    color: 'white',
+                    border: '2px solid black',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontWeight: 'bold',
+                    transition: 'all 0.3s ease',
+                    minHeight: isMobile ? '48px' : 'auto',
+                    touchAction: 'manipulation',
+                    WebkitTapHighlightColor: 'transparent',
+                    width: '100%',
+                    maxWidth: '300px',
+                    margin: '0 auto'
+                  }}
+                >
+                  ⏱️ With Timer (15s)
+                </button>
+
+                <button
+                  onClick={() => {
+                    setAiDifficulty(selectedDifficulty);
+                    setAiTimer(0);
+                    setShowTimerModal(false);
+                    setGameMode('ai-game');
+                    soundManager.playClickSound();
+                  }}
+                  style={{
+                    padding: isMobile ? '0.75rem 0.5rem' : '0.6rem 0.5rem',
+                    fontSize: isMobile ? '0.95rem' : '0.9em',
+                    backgroundColor: '#9C27B0',
+                    color: 'white',
+                    border: '2px solid black',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontWeight: 'bold',
+                    transition: 'all 0.3s ease',
+                    minHeight: isMobile ? '48px' : 'auto',
+                    touchAction: 'manipulation',
+                    WebkitTapHighlightColor: 'transparent',
+                    width: '100%',
+                    maxWidth: '300px',
+                    margin: '0 auto'
+                  }}
+                >
+                  ∞ No Timer
+                </button>
+              </div>
+
+              <button
+                onClick={() => {
+                  setShowTimerModal(false);
+                  setShowDifficultyModal(true);
+                  soundManager.playClickSound();
+                }}
+                style={{
+                  padding: isMobile ? '1rem 0.25rem' : '0.75rem 0.25rem',
+                  fontSize: isMobile ? '1.05rem' : '1rem',
+                  backgroundColor: '#666',
+                  color: 'white',
+                  border: '2px solid black',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  transition: 'all 0.3s ease',
+                  minHeight: isMobile ? '52px' : 'auto',
+                  touchAction: 'manipulation',
+                  WebkitTapHighlightColor: 'transparent',
+                  width: '100%',
+                  maxWidth: '300px',
+                  margin: '0 auto'
                 }}
               >
                 Cancel

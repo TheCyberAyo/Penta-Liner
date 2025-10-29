@@ -493,50 +493,7 @@ const BeeAdventureMap: React.FC<BeeAdventureMapProps> = ({
         overflow: 'hidden'
       }}>
 
-        {/* Map Title */}
-        <div style={{
-          textAlign: 'center',
-          marginBottom: '2rem',
-          position: 'relative',
-          zIndex: 5
-        }}>
-          <h2 style={{
-            margin: '0 0 0.5rem 0',
-            color: '#2E8B57',
-            fontSize: '2.5rem',
-            fontWeight: 'bold',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '1rem',
-            textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
-            animation: 'titleGlow 3s ease-in-out infinite',
-            transform: 'translateZ(0)' // Force hardware acceleration
-          }}>
-            <span style={{ 
-              fontSize: '3rem',
-              animation: 'mapIconSpin 4s linear infinite',
-              display: 'inline-block',
-              filter: 'drop-shadow(0 0 8px rgba(255, 195, 11, 0.6))'
-            }}>🐝</span>
-            Bee Adventure
-            <span style={{ 
-              fontSize: '3rem',
-              animation: 'mapIconSpin 4s linear infinite reverse',
-              display: 'inline-block',
-              filter: 'drop-shadow(0 0 8px rgba(255, 195, 11, 0.6))'
-            }}>🍯</span>
-          </h2>
-          <p style={{
-            margin: 0,
-            color: '#228B22',
-            fontSize: '1.2rem',
-            fontStyle: 'italic',
-            textShadow: '1px 1px 2px rgba(0,0,0,0.2)'
-          }}>
-            Guide a life to greatness
-          </p>
-        </div>
+        {/* Map Title - Removed */}
 
         {/* Scrollable map area */}
         <div 
@@ -1428,19 +1385,8 @@ const BeeAdventureMap: React.FC<BeeAdventureMapProps> = ({
         marginBottom: '1rem',
         textAlign: 'center'
       }}>
-        <h1 style={{ 
-          margin: 0, 
-          fontSize: '2.2rem',
-          textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '0.5rem'
-        }}>
-          🗺️ Adventure Map
-        </h1>
-        <p style={{ margin: '0.5rem 0 0 0', fontSize: '1rem' }}>
-          Current Game: {currentGame}
+        <p style={{ margin: '0.5rem 0 0 0', fontSize: '1.5rem', fontWeight: 'bold' }}>
+          Guide a life to greatness
         </p>
       </div>
 
