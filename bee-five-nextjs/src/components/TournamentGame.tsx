@@ -141,7 +141,7 @@ export default function BattleGame({
     if (gameState.isGameActive && gameState.winner === 0 && !battleComplete) {
       gameCompletedRef.current = false;
     }
-  }, [gameState.winner, gameState.isGameActive, gameState.timeLeft, gameState.currentPlayer, player1Name, player2Name, battleLength, battleComplete, showBattleWinnerModal, battleScores, battleGamesPlayed, setBattleScores, setBattleGamesPlayed, setBattleWinner, setShowBattleWinnerModal, timeLimit]);
+  }, [gameState.winner, gameState.isGameActive, gameState.timeLeft, gameState.currentPlayer, player1Name, player2Name, battleLength, battleComplete, showBattleWinnerModal, battleScores, battleGamesPlayed, timeLimit]);
 
   const handleNextGame = () => {
     // Don't allow next game if battle is complete
