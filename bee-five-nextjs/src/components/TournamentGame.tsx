@@ -17,6 +17,7 @@ interface BattleGameProps {
   showBattleWinnerModal: boolean;
   setShowBattleWinnerModal: (show: boolean) => void;
   onBackToMenu: () => void;
+  timeLimit?: number;
 }
 
 export default function BattleGame({ 
@@ -30,9 +31,9 @@ export default function BattleGame({
   setBattleWinner,
   showBattleWinnerModal,
   setShowBattleWinnerModal, 
-  onBackToMenu 
+  onBackToMenu,
+  timeLimit = 15 
 }: BattleGameProps) {
-  const [timeLimit] = useState(15);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -55,7 +56,8 @@ export default function BattleGame({
   const { gameState, handleCellClick, resetGame } = useGameLogic({
     timeLimit,
     startingPlayer,
-    gameNumber: undefined // Use standard empty board for battle
+    gameNumber: undefined, // Use standard empty board for battle
+    pauseTimer: timeLimit === 0 // Pause timer if "No timer" is selected
   });
 
   // Track if component has mounted to avoid initial reset
@@ -129,7 +131,7 @@ export default function BattleGame({
     } else if (!gameState.isGameActive && gameState.winner === 0 && !battleComplete) {
       setWinMessage('Game Over - Draw! 🐝');
       setShowWinPopup(true);
-    } else if (gameState.timeLeft === 0 && !battleComplete) {
+    } else if (gameState.timeLeft === 0 && !battleComplete && timeLimit > 0) {
       const winner = gameState.currentPlayer === 1 ? player2Name : player1Name;
       setWinMessage(`${winner} wins due to time limit! 🐝`);
       setShowWinPopup(true);
@@ -139,7 +141,7 @@ export default function BattleGame({
     if (gameState.isGameActive && gameState.winner === 0 && !battleComplete) {
       gameCompletedRef.current = false;
     }
-  }, [gameState.winner, gameState.isGameActive, gameState.timeLeft, gameState.currentPlayer, player1Name, player2Name, battleLength, battleComplete, showBattleWinnerModal, battleScores, battleGamesPlayed, setBattleScores, setBattleGamesPlayed, setBattleWinner, setShowBattleWinnerModal]);
+  }, [gameState.winner, gameState.isGameActive, gameState.timeLeft, gameState.currentPlayer, player1Name, player2Name, battleLength, battleComplete, showBattleWinnerModal, battleScores, battleGamesPlayed, setBattleScores, setBattleGamesPlayed, setBattleWinner, setShowBattleWinnerModal, timeLimit]);
 
   const handleNextGame = () => {
     // Don't allow next game if battle is complete
@@ -633,55 +635,32 @@ export default function BattleGame({
                 flexWrap: 'wrap'
               }}>
                 <div style={{
-                  backgroundColor: battleScores.player1 > battleScores.player2 ? '#4CAF50' : (isTie ? '#17a2b8' : '#f44336'),
+                  backgroundColor: 'black',
                   color: 'white',
-                  padding: '15px 25px',
+                  padding: isMobile ? '10px 18px' : '15px 25px',
                   borderRadius: '15px',
                   fontWeight: 'bold',
                   boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
                 }}>
-                  <div style={{ fontSize: '0.9em', marginBottom: '5px' }}>{player1Name}</div>
-                  <div style={{ fontSize: '2em' }}>{battleScores.player1}</div>
+                  <div style={{ fontSize: isMobile ? '0.8em' : '0.9em', marginBottom: '5px' }}>{player1Name}</div>
+                  <div style={{ fontSize: isMobile ? '1.5em' : '2em' }}>{battleScores.player1}</div>
                 </div>
                 <div style={{ 
-                  fontSize: '1.5em', 
+                  fontSize: isMobile ? '1.2em' : '1.5em', 
                   fontWeight: 'bold',
                   color: '#666'
                 }}>vs</div>
                 <div style={{
-                  backgroundColor: battleScores.player2 > battleScores.player1 ? '#4CAF50' : (isTie ? '#17a2b8' : '#f44336'),
+                  backgroundColor: 'black',
                   color: 'white',
-                  padding: '15px 25px',
+                  padding: isMobile ? '10px 18px' : '15px 25px',
                   borderRadius: '15px',
                   fontWeight: 'bold',
                   boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
                 }}>
-                  <div style={{ fontSize: '0.9em', marginBottom: '5px' }}>{player2Name}</div>
-                  <div style={{ fontSize: '2em' }}>{battleScores.player2}</div>
+                  <div style={{ fontSize: isMobile ? '0.8em' : '0.9em', marginBottom: '5px' }}>{player2Name}</div>
+                  <div style={{ fontSize: isMobile ? '1.5em' : '2em' }}>{battleScores.player2}</div>
                 </div>
-              </div>
-              
-              {/* Message */}
-              <div style={{
-                fontSize: '1.2em',
-                color: isTie ? '#6c757d' : '#8B4513',
-                marginBottom: '30px',
-                fontStyle: 'italic',
-                lineHeight: '1.4'
-              }}>
-                {isTie ? (
-                  <>
-                    🐝 What an epic battle! 🐝
-                    <br />
-                    Both players showed incredible skill!
-                  </>
-                ) : (
-                  <>
-                    🐝 Outstanding performance, {finalWinner}! 🐝
-                    <br />
-                    You won {finalWinnerScore} games to {finalLoserScore} in this epic {battleLength}-game battle!
-                  </>
-                )}
               </div>
               
               {/* Action Buttons */}

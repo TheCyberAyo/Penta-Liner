@@ -1,22 +1,8 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { simpleMultiplayerClient } from '../utils/simpleMultiplayer';
+import { multiplayerService, type RoomInfo, type PlayerInfo } from '../services/multiplayerService';
 import { soundManager } from '../utils/sounds';
-
-interface RoomInfo {
-  roomId: string;
-  players: PlayerInfo[];
-  isGameStarted: boolean;
-  hostId: string;
-}
-
-interface PlayerInfo {
-  id: string;
-  name: string;
-  playerNumber: 1 | 2;
-  isHost: boolean;
-}
 
 interface MultiplayerLobbyProps {
   onGameStart: (roomInfo: RoomInfo, playerNumber: 1 | 2) => void;
@@ -36,7 +22,7 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
   useEffect(() => {
     return () => {
       if (currentRoom) {
-        simpleMultiplayerClient.leaveRoom();
+        multiplayerService.leaveRoom();
       }
     };
   }, [currentRoom]);
@@ -50,66 +36,36 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
     setIsCreatingRoom(true);
     setError(null);
 
-    // Generate a simple room code
-    const roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-    
-    // Create room info
-    const roomInfo: RoomInfo = {
-      roomId: roomCode,
-      players: [
-        {id: "host", name: playerName.trim(), playerNumber: 1, isHost: true}
-      ],
-      isGameStarted: false,
-      hostId: "host"
-    };
-    
-    // Store room info in localStorage for other players to find
-    const roomData = {
-      roomId: roomCode,
-      hostName: playerName.trim(),
-      timestamp: Date.now(),
-      expires: Date.now() + (30 * 60 * 1000) // 30 minutes
-    };
-    localStorage.setItem(`bee5_room_${roomCode}`, JSON.stringify(roomData));
-    
-    setCurrentRoom(roomInfo);
-    setLobbyMode('waiting');
-    setIsCreatingRoom(false);
-    soundManager.playClickSound();
-    
-    // Set up polling to wait for guest to join
-    const pollForGuest = () => {
-      const guestInfoStr = localStorage.getItem(`bee5_guest_${roomCode}`);
-      if (guestInfoStr) {
-        try {
-          const guestInfo = JSON.parse(guestInfoStr);
-          const guestName = guestInfo.guestName || "Guest Player";
-          
-          const updatedRoom: RoomInfo = {
-            ...roomInfo,
-            players: [
-              ...roomInfo.players,
-              {id: "guest", name: guestName, playerNumber: 2, isHost: false}
-            ],
-            isGameStarted: true
-          };
-          
-          setCurrentRoom(updatedRoom);
-          onGameStart(updatedRoom, 1);
-          clearInterval(pollInterval);
-        } catch (error) {
-          console.warn('Could not parse guest info:', error);
-        }
-      }
-    };
-    
-    // Poll every 500ms for guest to join
-    const pollInterval = setInterval(pollForGuest, 500);
-    
-    // Clean up polling after 5 minutes if no guest joins
-    setTimeout(() => {
-      clearInterval(pollInterval);
-    }, 5 * 60 * 1000);
+    try {
+      const roomInfo = await multiplayerService.createRoom(playerName.trim());
+      setCurrentRoom(roomInfo);
+      setLobbyMode('waiting');
+      
+      // Set up listener for when player joins
+      multiplayerService.onPlayerJoined = (player) => {
+        const updatedRoom: RoomInfo = {
+          ...roomInfo,
+          players: [
+            ...roomInfo.players,
+            {
+              id: player.id,
+              name: player.player_name,
+              playerNumber: player.player_number,
+              isHost: player.is_host
+            }
+          ],
+          isGameStarted: true
+        };
+        setCurrentRoom(updatedRoom);
+        onGameStart(updatedRoom, 1);
+      };
+      
+    } catch (error) {
+      setError('Failed to create room. Please try again.');
+    } finally {
+      setIsCreatingRoom(false);
+      soundManager.playClickSound();
+    }
   };
 
   const handleJoinRoom = async () => {
@@ -126,66 +82,25 @@ export function MultiplayerLobby({ onGameStart, onBackToMenu }: MultiplayerLobby
     setIsJoiningRoom(true);
     setError(null);
 
-    const roomCodeUpper = roomCode.trim().toUpperCase();
-    
-    // Check if room exists
-    const roomDataStr = localStorage.getItem(`bee5_room_${roomCodeUpper}`);
-    if (!roomDataStr) {
-      setError('Room not found. Make sure the room code is correct.');
-      setIsJoiningRoom(false);
-      return;
-    }
-
     try {
-      const roomData = JSON.parse(roomDataStr);
-      
-      // Check if room is still active
-      if (Date.now() > roomData.expires) {
-        localStorage.removeItem(`bee5_room_${roomCodeUpper}`);
-        setError('Room has expired. Please ask the host to create a new room.');
-        setIsJoiningRoom(false);
-        return;
-      }
-
-      // Store guest info in localStorage for host to find
-      const guestInfo = {
-        roomId: roomCodeUpper,
-        guestName: playerName.trim(),
-        timestamp: Date.now()
-      };
-      localStorage.setItem(`bee5_guest_${roomCodeUpper}`, JSON.stringify(guestInfo));
-      
-      // Create room info
-      const roomInfo: RoomInfo = {
-        roomId: roomCodeUpper,
-        players: [
-          {id: "host", name: roomData.hostName, playerNumber: 1, isHost: true},
-          {id: "guest", name: playerName.trim(), playerNumber: 2, isHost: false}
-        ],
-        isGameStarted: true,
-        hostId: "host"
-      };
-      
+      const roomInfo = await multiplayerService.joinRoom(roomCode.trim(), playerName.trim());
       setCurrentRoom(roomInfo);
       setLobbyMode('waiting');
-      setIsJoiningRoom(false);
-      soundManager.playClickSound();
       
       // Start the game immediately
       onGameStart(roomInfo, 2);
       
     } catch (error) {
-      setError('Invalid room data. Please try again.');
+      setError(error instanceof Error ? error.message : 'Failed to join room. Please check the room code.');
+    } finally {
       setIsJoiningRoom(false);
+      soundManager.playClickSound();
     }
   };
 
   const handleLeaveRoom = () => {
     if (currentRoom) {
-      // Clean up localStorage
-      localStorage.removeItem(`bee5_room_${currentRoom.roomId}`);
-      localStorage.removeItem(`bee5_guest_${currentRoom.roomId}`);
-      simpleMultiplayerClient.leaveRoom();
+      multiplayerService.leaveRoom();
     }
     setCurrentRoom(null);
     setLobbyMode('menu');

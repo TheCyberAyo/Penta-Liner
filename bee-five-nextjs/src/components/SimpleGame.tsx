@@ -18,7 +18,8 @@ export default function SimpleGame({ onBackToMenu }: SimpleGameProps) {
   const [isMobile, setIsMobile] = useState(false);
   
   const { gameState, handleCellClick, resetGame } = useGameLogic({
-    timeLimit
+    timeLimit,
+    pauseTimer: true
   });
 
   // Initialize mobile detection

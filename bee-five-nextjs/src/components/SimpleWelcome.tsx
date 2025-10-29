@@ -23,8 +23,9 @@ export default function SimpleWelcome() {
   // Competition system state (fresh tournament implementation)
   const [showCompetitionModal, setShowCompetitionModal] = useState(false);
   const [competitionLength, setCompetitionLength] = useState<5 | 7>(5);
-  const [competitor1Name, setCompetitor1Name] = useState('Player 1');
-  const [competitor2Name, setCompetitor2Name] = useState('Player 2');
+  const [competitor1Name, setCompetitor1Name] = useState('A');
+  const [competitor2Name, setCompetitor2Name] = useState('B');
+  const [timerOption, setTimerOption] = useState<3 | 15 | 30 | 0>(15);
   const [competitionScores, setCompetitionScores] = useState({ player1: 0, player2: 0 });
   const [competitionGamesPlayed, setCompetitionGamesPlayed] = useState(0);
   const [competitionWinner, setCompetitionWinner] = useState('');
@@ -73,6 +74,7 @@ export default function SimpleWelcome() {
         showBattleWinnerModal={showCompetitionWinnerModal}
         setShowBattleWinnerModal={setShowCompetitionWinnerModal}
         onBackToMenu={() => setGameMode('menu')}
+        timeLimit={timerOption}
       />
     );
   }
@@ -147,7 +149,7 @@ export default function SimpleWelcome() {
 
         {/* Main content card */}
         <div style={{
-          background: 'rgba(255, 255, 255, 0.95)',
+          background: 'rgba(0, 0, 0, 0.95)',
           borderRadius: isMobile ? '20px' : 'clamp(15px, 3vw, 25px)',
           padding: isMobile ? '1.5rem 1rem' : 'clamp(1.5rem, 3vw, 2rem)',
           width: '90vw',
@@ -182,11 +184,11 @@ export default function SimpleWelcome() {
             </h1>
             <p style={{
               fontSize: isMobile ? '1rem' : 'clamp(1rem, 3vw, 1.2rem)',
-              color: '#333',
+              color: '#ffffff',
               margin: '0 0 clamp(1rem, 3vw, 1.5rem) 0',
               fontWeight: 'bold'
             }}>
-              Choose your game mode:
+              Let's settle This!
             </p>
           </div>
 
@@ -220,7 +222,7 @@ export default function SimpleWelcome() {
               style={{
                 background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)',
                 color: 'white',
-                border: '3px solid black',
+                border: '3px solid #FFC30B',
                 borderRadius: isMobile ? '16px' : '20px',
                 padding: isMobile ? '1.25rem 1.5rem' : '1rem 2rem',
                 fontSize: isMobile ? '1.1rem' : '1.2rem',
@@ -239,7 +241,7 @@ export default function SimpleWelcome() {
                 WebkitTapHighlightColor: 'transparent'
               }}
             >
-              <span style={{ fontSize: '1.3em' }}>🎮</span>
+              <span style={{ fontSize: '1.3em' }}>🤝</span>
               <span>Single Game</span>
             </button>
 
@@ -267,7 +269,7 @@ export default function SimpleWelcome() {
               style={{
                 background: 'linear-gradient(135deg, #FF6B35 0%, #e55a2b 100%)',
                 color: 'white',
-                border: '3px solid black',
+                border: '3px solid #FFC30B',
                 borderRadius: isMobile ? '16px' : '20px',
                 padding: isMobile ? '1.25rem 1.5rem' : '1rem 2rem',
                 fontSize: isMobile ? '1.1rem' : '1.2rem',
@@ -304,19 +306,21 @@ export default function SimpleWelcome() {
               borderRadius: '8px',
               cursor: 'pointer',
               transition: 'all 0.3s ease',
-              marginTop: isMobile ? '1rem' : 'clamp(1rem, 2vw, 1.5rem)',
+              margin: isMobile ? '1rem auto 0' : 'clamp(1rem, 2vw, 1.5rem) auto 0',
+              maxWidth: '200px',
+              display: 'block',
               touchAction: 'manipulation',
               WebkitTapHighlightColor: 'transparent'
             }}
           >
-            ← Back to Menu
+            Back to Menu
           </button>
         </div>
 
         {/* Footer */}
         <footer style={{ 
           marginTop: isMobile ? '1rem' : 'clamp(1rem, 3vw, 2rem)',
-          color: 'rgba(0,0,0,0.7)',
+          color: 'rgba(255,255,255,0.7)',
           fontSize: isMobile ? '0.8rem' : 'clamp(0.7rem, 2vw, 0.8rem)',
           textAlign: 'center',
           zIndex: 1,
@@ -412,63 +416,173 @@ export default function SimpleWelcome() {
                 </div>
               </div>
               
-              <div style={{ marginBottom: isMobile ? '1rem' : '1.5rem' }}>
-                <label style={{
-                  display: 'block',
-                  fontSize: isMobile ? '0.9rem' : '1rem',
-                  fontWeight: 'bold',
-                  color: '#333',
-                  marginBottom: '0.5rem',
-                  textAlign: 'left'
-                }}>
-                  Competitor 1 Name:
-                </label>
-                <input
-                  type="text"
-                  value={competitor1Name}
-                  onChange={(e) => setCompetitor1Name(e.target.value)}
-                  placeholder="Enter Competitor 1 name"
-                  style={{
-                    width: '100%',
-                    padding: isMobile ? '0.75rem' : '1rem',
-                    fontSize: isMobile ? '1rem' : '1.1rem',
-                    border: '2px solid black',
-                    borderRadius: '8px',
-                    backgroundColor: 'white',
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: '1fr 1fr', 
+                gap: isMobile ? '0.5rem' : '1rem',
+                marginBottom: isMobile ? '1rem' : '1.5rem'
+              }}>
+                <div>
+                  <label style={{
+                    display: 'block',
+                    fontSize: isMobile ? '0.8rem' : '0.9rem',
+                    fontWeight: 'bold',
                     color: '#333',
-                    boxSizing: 'border-box',
-                    marginBottom: isMobile ? '0.75rem' : '1rem'
-                  }}
-                />
+                    marginBottom: '0.25rem',
+                    textAlign: 'left'
+                  }}>
+                    Player 1:
+                  </label>
+                  <input
+                    type="text"
+                    value={competitor1Name}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/[^a-zA-Z]/g, '').slice(0, 5);
+                      // Prevent duplicate names (case-insensitive)
+                      if (value.toLowerCase() !== competitor2Name.toLowerCase()) {
+                        setCompetitor1Name(value);
+                      }
+                    }}
+                    maxLength={5}
+                    style={{
+                      width: '100%',
+                      padding: isMobile ? '0.5rem' : '0.6rem',
+                      fontSize: isMobile ? '0.85rem' : '0.95rem',
+                      border: '2px solid black',
+                      borderRadius: '8px',
+                      backgroundColor: 'white',
+                      color: '#333',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{
+                    display: 'block',
+                    fontSize: isMobile ? '0.8rem' : '0.9rem',
+                    fontWeight: 'bold',
+                    color: '#333',
+                    marginBottom: '0.25rem',
+                    textAlign: 'left'
+                  }}>
+                    Player 2:
+                  </label>
+                  <input
+                    type="text"
+                    value={competitor2Name}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/[^a-zA-Z]/g, '').slice(0, 5);
+                      // Prevent duplicate names (case-insensitive)
+                      if (value.toLowerCase() !== competitor1Name.toLowerCase()) {
+                        setCompetitor2Name(value);
+                      }
+                    }}
+                    maxLength={5}
+                    style={{
+                      width: '100%',
+                      padding: isMobile ? '0.5rem' : '0.6rem',
+                      fontSize: isMobile ? '0.85rem' : '0.95rem',
+                      border: '2px solid black',
+                      borderRadius: '8px',
+                      backgroundColor: 'white',
+                      color: '#333',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
               </div>
 
+              {/* Timer Options */}
               <div style={{ marginBottom: isMobile ? '1.5rem' : '2rem' }}>
                 <label style={{
                   display: 'block',
                   fontSize: isMobile ? '0.9rem' : '1rem',
                   fontWeight: 'bold',
                   color: '#333',
-                  marginBottom: '0.5rem',
+                  marginBottom: isMobile ? '0.5rem' : '0.75rem',
                   textAlign: 'left'
                 }}>
-                  Competitor 2 Name:
+                  Time for each move in seconds:
                 </label>
-                <input
-                  type="text"
-                  value={competitor2Name}
-                  onChange={(e) => setCompetitor2Name(e.target.value)}
-                  placeholder="Enter Competitor 2 name"
-                  style={{
-                    width: '100%',
-                    padding: isMobile ? '0.75rem' : '1rem',
-                    fontSize: isMobile ? '1rem' : '1.1rem',
-                    border: '2px solid black',
-                    borderRadius: '8px',
-                    backgroundColor: 'white',
-                    color: '#333',
-                    boxSizing: 'border-box'
-                  }}
-                />
+                <div style={{
+                  display: 'flex',
+                  gap: isMobile ? '0.5rem' : '0.75rem',
+                  width: '100%',
+                  flexWrap: 'wrap'
+                }}>
+                  <button
+                    onClick={() => setTimerOption(3)}
+                    style={{
+                      flex: '1 1 0',
+                      minWidth: '60px',
+                      padding: isMobile ? '0.6rem 0.5rem' : '0.5rem 0.75rem',
+                      fontSize: isMobile ? '0.85rem' : '0.95rem',
+                      backgroundColor: timerOption === 3 ? '#4CAF50' : '#f0f0f0',
+                      color: timerOption === 3 ? 'white' : '#333',
+                      border: '2px solid #333',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontWeight: 'bold',
+                      transition: 'all 0.3s ease'
+                    }}
+                  >
+                    3
+                  </button>
+                  <button
+                    onClick={() => setTimerOption(15)}
+                    style={{
+                      flex: '1 1 0',
+                      minWidth: '60px',
+                      padding: isMobile ? '0.6rem 0.5rem' : '0.5rem 0.75rem',
+                      fontSize: isMobile ? '0.85rem' : '0.95rem',
+                      backgroundColor: timerOption === 15 ? '#4CAF50' : '#f0f0f0',
+                      color: timerOption === 15 ? 'white' : '#333',
+                      border: '2px solid #333',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontWeight: 'bold',
+                      transition: 'all 0.3s ease'
+                    }}
+                  >
+                    15
+                  </button>
+                  <button
+                    onClick={() => setTimerOption(30)}
+                    style={{
+                      flex: '1 1 0',
+                      minWidth: '60px',
+                      padding: isMobile ? '0.6rem 0.5rem' : '0.5rem 0.75rem',
+                      fontSize: isMobile ? '0.85rem' : '0.95rem',
+                      backgroundColor: timerOption === 30 ? '#4CAF50' : '#f0f0f0',
+                      color: timerOption === 30 ? 'white' : '#333',
+                      border: '2px solid #333',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontWeight: 'bold',
+                      transition: 'all 0.3s ease'
+                    }}
+                  >
+                    30
+                  </button>
+                  <button
+                    onClick={() => setTimerOption(0)}
+                    style={{
+                      flex: '1 1 0',
+                      minWidth: '60px',
+                      padding: isMobile ? '0.6rem 0.5rem' : '0.5rem 0.75rem',
+                      fontSize: isMobile ? '0.85rem' : '0.95rem',
+                      backgroundColor: timerOption === 0 ? '#4CAF50' : '#f0f0f0',
+                      color: timerOption === 0 ? 'white' : '#333',
+                      border: '2px solid #333',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontWeight: 'bold',
+                      transition: 'all 0.3s ease'
+                    }}
+                  >
+                    no timer
+                  </button>
+                </div>
               </div>
 
               <div style={{ 
@@ -505,7 +619,7 @@ export default function SimpleWelcome() {
                     width: isMobile ? '100%' : 'auto'
                   }}
                 >
-                  Start Competition
+                  Start
                 </button>
                 
                 <button
@@ -585,7 +699,7 @@ export default function SimpleWelcome() {
 
         {/* Main content card */}
         <div style={{
-          background: 'rgba(255, 255, 255, 0.95)',
+          background: 'rgba(0, 0, 0, 0.95)',
           borderRadius: isMobile ? '20px' : 'clamp(15px, 3vw, 25px)',
           padding: isMobile ? '1.5rem 1rem' : 'clamp(1.5rem, 3vw, 2rem)',
           width: '90vw',
@@ -620,7 +734,7 @@ export default function SimpleWelcome() {
             </h1>
             <p style={{
               fontSize: isMobile ? '1rem' : 'clamp(1rem, 3vw, 1.2rem)',
-              color: '#333',
+              color: '#ffffff',
               margin: '0 0 clamp(1rem, 3vw, 1.5rem) 0',
               fontWeight: 'bold'
             }}>
@@ -750,7 +864,7 @@ export default function SimpleWelcome() {
         {/* Footer */}
         <footer style={{ 
           marginTop: isMobile ? '1rem' : 'clamp(1rem, 3vw, 2rem)',
-          color: 'rgba(0,0,0,0.7)',
+          color: 'rgba(255,255,255,0.7)',
           fontSize: isMobile ? '0.8rem' : 'clamp(0.7rem, 2vw, 0.8rem)',
           textAlign: 'center',
           zIndex: 1,
@@ -964,7 +1078,7 @@ export default function SimpleWelcome() {
 
       {/* Main content card */}
       <div style={{
-        background: 'rgba(255, 255, 255, 0.95)',
+        background: 'rgba(0, 0, 0, 0.95)',
         borderRadius: isMobile ? '20px' : 'clamp(15px, 3vw, 25px)',
         padding: isMobile ? '1.5rem 1rem' : 'clamp(1.5rem, 3vw, 2rem)',
         width: '90vw',
@@ -996,15 +1110,15 @@ export default function SimpleWelcome() {
             fontWeight: 'bold',
             WebkitTextStroke: isMobile ? '0.5px black' : 'initial'
           }}>
-            🐝 Welcome to Bee-Five! 🐝
+            🐝 Bee-Five 🐝
           </h1>
           <p style={{
             fontSize: isMobile ? '1rem' : 'clamp(1rem, 3vw, 1.2rem)',
-            color: '#333',
+            color: '#ffffff',
             margin: '0 0 clamp(1rem, 3vw, 1.5rem) 0',
             fontWeight: 'bold'
           }}>
-            Choose your game mode:
+            Your favourite version of Connect-Five!
           </p>
         </div>
 
@@ -1038,7 +1152,7 @@ export default function SimpleWelcome() {
             style={{
               background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)',
               color: 'white',
-              border: '3px solid black',
+              border: '3px solid #FFC30B',
               borderRadius: isMobile ? '16px' : '20px',
               padding: isMobile ? '1.25rem 1.5rem' : '1rem 2rem',
               fontSize: isMobile ? '1.1rem' : '1.2rem',
@@ -1081,7 +1195,7 @@ export default function SimpleWelcome() {
             style={{
               background: 'linear-gradient(135deg, #2196F3 0%, #1976D2 100%)',
               color: 'white',
-              border: '3px solid black',
+              border: '3px solid #FFC30B',
               borderRadius: isMobile ? '16px' : '20px',
               padding: isMobile ? '1.25rem 1.5rem' : '1rem 2rem',
               fontSize: isMobile ? '1.1rem' : '1.2rem',
@@ -1124,7 +1238,7 @@ export default function SimpleWelcome() {
             style={{
               background: 'linear-gradient(135deg, #FF9800 0%, #F57C00 100%)',
               color: 'white',
-              border: '3px solid black',
+              border: '3px solid #FFC30B',
               borderRadius: isMobile ? '16px' : '20px',
               padding: isMobile ? '1.25rem 1.5rem' : '1rem 2rem',
               fontSize: isMobile ? '1.1rem' : '1.2rem',
@@ -1151,7 +1265,7 @@ export default function SimpleWelcome() {
         {/* Footer */}
         <footer style={{ 
           marginTop: isMobile ? '1rem' : 'clamp(1rem, 3vw, 2rem)',
-          color: 'rgba(0,0,0,0.7)',
+          color: 'rgba(255,255,255,0.7)',
           fontSize: isMobile ? '0.8rem' : 'clamp(0.7rem, 2vw, 0.8rem)',
           textAlign: 'center',
           zIndex: 1,
