@@ -47,15 +47,23 @@ export default function SidebarMenu({ onMenuItemClick, isMobile }: SidebarMenuPr
       boxSizing: 'border-box'
     }}>
       <div style={{
-        color: '#FFC30B',
-        fontSize: 'clamp(1.1rem, 2.5vw, 1.5rem)',
-        fontWeight: 'bold',
         textAlign: 'center',
         marginBottom: '0.75rem',
         paddingBottom: '0.5rem',
-        textDecoration: 'none'
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center'
       }}>
-        BEE_FIVE
+        <img 
+          src="/BEE-FIVE.png" 
+          alt="BEE-FIVE" 
+          style={{
+            maxWidth: '100%',
+            height: 'auto',
+            maxHeight: 'clamp(2rem, 4vw, 3rem)',
+            objectFit: 'contain'
+          }}
+        />
       </div>
       
       {menuItems.map((item) => (

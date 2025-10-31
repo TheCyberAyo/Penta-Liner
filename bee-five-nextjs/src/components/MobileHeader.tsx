@@ -60,14 +60,21 @@ export default function MobileHeader({ onMenuItemClick, isMobile }: MobileHeader
       }}>
         {/* Logo */}
         <div style={{
-          color: '#FFC30B',
-          fontSize: '1.2rem',
-          fontWeight: 'bold',
-          letterSpacing: '1px',
-          textDecoration: 'none',
-          flex: 1
+          flex: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-start'
         }}>
-          BEE_FIVE
+          <img 
+            src="/BEE-FIVE.png" 
+            alt="BEE-FIVE" 
+            style={{
+              maxWidth: '120px',
+              height: 'auto',
+              maxHeight: '2rem',
+              objectFit: 'contain'
+            }}
+          />
         </div>
 
         {/* Hamburger menu button */}
