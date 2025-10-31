@@ -7,9 +7,10 @@ import GameCanvas from './GameCanvas';
 
 interface SimpleGameProps {
   onBackToMenu: () => void;
+  backgroundColor?: 'yellow' | 'black';
 }
 
-export default function SimpleGame({ onBackToMenu }: SimpleGameProps) {
+export default function SimpleGame({ onBackToMenu, backgroundColor = 'yellow' }: SimpleGameProps) {
   const [timeLimit] = useState(15);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [volume, setVolume] = useState(0.3);
@@ -63,9 +64,13 @@ export default function SimpleGame({ onBackToMenu }: SimpleGameProps) {
   }, [gameState.winner, gameState.isGameActive, gameState.timeLeft, gameState.currentPlayer]);
 
 
+  const backgroundStyle = backgroundColor === 'yellow' 
+    ? 'linear-gradient(135deg, #FFC30B 0%, #FFD700 50%, #FFC30B 100%)'
+    : 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%)';
+
   return (
     <div style={{ 
-      background: 'linear-gradient(135deg, #FFC30B 0%, #FFD700 50%, #FFC30B 100%)',
+      background: backgroundStyle,
       width: '100vw', 
       height: '100vh', 
       display: 'flex', 

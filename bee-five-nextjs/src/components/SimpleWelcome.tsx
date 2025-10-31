@@ -10,9 +10,16 @@ import SimpleGame from './SimpleGame';
 import AIGame from './AIGame';
 import AdventureGame from './AdventureGame';
 import BattleGame from './TournamentGame';
+import AboutUs from './AboutUs';
+import HowToPlay from './HowToPlay';
+import NewsUpdates from './NewsUpdates';
+import PrivacyPolicy from './PrivacyPolicy';
+import Settings from './Settings';
+import SidebarMenu from './SidebarMenu';
+import MobileHeader from './MobileHeader';
 
 export default function SimpleWelcome() {
-  const [gameMode, setGameMode] = useState<'menu' | 'local-multiplayer' | 'online-lobby' | 'online-game' | 'ai-game' | 'adventure-game' | 'show-take-turns-submenu' | 'show-ai-submenu' | 'competition'>('menu');
+  const [gameMode, setGameMode] = useState<'menu' | 'local-multiplayer' | 'online-lobby' | 'online-game' | 'ai-game' | 'adventure-game' | 'show-take-turns-submenu' | 'show-ai-submenu' | 'competition' | 'about-us' | 'how-to-play' | 'news-updates' | 'privacy-policy' | 'settings'>('menu');
   const [currentRoom, setCurrentRoom] = useState<RoomInfo | null>(null);
   const [playerNumber, setPlayerNumber] = useState<1 | 2>(1);
   const [showDifficultyModal, setShowDifficultyModal] = useState(false);
@@ -22,6 +29,7 @@ export default function SimpleWelcome() {
   const [aiDifficulty, setAiDifficulty] = useState('medium');
   const [aiTimer, setAiTimer] = useState<number>(15);
   const [isMobile, setIsMobile] = useState(false);
+  const [backgroundColor, setBackgroundColor] = useState<'yellow' | 'black'>('yellow');
   
   // Competition system state (fresh tournament implementation)
   const [showCompetitionModal, setShowCompetitionModal] = useState(false);
@@ -48,12 +56,12 @@ export default function SimpleWelcome() {
 
   // Handle local multiplayer mode
   if (gameMode === 'local-multiplayer') {
-    return <SimpleGame onBackToMenu={() => setGameMode('menu')} />;
+    return <SimpleGame onBackToMenu={() => setGameMode('menu')} backgroundColor={backgroundColor} />;
   }
 
   // Handle AI game mode
   if (gameMode === 'ai-game') {
-    return <AIGame onBackToMenu={() => setGameMode('menu')} initialDifficulty={aiDifficulty} initialTimer={aiTimer} />;
+    return <AIGame onBackToMenu={() => setGameMode('menu')} initialDifficulty={aiDifficulty} initialTimer={aiTimer} backgroundColor={backgroundColor} />;
   }
 
   // Handle Adventure game mode
@@ -105,6 +113,36 @@ export default function SimpleWelcome() {
         onBackToLobby={() => setGameMode('online-lobby')}
       />
     );
+  }
+
+  // Handle About Us page
+  if (gameMode === 'about-us') {
+    return <AboutUs onBackToMenu={() => setGameMode('menu')} isMobile={isMobile} />;
+  }
+
+  // Handle How to Play page
+  if (gameMode === 'how-to-play') {
+    return <HowToPlay onBackToMenu={() => setGameMode('menu')} isMobile={isMobile} />;
+  }
+
+  // Handle News/Updates page
+  if (gameMode === 'news-updates') {
+    return <NewsUpdates onBackToMenu={() => setGameMode('menu')} isMobile={isMobile} />;
+  }
+
+  // Handle Privacy Policy page
+  if (gameMode === 'privacy-policy') {
+    return <PrivacyPolicy onBackToMenu={() => setGameMode('menu')} isMobile={isMobile} />;
+  }
+
+  // Handle Settings page
+  if (gameMode === 'settings') {
+    return <Settings 
+      onBackToMenu={() => setGameMode('menu')} 
+      isMobile={isMobile}
+      backgroundColor={backgroundColor}
+      onBackgroundColorChange={setBackgroundColor}
+    />;
   }
 
   // Handle Take Turns submenu
@@ -1194,15 +1232,23 @@ export default function SimpleWelcome() {
       width: '100%',
       maxWidth: '100vw',
       display: 'flex',
-      flexDirection: 'column',
+      flexDirection: isMobile ? 'column' : 'row',
       justifyContent: 'center',
       alignItems: 'center',
-      padding: isMobile ? '1rem 0.75rem' : 'clamp(1rem, 2vw, 2rem)',
+      padding: isMobile ? '0' : 'clamp(1rem, 2vw, 2rem)',
+      paddingTop: isMobile ? '60px' : 'clamp(1rem, 2vw, 2rem)',
       fontFamily: 'system-ui, -apple-system, sans-serif',
       position: 'relative',
       overflow: 'visible',
-      boxSizing: 'border-box'
+      boxSizing: 'border-box',
+      gap: isMobile ? '1rem' : '1.5rem'
     }}>
+      {/* Mobile Header - Mobile only */}
+      <MobileHeader onMenuItemClick={setGameMode} isMobile={isMobile} />
+      
+      {/* Vertical Sidebar Menu - Desktop only */}
+      <SidebarMenu onMenuItemClick={setGameMode} isMobile={isMobile} />
+
       {/* Decorative bee pattern background - hidden on mobile */}
       {!isMobile && (
         <div style={{
@@ -1233,10 +1279,11 @@ export default function SimpleWelcome() {
         background: 'rgba(0, 0, 0, 0.95)',
         borderRadius: isMobile ? '20px' : 'clamp(15px, 3vw, 25px)',
         padding: isMobile ? '1.5rem 1rem' : 'clamp(1.5rem, 3vw, 2rem)',
-        width: '90vw',
-        maxWidth: '90vw',
-        minHeight: '90vh',
-        maxHeight: '90vh',
+        width: isMobile ? '90vw' : 'auto',
+        maxWidth: isMobile ? '90vw' : 'none',
+        flex: isMobile ? 'none' : '1 1 auto',
+        minHeight: isMobile ? 'calc(100vh - 140px)' : '90vh',
+        maxHeight: isMobile ? 'calc(100vh - 140px)' : '90vh',
         boxShadow: '0 20px 40px rgba(0,0,0,0.1), 0 0 0 3px rgba(0,0,0,0.1)',
         backdropFilter: 'blur(10px)',
         textAlign: 'center',

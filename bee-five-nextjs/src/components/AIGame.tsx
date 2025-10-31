@@ -9,9 +9,10 @@ interface AIGameProps {
   onBackToMenu: () => void;
   initialDifficulty?: string;
   initialTimer?: number;
+  backgroundColor?: 'yellow' | 'black';
 }
 
-export default function AIGame({ onBackToMenu, initialDifficulty = 'medium', initialTimer = 15 }: AIGameProps) {
+export default function AIGame({ onBackToMenu, initialDifficulty = 'medium', initialTimer = 15, backgroundColor = 'yellow' }: AIGameProps) {
   const [timeLimit] = useState(initialTimer);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [volume, setVolume] = useState(0.3);
@@ -1001,9 +1002,13 @@ export default function AIGame({ onBackToMenu, initialDifficulty = 'medium', ini
     return false;
   };
 
+  const backgroundStyle = backgroundColor === 'yellow' 
+    ? 'linear-gradient(135deg, #FFC30B 0%, #FFD700 50%, #FFC30B 100%)'
+    : 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%)';
+
   return (
     <div style={{ 
-      background: 'linear-gradient(135deg, #FFC30B 0%, #FFD700 50%, #FFC30B 100%)',
+      background: backgroundStyle,
       width: '100vw', 
       height: '100vh', 
       display: 'flex', 
