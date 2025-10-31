@@ -19,9 +19,17 @@ export const metadata: Metadata = {
   description: "A fun Connect Five game with bee-themed adventure mode and multiplayer features",
   viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no",
   icons: {
-    icon: '/icon.jpg',
-    shortcut: '/icon.jpg',
-    apple: '/icon.jpg',
+    icon: [
+      { url: '/favicon.ico', type: 'image/x-icon' },
+      { url: '/icon.png', type: 'image/png' },
+      { url: '/icon.jpg', type: 'image/jpeg', sizes: 'any' },
+    ],
+    shortcut: [
+      { url: '/favicon.ico', type: 'image/x-icon' },
+    ],
+    apple: [
+      { url: '/icon.png', type: 'image/png' },
+    ],
   },
 };
 
