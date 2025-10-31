@@ -18,6 +18,11 @@ export const metadata: Metadata = {
   title: "Bee-Five - Connect Five Game",
   description: "A fun Connect Five game with bee-themed adventure mode and multiplayer features",
   viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no",
+  icons: {
+    icon: '/icon.jpg',
+    shortcut: '/icon.jpg',
+    apple: '/icon.jpg',
+  },
 };
 
 export default function RootLayout({

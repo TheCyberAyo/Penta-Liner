@@ -72,6 +72,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
   const [currentGame, setCurrentGame] = useState(1);
   const [gamesWon, setGamesWon] = useState(0);
   const [gamesCompleted, setGamesCompleted] = useState<number[]>([]);
+  const [highestUnlockedGame, setHighestUnlockedGame] = useState(1); // Track the highest unlocked game (starts at 1)
   const [showBeeFact, setShowBeeFact] = useState(false);
   const [currentBeeFact, setCurrentBeeFact] = useState<string | null>(null);
   const [showMap, setShowMap] = useState(true);
@@ -278,6 +279,8 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
              if (newPlayerWins >= requiredWins || (currentMatch > totalGames)) {
                setIsMatchComplete(true);
                setGamesWon(prevGames => prevGames + 1);
+               // Unlock the next game when match is won
+               setHighestUnlockedGame(prev => Math.max(prev, currentGame + 1));
                
                setGamesCompleted(prev => {
                  if (!prev.includes(currentGame)) {
@@ -334,6 +337,8 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
         
          if (gameState.winner === 1) {
            setGamesWon(prev => prev + 1);
+           // Unlock the next game when current game is won
+           setHighestUnlockedGame(prev => Math.max(prev, currentGame + 1));
          }
         setGamesCompleted(prev => {
           if (!prev.includes(currentGame)) {
@@ -386,6 +391,8 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
              if (newPlayerWins >= requiredWins || (currentMatch > totalGames)) {
                setIsMatchComplete(true);
                setGamesWon(prevGames => prevGames + 1);
+               // Unlock the next game when match is won
+               setHighestUnlockedGame(prev => Math.max(prev, currentGame + 1));
                
                setGamesCompleted(prev => {
                  if (!prev.includes(currentGame)) {
@@ -442,6 +449,8 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
         
          if (gameState.currentPlayer === 2) {
            setGamesWon(prev => prev + 1);
+           // Unlock the next game when current game is won
+           setHighestUnlockedGame(prev => Math.max(prev, currentGame + 1));
          }
         setGamesCompleted(prev => {
           if (!prev.includes(currentGame)) {
@@ -1269,7 +1278,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
           <div style={{
             fontSize: isMobile ? 'clamp(0.9rem, 3.5vw, 1.1rem)' : '1.4rem',
             lineHeight: isMobile ? '1.6' : '2',
-            color: currentTheme.textColor,
+            color: '#000000',
             marginBottom: isMobile ? '1rem' : '2rem',
             minHeight: isMobile ? '120px' : '150px',
             display: 'flex',
@@ -1510,6 +1519,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
       <BeeAdventureMap
         currentGame={currentGame}
         gamesCompleted={gamesCompleted}
+        highestUnlockedGame={highestUnlockedGame}
         onGameSelect={handleGameSelect}
         onBackToMenu={onBackToMenu}
       />
@@ -2294,11 +2304,11 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
             background: playerWins > aiWins 
               ? 'linear-gradient(135deg, #FFD700 0%, #FFC30B 50%, #FFD700 100%)'
               : 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 50%, #f8f9fa 100%)',
-            padding: '50px',
-            borderRadius: '25px',
-            border: `5px solid ${playerWins > aiWins ? '#FFC30B' : '#6c757d'}`,
+            padding: isMultipleOf10(currentGame) && !isMultipleOf50(currentGame) ? '30px' : '50px',
+            borderRadius: isMultipleOf10(currentGame) && !isMultipleOf50(currentGame) ? '15px' : '25px',
+            border: `${isMultipleOf10(currentGame) && !isMultipleOf50(currentGame) ? '3px' : '5px'} solid ${playerWins > aiWins ? '#FFC30B' : '#6c757d'}`,
             textAlign: 'center',
-            minWidth: '450px',
+            minWidth: isMultipleOf10(currentGame) && !isMultipleOf50(currentGame) ? '300px' : '450px',
             maxWidth: '90vw',
             position: 'relative',
             animation: playerWins > aiWins ? 'victoryBounce 0.8s ease-out' : 'popIn 0.5s ease-out',
@@ -2313,7 +2323,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
                 top: '-20px',
                 left: '50%',
                 transform: 'translateX(-50%)',
-                fontSize: '3em',
+                fontSize: isMultipleOf10(currentGame) && !isMultipleOf50(currentGame) ? '2em' : '3em',
                 animation: 'confetti 2s ease-out infinite'
               }}>
                 🎊🎉🎊
@@ -2321,15 +2331,17 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
             )}
             
             <div style={{
-              fontSize: '5em',
-              marginBottom: '20px',
+              fontSize: isMultipleOf10(currentGame) && !isMultipleOf50(currentGame) ? '3em' : '5em',
+              marginBottom: isMultipleOf10(currentGame) && !isMultipleOf50(currentGame) ? '15px' : '20px',
               animation: playerWins > aiWins ? 'victorySpin 1.5s ease-out infinite' : 'bounce 1s ease-out infinite'
             }}>
               {playerWins > aiWins ? '🏆' : '😔'}
             </div>
             
             <h1 style={{
-              fontSize: playerWins > aiWins ? '3em' : '2.5em',
+              fontSize: isMultipleOf10(currentGame) && !isMultipleOf50(currentGame) 
+                ? (playerWins > aiWins ? '2em' : '1.8em') 
+                : (playerWins > aiWins ? '3em' : '2.5em'),
               color: playerWins > aiWins ? '#B8860B' : '#495057',
               marginBottom: '15px',
               textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
@@ -2339,7 +2351,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
             </h1>
             
             <div style={{
-              fontSize: '1.6em',
+              fontSize: isMultipleOf10(currentGame) && !isMultipleOf50(currentGame) ? '1.2em' : '1.6em',
               color: playerWins > aiWins ? '#8B4513' : '#6c757d',
               marginBottom: '15px',
               fontWeight: 'bold'
@@ -2348,7 +2360,9 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
             </div>
             
             <div style={{
-              fontSize: playerWins > aiWins ? '2.5em' : '2em',
+              fontSize: isMultipleOf10(currentGame) && !isMultipleOf50(currentGame) 
+                ? (playerWins > aiWins ? '1.8em' : '1.5em') 
+                : (playerWins > aiWins ? '2.5em' : '2em'),
               color: playerWins > aiWins ? '#228B22' : '#dc3545',
               marginBottom: '20px',
               fontWeight: 'bold',
@@ -2357,48 +2371,9 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
               {playerWins > aiWins ? 'You Won 🎉' : 'You Lost'}
             </div>
             
-            {/* Enhanced Score Display */}
-            <div style={{
-              fontSize: '1.3em',
-              color: '#333',
-              marginBottom: '30px',
-              display: 'flex',
-              justifyContent: 'center',
-              gap: '3rem',
-              alignItems: 'center'
-            }}>
-              <div style={{
-                backgroundColor: playerWins > aiWins ? '#4CAF50' : '#f44336',
-                color: 'white',
-                padding: '15px 25px',
-                borderRadius: '15px',
-                fontWeight: 'bold',
-                boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
-              }}>
-                <div style={{ fontSize: '0.9em', marginBottom: '5px' }}>You</div>
-                <div style={{ fontSize: '2em' }}>{playerWins}</div>
-              </div>
-              <div style={{ 
-                fontSize: '1.5em', 
-                fontWeight: 'bold',
-                color: '#666'
-              }}>vs</div>
-              <div style={{
-                backgroundColor: playerWins > aiWins ? '#f44336' : '#4CAF50',
-                color: 'white',
-                padding: '15px 25px',
-                borderRadius: '15px',
-                fontWeight: 'bold',
-                boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
-              }}>
-                <div style={{ fontSize: '0.9em', marginBottom: '5px' }}>AI</div>
-                <div style={{ fontSize: '2em' }}>{aiWins}</div>
-              </div>
-            </div>
-            
             {/* Conditional Message */}
             <div style={{
-              fontSize: '1.2em',
+              fontSize: isMultipleOf10(currentGame) && !isMultipleOf50(currentGame) ? '1em' : '1.2em',
               color: playerWins > aiWins ? '#8B4513' : '#6c757d',
               marginBottom: '30px',
               fontStyle: 'italic',
@@ -2407,19 +2382,13 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
               {playerWins > aiWins ? (
                 <>
                   <div style={{ marginBottom: '10px' }}>
-                    🐝 Excellent work, Bee Angel! 🐝
-                  </div>
-                  <div>
-                    You've proven your strategic prowess in this {getMatchType(currentGame) === 'best-of-5' ? '5-game' : '3-game'} showdown!
+                    🐝 Excellent work, Bee Watcher! 🐝
                   </div>
                 </>
               ) : (
                 <>
                   <div style={{ marginBottom: '10px' }}>
-                    🐝 Don't give up, Bee Angel! 🐝
-                  </div>
-                  <div>
-                    Every defeat is an opportunity to improve
+                    🐝 Don't give up, Bee Watcher! 🐝
                   </div>
                 </>
               )}
@@ -2434,8 +2403,8 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
               <button 
                 onClick={handleResultsPopupNext}
                 style={{
-                  padding: '15px 30px',
-                  fontSize: '1.2em',
+                  padding: isMultipleOf10(currentGame) && !isMultipleOf50(currentGame) ? '10px 20px' : '15px 30px',
+                  fontSize: isMultipleOf10(currentGame) && !isMultipleOf50(currentGame) ? '1em' : '1.2em',
                   fontWeight: 'bold',
                   backgroundColor: playerWins > aiWins ? '#28a745' : '#17a2b8',
                   color: 'white',
@@ -2443,7 +2412,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
                   borderRadius: '15px',
                   cursor: 'pointer',
                   transition: 'all 0.3s ease',
-                  minWidth: '150px',
+                  minWidth: isMultipleOf10(currentGame) && !isMultipleOf50(currentGame) ? '120px' : '150px',
                   boxShadow: '0 6px 12px rgba(0,0,0,0.2)',
                   textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
                 }}
@@ -2465,8 +2434,8 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
                   onBackToMenu();
                 }}
                 style={{
-                  padding: '15px 30px',
-                  fontSize: '1.2em',
+                  padding: isMultipleOf10(currentGame) && !isMultipleOf50(currentGame) ? '10px 20px' : '15px 30px',
+                  fontSize: isMultipleOf10(currentGame) && !isMultipleOf50(currentGame) ? '1em' : '1.2em',
                   fontWeight: 'bold',
                   backgroundColor: '#6c757d',
                   color: 'white',
@@ -2474,7 +2443,7 @@ const AdventureGame: React.FC<AdventureGameProps> = ({ onBackToMenu }) => {
                   borderRadius: '15px',
                   cursor: 'pointer',
                   transition: 'all 0.3s ease',
-                  minWidth: '150px',
+                  minWidth: isMultipleOf10(currentGame) && !isMultipleOf50(currentGame) ? '120px' : '150px',
                   boxShadow: '0 6px 12px rgba(0,0,0,0.2)',
                   textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
                 }}

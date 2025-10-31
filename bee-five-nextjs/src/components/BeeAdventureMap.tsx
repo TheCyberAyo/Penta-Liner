@@ -8,13 +8,15 @@ import BeeLifeStageEffects from './BeeLifeStageEffects';
 interface BeeAdventureMapProps {
   currentGame: number;
   gamesCompleted: number[];
+  highestUnlockedGame: number;
   onGameSelect: (gameNumber: number) => void;
   onBackToMenu: () => void;
 }
 
 const BeeAdventureMap: React.FC<BeeAdventureMapProps> = ({ 
   currentGame, 
-  gamesCompleted, 
+  gamesCompleted,
+  highestUnlockedGame,
   onGameSelect, 
   onBackToMenu 
 }) => {
@@ -241,7 +243,15 @@ const BeeAdventureMap: React.FC<BeeAdventureMapProps> = ({
     return ADVENTURE_THEMES[currentStageBasedOnScroll] || ADVENTURE_THEMES[0];
   };
 
+  const isGameLocked = (gameNumber: number): boolean => {
+    return gameNumber > highestUnlockedGame;
+  };
+
   const handleGameClick = (gameNumber: number) => {
+    // Prevent clicking on locked games
+    if (isGameLocked(gameNumber)) {
+      return;
+    }
     // Directly start the game when clicked
     onGameSelect(gameNumber);
     if (soundEnabled) soundManager.playClickSound();
@@ -362,6 +372,7 @@ const BeeAdventureMap: React.FC<BeeAdventureMapProps> = ({
     const stage = ADVENTURE_THEMES[stageIndex];
     const isCompleted = gamesCompleted.includes(gameNumber);
     const isCurrent = gameNumber === currentGame;
+    const isLocked = gameNumber > highestUnlockedGame;
     const environment = getGameEnvironment(gameNumber);
     const isMobile = window.innerWidth <= 768;
     
@@ -393,13 +404,15 @@ const BeeAdventureMap: React.FC<BeeAdventureMapProps> = ({
           onClick={() => handleGameClick(gameNumber)}
           style={{
             position: 'relative',
-            cursor: 'pointer',
+            cursor: isLocked ? 'not-allowed' : 'pointer',
             transition: 'all 0.3s ease',
             transform: isCurrent ? 'scale(1.3)' : 'scale(1)',
-            zIndex: isCurrent ? '10' : '2'
+            zIndex: isCurrent ? '10' : '2',
+            opacity: isLocked ? 0.4 : 1,
+            filter: isLocked ? 'grayscale(80%)' : 'none'
           }}
           onMouseEnter={(e) => {
-            if (!isMobile) {
+            if (!isMobile && !isLocked) {
               e.currentTarget.style.transform = 'scale(1.3)';
               e.currentTarget.style.zIndex = '10';
             }
@@ -410,14 +423,14 @@ const BeeAdventureMap: React.FC<BeeAdventureMapProps> = ({
               e.currentTarget.style.zIndex = '2';
             }
           }}
-          title={`Game ${gameNumber} - ${stage?.name || 'Unknown Stage'}\n${stage?.beeLifeStage || ''}`}
+          title={isLocked ? `🔒 Locked - Complete Game ${gameNumber - 1} to unlock` : `Game ${gameNumber} - ${stage?.name || 'Unknown Stage'}\n${stage?.beeLifeStage || ''}`}
         >
           {/* Pin head (circular part) */}
           <div style={{
             width: isMobile ? '24px' : '20px',
             height: isMobile ? '24px' : '20px',
             borderRadius: '50%',
-            backgroundColor: isCompleted ? '#4CAF50' : isCurrent ? '#FFC30B' : stage?.primaryColor || '#FFC30B',
+            backgroundColor: isLocked ? '#666666' : isCompleted ? '#4CAF50' : isCurrent ? '#FFC30B' : stage?.primaryColor || '#FFC30B',
             border: isCompleted || isCurrent ? '3px solid #fff' : '2px solid #fff',
             boxShadow: isCurrent ? '0 0 12px rgba(255, 195, 11, 0.8)' : '0 2px 6px rgba(0,0,0,0.3)',
             position: 'relative',
@@ -425,7 +438,19 @@ const BeeAdventureMap: React.FC<BeeAdventureMapProps> = ({
             animation: isCurrent ? 'currentPulse 2s ease-in-out infinite' : 'none',
             transform: 'translateZ(0)' // Force hardware acceleration
           }}>
-            {isCurrent && (
+            {isLocked && (
+              <div style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                fontSize: isMobile ? '12px' : '10px',
+                color: '#fff'
+              }}>
+                🔒
+              </div>
+            )}
+            {isCurrent && !isLocked && (
               <div style={{
                 position: 'absolute',
                 top: '50%',
@@ -1385,6 +1410,9 @@ const BeeAdventureMap: React.FC<BeeAdventureMapProps> = ({
         marginBottom: '1rem',
         textAlign: 'center'
       }}>
+        <p style={{ margin: '0 0 0.5rem 0', fontSize: '2.5rem', fontWeight: '900', color: '#4CAF50', textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>
+          Bee Adventure
+        </p>
         <p style={{ margin: '0.5rem 0 0 0', fontSize: '1.5rem', fontWeight: 'bold' }}>
           Guide a life to greatness
         </p>
