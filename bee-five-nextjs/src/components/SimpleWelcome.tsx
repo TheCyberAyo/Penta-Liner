@@ -19,7 +19,7 @@ import SidebarMenu from './SidebarMenu';
 import MobileHeader from './MobileHeader';
 
 export default function SimpleWelcome() {
-  const [gameMode, setGameMode] = useState<'menu' | 'local-multiplayer' | 'online-lobby' | 'online-game' | 'ai-game' | 'adventure-game' | 'show-take-turns-submenu' | 'show-ai-submenu' | 'competition' | 'about-us' | 'how-to-play' | 'news-updates' | 'privacy-policy' | 'settings'>('menu');
+  const [gameMode, setGameMode] = useState<'menu' | 'local-multiplayer' | 'online-lobby' | 'online-game' | 'ai-game' | 'adventure-game' | 'show-take-turns-submenu' | 'show-ai-submenu' | 'competition' | 'about-us' | 'how-to-play' | 'news-updates' | 'privacy-policy' | 'settings' | 'profile' | 'contact-us'>('menu');
   const [currentRoom, setCurrentRoom] = useState<RoomInfo | null>(null);
   const [playerNumber, setPlayerNumber] = useState<1 | 2>(1);
   const [showDifficultyModal, setShowDifficultyModal] = useState(false);

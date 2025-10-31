@@ -3,13 +3,15 @@
 import React from 'react';
 import { soundManager } from '../utils/sounds';
 
+type GameMode = 'menu' | 'about-us' | 'how-to-play' | 'news-updates' | 'privacy-policy' | 'settings' | 'profile' | 'contact-us' | 'local-multiplayer' | 'online-lobby' | 'online-game' | 'ai-game' | 'adventure-game' | 'show-take-turns-submenu' | 'show-ai-submenu' | 'competition';
+
 interface SidebarMenuProps {
-  onMenuItemClick: (mode: string) => void;
+  onMenuItemClick: (mode: GameMode) => void;
   isMobile: boolean;
 }
 
 export default function SidebarMenu({ onMenuItemClick, isMobile }: SidebarMenuProps) {
-  const menuItems = [
+  const menuItems: { id: GameMode; icon: string; label: string }[] = [
     { id: 'about-us', icon: 'ℹ️', label: 'About Us' },
     { id: 'how-to-play', icon: '📖', label: 'How to Play' },
     { id: 'news-updates', icon: '📰', label: 'News/Updates' },
